@@ -10,22 +10,88 @@ local gymCFrame = CFrame.new(-8649.71484, 17.8046951, -5897.97949, 0.942061365, 
 
 local mainTab = window:AddTab("Main")
 
+-- ==================== AUTO LOAD ALL FEATURES ====================
+
+getgenv().autoJoinBrawl = true
+getgenv().autoWinBrawl = true
+getgenv().AntiKnockback = true
+_G.fastHitActive = true
+local AutoServerHopEnabled = true
+
 -- Auto Brawls
 mainTab:AddSwitch("Auto Brawls", function(bool)
     getgenv().autoJoinBrawl = bool
-end)
+end, true)  -- Auto ON
 
 -- Auto Win Brawls
 mainTab:AddSwitch("Auto Win Brawls", function(bool)
     getgenv().autoWinBrawl = bool
-end)
+end, true)  -- Auto ON
+
+-- Anti Knockback
+local AntiKnockbackToggle = mainTab:AddSwitch("Anti Knockback", function(state)
+    getgenv().AntiKnockback = state
+    if state then
+        print("✅ Anti Knockback ENABLED")
+        spawn(function()
+            while getgenv().AntiKnockback do
+                pcall(function()
+                    local character = game.Players.LocalPlayer.Character
+                    if not character then return end
+                    local root = character:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        for _, v in pairs(root:GetChildren()) do
+                            if v:IsA("BodyVelocity") or v:IsA("BodyThrust") or v:IsA("BodyForce") or 
+                               v:IsA("LinearVelocity") or v:IsA("VectorForce") then
+                                v:Destroy()
+                            end
+                        end
+                    end
+                end)
+                wait(0.03)
+            end
+        end)
+    else
+        print("❌ Anti Knockback DISABLED")
+    end
+end, true)  -- Auto ON
+
+-- Auto Punch
+mainTab:AddSwitch("Auto Punch", function(state)
+    _G.fastHitActive = state
+    if state then
+        task.spawn(function()
+            while _G.fastHitActive do
+                local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
+                if punch then
+                    punch.Parent = LocalPlayer.Character
+                    if punch:FindFirstChild("attackTime") then
+                        punch.attackTime.Value = 0
+                    end
+                end
+                task.wait(0.1)
+            end
+        end)
+        task.spawn(function()
+            while _G.fastHitActive do
+                local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
+                if punch then
+                    punch:Activate()
+                end
+                task.wait(0.1)
+            end
+        end)
+    else
+        local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
+        if punch then
+            punch.Parent = LocalPlayer.Backpack
+        end
+    end
+end, true)  -- Auto ON
 
 -- ==================== AUTO LOAD + NIGHT MODE ====================
 
-getgenv().autoJoinBrawl = true
-getgenv().autoWinBrawl = true
-
--- Force Night Time (stronger method)
+-- Force Night Time
 task.spawn(function()
     while task.wait(1) do
         game.Lighting.ClockTime = 0
@@ -39,7 +105,7 @@ end)
 
 print("🌙 Night mode forced")
 
--- ==================== AUTO WIN BRAWL LOGIC (Full) ====================
+-- ==================== AUTO WIN BRAWL LOGIC (Unchanged) ====================
 
 local Players = game:GetService("Players")
 local lp = Players.LocalPlayer
@@ -154,81 +220,13 @@ task.spawn(function()
     end
 end)
 
-
-local AntiKnockbackToggle = mainTab:AddSwitch("Anti Knockback", function(state)
-    getgenv().AntiKnockback = state
-    
-    if state then
-        print("✅ Anti Knockback ENABLED")
-        
-        spawn(function()
-            while getgenv().AntiKnockback do
-                pcall(function()
-                    local character = game.Players.LocalPlayer.Character
-                    if not character then return end
-                    
-                    local root = character:FindFirstChild("HumanoidRootPart")
-                    if root then
-                        -- Only remove knockback forces, don't touch normal movement
-                        for _, v in pairs(root:GetChildren()) do
-                            if v:IsA("BodyVelocity") or v:IsA("BodyThrust") or v:IsA("BodyForce") or 
-                               v:IsA("LinearVelocity") or v:IsA("VectorForce") then
-                                v:Destroy()
-                            end
-                        end
-                    end
-                end)
-                wait(0.03)  -- Slightly faster detection
-            end
-        end)
-    else
-        print("❌ Anti Knockback DISABLED")
-    end
-end)
-
-mainTab:AddSwitch("Auto Punch", function(state)
-    _G.fastHitActive = state
-    if state then
-        task.spawn(function()
-            while _G.fastHitActive do
-                local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
-                if punch then
-                    punch.Parent = LocalPlayer.Character
-                    if punch:FindFirstChild("attackTime") then
-                        punch.attackTime.Value = 0
-                    end
-                end
-                task.wait(0.1)
-            end
-        end)
-        task.spawn(function()
-            while _G.fastHitActive do
-                local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
-                if punch then
-                    punch:Activate()
-                end
-                task.wait(0.1)
-            end
-        end)
-    else
-        local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
-        if punch then
-            punch.Parent = LocalPlayer.Backpack
-        end
-    end
-end)
-
-
+-- ==================== AUTO SERVER HOP (Unchanged) ====================
 
 if getgenv().AutoServerHopLoaded then return end
 getgenv().AutoServerHopLoaded = true
 
--- ================== SETTINGS ==================
-local AutoServerHopEnabled = true
 local ServerHopInterval = 120  -- seconds
--- =============================================
 
-local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 
@@ -284,4 +282,4 @@ game:GetService("RunService").Heartbeat:Connect(function()
     end
 end)
 
-print("✅ Server Hop Only Loaded! (Interval: " .. ServerHopInterval .. "s)")
+print("✅ All features AUTO-LOADED! (Server Hop: " .. ServerHopInterval .. "s)")
