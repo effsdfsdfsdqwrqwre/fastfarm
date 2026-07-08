@@ -1,143 +1,77 @@
-
--- Muscle Legends Brawls GUI
--- Place this LocalScript in StarterPlayer > StarterPlayerScripts
+-- Simple Small Black Brawls Box for Muscle Legends
+-- Paste into a LocalScript in StarterPlayer > StarterPlayerScripts
 
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Create ScreenGui
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "BrawlsGUI"
+screenGui.Name = "SimpleBrawls"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- Main Frame (positioned under typical strength/gems area, top-right-ish)
-local mainFrame = Instance.new("Frame")
-mainFrame.Name = "BrawlsFrame"
-mainFrame.Size = UDim2.new(0, 220, 0, 140)
-mainFrame.Position = UDim2.new(1, -240, 0, 80)  -- Adjust Y if needed to sit under default GUI
-mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-mainFrame.BackgroundTransparency = 0.3
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = screenGui
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 170, 0, 50)
+frame.Position = UDim2.new(0.5, -85, 0, 65)   -- Centered under strength/gems (best starting spot)
+frame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+frame.BackgroundTransparency = 0.35
+frame.BorderSizePixel = 0
+frame.Parent = screenGui
 
--- Corner rounding
-local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 8)
-uiCorner.Parent = mainFrame
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = frame
 
--- Title
-local title = Instance.new("TextLabel")
-title.Name = "Title"
-title.Size = UDim2.new(1, 0, 0, 30)
-title.BackgroundTransparency = 1
-title.Text = "🥊 MY BRAWLS"
-title.TextColor3 = Color3.fromRGB(255, 215, 0)
-title.TextScaled = true
-title.Font = Enum.Font.GothamBold
-title.Parent = mainFrame
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(1, 0, 1, 0)
+label.BackgroundTransparency = 1
+label.Text = "Brawls: 0"
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.TextScaled = true
+label.Font = Enum.Font.GothamBold
+label.Parent = frame
 
--- Brawl Wins
-local winsLabel = Instance.new("TextLabel")
-winsLabel.Name = "WinsLabel"
-winsLabel.Size = UDim2.new(1, -20, 0, 25)
-winsLabel.Position = UDim2.new(0, 10, 0, 40)
-winsLabel.BackgroundTransparency = 1
-winsLabel.Text = "Brawl Wins: 0"
-winsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-winsLabel.TextXAlignment = Enum.TextXAlignment.Left
-winsLabel.TextScaled = true
-winsLabel.Font = Enum.Font.Gotham
-winsLabel.Parent = mainFrame
-
--- Win Rate (placeholder - update if you track games)
-local rateLabel = Instance.new("TextLabel")
-rateLabel.Name = "RateLabel"
-rateLabel.Size = UDim2.new(1, -20, 0, 25)
-rateLabel.Position = UDim2.new(0, 10, 0, 70)
-rateLabel.BackgroundTransparency = 1
-rateLabel.Text = "Win Rate: 0%"
-rateLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-rateLabel.TextXAlignment = Enum.TextXAlignment.Left
-rateLabel.TextScaled = true
-rateLabel.Font = Enum.Font.Gotham
-rateLabel.Parent = mainFrame
-
--- Current Status
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Name = "StatusLabel"
-statusLabel.Size = UDim2.new(1, -20, 0, 25)
-statusLabel.Position = UDim2.new(0, 10, 0, 100)
-statusLabel.BackgroundTransparency = 1
-statusLabel.Text = "Status: Idle"
-statusLabel.TextColor3 = Color3.fromRGB(0, 255, 100)
-statusLabel.TextXAlignment = Enum.TextXAlignment.Left
-statusLabel.TextScaled = true
-statusLabel.Font = Enum.Font.Gotham
-statusLabel.Parent = mainFrame
-
--- Make it draggable
+-- Draggable
 local dragging = false
 local dragInput
 local dragStart
 local startPos
 
-local function updateInput(input)
-    local delta = input.Position - dragStart
-    mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-end
-
-mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+	end
 end)
 
-mainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
+frame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
 end)
 
 game:GetService("UserInputService").InputChanged:Connect(function(input)
-    if dragging and input == dragInput then
-        updateInput(input)
-    end
+	if dragging and input == dragInput then
+		local delta = input.Position - dragStart
+		frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
 end)
 
--- Update function (runs every 2 seconds)
-local function updateBrawlsGUI()
-    -- Try to read from leaderstats (common in Muscle Legends)
-    local leaderstats = player:FindFirstChild("leaderstats")
-    if leaderstats then
-        local strength = leaderstats:FindFirstChild("Strength")
-        local gems = leaderstats:FindFirstChild("Gems")
-        
-        -- Brawl wins might be stored differently - check for common names
-        local brawlWins = leaderstats:FindFirstChild("BrawlWins") or leaderstats:FindFirstChild("Wins") or leaderstats:FindFirstChild("Brawls")
-        
-        if brawlWins then
-            winsLabel.Text = "Brawl Wins: " .. brawlWins.Value
-        else
-            winsLabel.Text = "Brawl Wins: (Check leaderstats)"
-        end
-    end
-    
-    -- Example status (you can expand this with RemoteEvents if needed)
-    statusLabel.Text = "Status: Ready for Brawl"
-end
-
--- Initial update + loop
-updateBrawlsGUI()
-while true do
-    wait(2)
-    updateBrawlsGUI()
-end
+-- Auto update
+spawn(function()
+	while wait(1.5) do
+		local leaderstats = player:FindFirstChild("leaderstats")
+		if leaderstats then
+			local brawls = leaderstats:FindFirstChild("BrawlWins") 
+				or leaderstats:FindFirstChild("Brawls") 
+				or leaderstats:FindFirstChild("Wins")
+				or leaderstats:FindFirstChild("BrawlCount")
+			
+			if brawls then
+				label.Text = "Brawls: " .. tostring(brawls.Value)
+			else
+				label.Text = "Brawls: ?"
+			end
+		end
+	end
+end)
