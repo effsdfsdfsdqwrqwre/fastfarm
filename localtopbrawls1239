@@ -193,6 +193,9 @@ task.spawn(function()
 end)
 
 -- ==================== AUTO SERVER HOP ====================
+local AutoServerHopEnabled = true
+local ServerHopInterval = 60
+
 local function ServerHop()
     local placeId = game.PlaceId
     local myJobId = game.JobId
