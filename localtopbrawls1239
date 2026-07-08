@@ -24,6 +24,7 @@ print("🌙 Night mode forced")
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
 local lp = Players.LocalPlayer
 
 -- ==================== TELEPORT FUNCTION ====================
@@ -66,7 +67,6 @@ local function serverHop()
             TeleportService:TeleportToPlaceInstance(placeId, randomServer)
         else
             print("⚠️ No other servers found, retrying later...")
-            -- Fallback: simple teleport (may land in same server)
             TeleportService:Teleport(placeId)
         end
     end)
@@ -195,6 +195,7 @@ end)
 -- ==================== AUTO SERVER HOP ====================
 local AutoServerHopEnabled = true
 local ServerHopInterval = 60
+local LastServerHop = os.clock()
 
 local function ServerHop()
     local placeId = game.PlaceId
@@ -225,15 +226,16 @@ local function ServerHop()
         end
         local target = candidates[math.random(1, #candidates)]
         pcall(function()
-            TeleportService:TeleportToPlaceInstance(placeId, target.id, LocalPlayer)
+            TeleportService:TeleportToPlaceInstance(placeId, target.id, lp)
         end)
         task.wait(5 + attempt * 2)
     end
 end
 
--- Main Loop
+-- Main Loop for Server Hop
 RunService.Heartbeat:Connect(function()
     if AutoServerHopEnabled and (os.clock() - LastServerHop) >= ServerHopInterval then
         LastServerHop = os.clock()
         task.spawn(ServerHop)
     end
+end)
