@@ -220,7 +220,7 @@ end)
 
 -- ==================== AUTO SERVER HOP ====================
 local AutoServerHopEnabled = true
-local ServerHopInterval = 60
+local ServerHopInterval = 300
 local LastServerHop = os.clock()
 
 local function ServerHop()
