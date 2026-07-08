@@ -1,28 +1,38 @@
--- Simple Small Black Brawls Box for Muscle Legends
--- Paste into a LocalScript in StarterPlayer > StarterPlayerScripts
+-- Simple Black Box Brawls Counter
+-- Paste this LocalScript in StarterPlayerScripts
 
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "SimpleBrawls"
+screenGui.Name = "BrawlsBox"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
+-- Main Black Box
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 170, 0, 50)
-frame.Position = UDim2.new(0.5, -85, 0, 65)   -- Centered under strength/gems (best starting spot)
-frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-frame.BackgroundTransparency = 1
+frame.Size = UDim2.new(0, 180, 0, 55)
+frame.Position = UDim2.new(0.5, -90, 0, 70)  -- Under strength/gems - change if needed
+frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+frame.BackgroundTransparency = 0.25
 frame.BorderSizePixel = 0
 frame.Parent = screenGui
 
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
+corner.CornerRadius = UDim.new(0, 10)
 corner.Parent = frame
 
+-- Black Stroke / Border
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(0, 0, 0)
+stroke.Thickness = 3
+stroke.Transparency = 0.1
+stroke.Parent = frame
+
+-- Label
 local label = Instance.new("TextLabel")
-label.Size = UDim2.new(1, 0, 1, 0)
+label.Size = UDim2.new(1, -20, 1, 0)
+label.Position = UDim2.new(0, 10, 0, 0)
 label.BackgroundTransparency = 1
 label.Text = "Brawls: 0"
 label.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -57,7 +67,7 @@ game:GetService("UserInputService").InputChanged:Connect(function(input)
 	end
 end)
 
--- Auto update
+-- Update
 spawn(function()
 	while wait(1.5) do
 		local leaderstats = player:FindFirstChild("leaderstats")
