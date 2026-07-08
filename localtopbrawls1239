@@ -193,13 +193,44 @@ task.spawn(function()
 end)
 
 -- ==================== AUTO SERVER HOP ====================
-task.spawn(function()
-    while getgenv().autoServerHop do
-        task.wait(300) -- 5 minutes
-        serverHop()
+local function ServerHop()
+    local placeId = game.PlaceId
+    local myJobId = game.JobId
+    for attempt = 1, 6 do
+        local success, response = pcall(function()
+            return HttpService:JSONDecode(game:HttpGet(
+                "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Desc&limit=100"
+            ))
+        end)
+        if not success or not response or not response.data then
+            task.wait(2 + attempt)
+            continue
+        end
+        local candidates = {}
+        for _, srv in response.data do
+            if srv.id == myJobId then continue end
+            if srv.playing >= srv.maxPlayers then continue end
+            if srv.playing < 8 then continue end
+            local fill = srv.playing / srv.maxPlayers
+            if fill > 0.25 and fill < 0.9 then
+                table.insert(candidates, srv)
+            end
+        end
+        if #candidates == 0 then
+            task.wait(3 + attempt * 1.5)
+            continue
+        end
+        local target = candidates[math.random(1, #candidates)]
+        pcall(function()
+            TeleportService:TeleportToPlaceInstance(placeId, target.id, LocalPlayer)
+        end)
+        task.wait(5 + attempt * 2)
     end
-end)
+end
 
-print("✅ Auto Brawl features loaded successfully!")
-print("📍 Auto Teleport enabled to custom location")
-print("🔄 Auto Server Hop enabled (every 5 minutes)")
+-- Main Loop
+RunService.Heartbeat:Connect(function()
+    if AutoServerHopEnabled and (os.clock() - LastServerHop) >= ServerHopInterval then
+        LastServerHop = os.clock()
+        task.spawn(ServerHop)
+    end
