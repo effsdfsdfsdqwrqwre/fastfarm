@@ -6,92 +6,24 @@ local window = library:AddWindow("INVINCIBLE ┃ AUTO BRAWL ", {
     can_resize = false,
 })
 
-local gymCFrame = CFrame.new(-8649.71484, 17.8046951, -5897.97949, 0.942061365, 0, -0.335440665, 0, 1, 0, 0.335440665, 0, 0.942061365)
-
 local mainTab = window:AddTab("Main")
-
--- ==================== AUTO LOAD ALL FEATURES ====================
-
-getgenv().autoJoinBrawl = true
-getgenv().autoWinBrawl = true
-getgenv().AntiKnockback = true
-_G.fastHitActive = true
-local AutoServerHopEnabled = true
 
 -- Auto Brawls
 mainTab:AddSwitch("Auto Brawls", function(bool)
     getgenv().autoJoinBrawl = bool
-end, true)  -- Auto ON
+end)
 
 -- Auto Win Brawls
 mainTab:AddSwitch("Auto Win Brawls", function(bool)
     getgenv().autoWinBrawl = bool
-end, true)  -- Auto ON
-
--- Anti Knockback
-local AntiKnockbackToggle = mainTab:AddSwitch("Anti Knockback", function(state)
-    getgenv().AntiKnockback = state
-    if state then
-        print("✅ Anti Knockback ENABLED")
-        spawn(function()
-            while getgenv().AntiKnockback do
-                pcall(function()
-                    local character = game.Players.LocalPlayer.Character
-                    if not character then return end
-                    local root = character:FindFirstChild("HumanoidRootPart")
-                    if root then
-                        for _, v in pairs(root:GetChildren()) do
-                            if v:IsA("BodyVelocity") or v:IsA("BodyThrust") or v:IsA("BodyForce") or 
-                               v:IsA("LinearVelocity") or v:IsA("VectorForce") then
-                                v:Destroy()
-                            end
-                        end
-                    end
-                end)
-                wait(0.03)
-            end
-        end)
-    else
-        print("❌ Anti Knockback DISABLED")
-    end
-end, true)  -- Auto ON
-
--- Auto Punch
-mainTab:AddSwitch("Auto Punch", function(state)
-    _G.fastHitActive = state
-    if state then
-        task.spawn(function()
-            while _G.fastHitActive do
-                local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
-                if punch then
-                    punch.Parent = LocalPlayer.Character
-                    if punch:FindFirstChild("attackTime") then
-                        punch.attackTime.Value = 0
-                    end
-                end
-                task.wait(0.1)
-            end
-        end)
-        task.spawn(function()
-            while _G.fastHitActive do
-                local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
-                if punch then
-                    punch:Activate()
-                end
-                task.wait(0.1)
-            end
-        end)
-    else
-        local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
-        if punch then
-            punch.Parent = LocalPlayer.Backpack
-        end
-    end
-end, true)  -- Auto ON
+end)
 
 -- ==================== AUTO LOAD + NIGHT MODE ====================
 
--- Force Night Time
+getgenv().autoJoinBrawl = true
+getgenv().autoWinBrawl = true
+
+-- Force Night Time (stronger method)
 task.spawn(function()
     while task.wait(1) do
         game.Lighting.ClockTime = 0
@@ -105,7 +37,7 @@ end)
 
 print("🌙 Night mode forced")
 
--- ==================== AUTO WIN BRAWL LOGIC (Unchanged) ====================
+-- ==================== AUTO WIN BRAWL LOGIC (Full) ====================
 
 local Players = game:GetService("Players")
 local lp = Players.LocalPlayer
@@ -220,66 +152,4 @@ task.spawn(function()
     end
 end)
 
--- ==================== AUTO SERVER HOP (Unchanged) ====================
-
-if getgenv().AutoServerHopLoaded then return end
-getgenv().AutoServerHopLoaded = true
-
-local ServerHopInterval = 120  -- seconds
-
-local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
-
-local LocalPlayer = Players.LocalPlayer
-local LastServerHop = os.clock()
-
-local function ServerHop()
-    local placeId = game.PlaceId
-    local myJobId = game.JobId
-    
-    for attempt = 1, 6 do
-        local success, response = pcall(function()
-            return HttpService:JSONDecode(game:HttpGet(
-                "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Desc&limit=100"
-            ))
-        end)
-        
-        if not success or not response or not response.data then
-            task.wait(2 + attempt)
-            continue
-        end
-        
-        local candidates = {}
-        for _, srv in response.data do
-            if srv.id == myJobId then continue end
-            if srv.playing >= srv.maxPlayers then continue end
-            if srv.playing < 8 then continue end
-            
-            local fill = srv.playing / srv.maxPlayers
-            if fill > 0.25 and fill < 0.9 then
-                table.insert(candidates, srv)
-            end
-        end
-        
-        if #candidates == 0 then
-            task.wait(3 + attempt * 1.5)
-            continue
-        end
-        
-        local target = candidates[math.random(1, #candidates)]
-        pcall(function()
-            TeleportService:TeleportToPlaceInstance(placeId, target.id, LocalPlayer)
-        end)
-        task.wait(5 + attempt * 2)
-    end
-end
-
--- Main Loop
-game:GetService("RunService").Heartbeat:Connect(function()
-    if AutoServerHopEnabled and (os.clock() - LastServerHop) >= ServerHopInterval then
-        LastServerHop = os.clock()
-        task.spawn(ServerHop)
-    end
-end)
-
-print("✅ All features AUTO-LOADED! (Server Hop: " .. ServerHopInterval .. "s)")
+print("✅ Auto features loaded successfully!")
