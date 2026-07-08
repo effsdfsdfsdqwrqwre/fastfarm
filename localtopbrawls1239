@@ -1,5 +1,3 @@
--- Simple Black Box Brawls Counter
--- Paste this LocalScript in StarterPlayerScripts
 
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
