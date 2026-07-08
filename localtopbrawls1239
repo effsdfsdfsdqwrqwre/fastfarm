@@ -14,7 +14,7 @@ local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 180, 0, 55)
 frame.Position = UDim2.new(0.5, -90, 0, 70)  -- Under strength/gems - change if needed
 frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-frame.BackgroundTransparency = 0.25
+frame.BackgroundTransparency = 1
 frame.BorderSizePixel = 0
 frame.Parent = screenGui
 
