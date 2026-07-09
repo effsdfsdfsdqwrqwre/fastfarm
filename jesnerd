@@ -234,7 +234,7 @@ local tinyIslandRockSwitch = mobileFolder:AddSwitch("Farm Tiny Island Rock", fun
     getgenv().autoFarm = bool
  
     if bool then
-        spawn(function()
+        task.spawn(function()  -- Changed spawn to task.spawn
             while getgenv().autoFarm do
                 task.wait()
                 if game:GetService("Players").LocalPlayer.Durability.Value >= 0 then
@@ -261,7 +261,7 @@ local starterIslandRockSwitch = mobileFolder:AddSwitch("Farm Starter Island Rock
     getgenv().autoFarm = bool
  
     if bool then
-        spawn(function()
+        task.spawn(function()
             while getgenv().autoFarm do
                 task.wait()
                 if game:GetService("Players").LocalPlayer.Durability.Value >= 100 then
@@ -288,7 +288,7 @@ local legendBeachRockSwitch = mobileFolder:AddSwitch("Farm Legend Beach Rock", f
     getgenv().autoFarm = bool
  
     if bool then
-        spawn(function()
+        task.spawn(function()
             while getgenv().autoFarm do
                 task.wait()
                 if game:GetService("Players").LocalPlayer.Durability.Value >= 5000 then
@@ -315,7 +315,7 @@ local frostGymRockSwitch = mobileFolder:AddSwitch("Farm Frost Gym Rock", functio
     getgenv().autoFarm = bool
  
     if bool then
-        spawn(function()
+        task.spawn(function()
             while getgenv().autoFarm do
                 task.wait()
                 if game:GetService("Players").LocalPlayer.Durability.Value >= 150000 then
@@ -342,7 +342,7 @@ local mythicalGymRockSwitch = mobileFolder:AddSwitch("Farm Mythical Gym Rock", f
     getgenv().autoFarm = bool
  
     if bool then
-        spawn(function()
+        task.spawn(function()
             while getgenv().autoFarm do
                 task.wait()
                 if game:GetService("Players").LocalPlayer.Durability.Value >= 400000 then
@@ -369,7 +369,7 @@ local eternalGymRockSwitch = mobileFolder:AddSwitch("Farm Eternal Gym Rock", fun
     getgenv().autoFarm = bool
  
     if bool then
-        spawn(function()
+        task.spawn(function()
             while getgenv().autoFarm do
                 task.wait()
                 if game:GetService("Players").LocalPlayer.Durability.Value >= 750000 then
@@ -396,7 +396,7 @@ local legendGymRockSwitch = mobileFolder:AddSwitch("Farm Legend Gym Rock", funct
     getgenv().autoFarm = bool
  
     if bool then
-        spawn(function()
+        task.spawn(function()
             while getgenv().autoFarm do
                 task.wait()
                 if game:GetService("Players").LocalPlayer.Durability.Value >= 1000000 then
@@ -423,7 +423,7 @@ local muscleKingGymRockSwitch = mobileFolder:AddSwitch("Farm Muscle King Gym Roc
     getgenv().autoFarm = bool
  
     if bool then
-        spawn(function()
+        task.spawn(function()
             while getgenv().autoFarm do
                 task.wait()
                 if game:GetService("Players").LocalPlayer.Durability.Value >= 5000000 then
@@ -450,7 +450,7 @@ local ancientJungleRockSwitch = mobileFolder:AddSwitch("Farm Ancient Jungle Rock
     getgenv().autoFarm = bool
  
     if bool then
-        spawn(function()
+        task.spawn(function()
             while getgenv().autoFarm do
                 task.wait()
                 if game:GetService("Players").LocalPlayer.Durability.Value >= 10000000 then
@@ -472,7 +472,11 @@ local ancientJungleRockSwitch = mobileFolder:AddSwitch("Farm Ancient Jungle Rock
     end
 end) 
 
-local rebirthsFolder = mainTab:AddFolder(Rebirthing")
+local rebirthsFolder = mainTab:AddFolder("Rebirthing")
+
+-- Initialize variables
+local LocalPlayer = game.Players.LocalPlayer
+local targetRebirthValue = 1  -- Default value
 
 -- Target Rebirth
 rebirthsFolder:AddTextBox("Rebirth Target", function(text)
@@ -505,7 +509,7 @@ local targetSwitch = rebirthsFolder:AddSwitch("Auto Rebirth Target", function(bo
             _G.infiniteRebirthActive = false
         end
         
-        spawn(function()
+        task.spawn(function()
             while _G.targetRebirthActive do
                 local currentRebirths = LocalPlayer.leaderstats.Rebirths.Value
                 
@@ -539,7 +543,7 @@ infiniteSwitch = rebirthsFolder:AddSwitch("Auto Rebirth (Infinite)", function(bo
             _G.targetRebirthActive = false
         end
         
-        spawn(function()
+        task.spawn(function()
             while _G.infiniteRebirthActive do
                 game:GetService("ReplicatedStorage").rEvents.rebirthRemote:InvokeServer("rebirthRequest")
                 task.wait(0.15)
@@ -552,7 +556,7 @@ end)
 rebirthsFolder:AddSwitch("Auto Size 1", function(bool)
     _G.autoSizeActive = bool
     if bool then
-        spawn(function()
+        task.spawn(function()
             while _G.autoSizeActive do
                 game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer("changeSize", 1)
                 task.wait()
@@ -565,7 +569,7 @@ end)
 rebirthsFolder:AddSwitch("Auto Teleport to Muscle King", function(bool)
     _G.teleportActive = bool
     if bool then
-        spawn(function()
+        task.spawn(function()
             while _G.teleportActive do
                 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
                     LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-8646, 17, -5738)
