@@ -499,7 +499,10 @@ rebirthsFolder:AddTextBox("Rebirth Target", function(text)
 end)
 
 -- Auto Rebirth Target (stops when goal is reached)
-local targetSwitch = rebirthsFolder:AddSwitch("Auto Rebirth Target", function(bool)
+local targetSwitch
+local infiniteSwitch
+
+targetSwitch = rebirthsFolder:AddSwitch("Auto Rebirth Target", function(bool)
     _G.targetRebirthActive = bool
     
     if bool then
@@ -745,13 +748,6 @@ autoEquipToolsFolder:AddSwitch("Auto Punch", function(Value)
     end
 end)
 
-
-
-
-
-
-
-
 local Killer = window:AddTab("Killer")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -767,12 +763,10 @@ local autoPunchNoAnim = false
 local targetDropdownItems = {}
 local availableTargets = {}
 
-
 local titleLabel = Killer:AddLabel("____________________")
 titleLabel.TextSize = 18
 titleLabel.Font = Enum.Font.Bangers        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-
 
 local targetDropdown = Killer:AddDropdown("Select Target", function(displayName)
     for _, player in ipairs(Players:GetPlayers()) do
@@ -928,11 +922,6 @@ titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 -- Auto Kill
-local targetDropdownItems = {}
-local targetPlayerNames = {}
-local selectedTarget = nil
-local autoKill = false
-
 Killer:AddSwitch("Auto Kill", function(bool)
     autoKill = bool
     task.spawn(function()
@@ -1049,13 +1038,10 @@ Killer:AddSwitch("Auto Whitelist Friends", function(state)
     end
 end)
 
-
-
 local titleLabel = Killer:AddLabel("____________________")
 titleLabel.TextSize = 18
 titleLabel.Font = Enum.Font.Bangers        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-
 
 -- Auto slam "Ground Slam"
 local godDamageActive = false
@@ -1107,6 +1093,7 @@ local switch = Killer:AddSwitch("Lock Pos", function(Value)
         end
     end
 end)
+
 Killer:AddSwitch("NaN", function(state)
     local player = game.Players.LocalPlayer
     local targetCFrame = CFrame.new(
@@ -1221,4 +1208,3 @@ Killer:AddSwitch("Fast punch", function(state)
         end
     end
 end)
-
