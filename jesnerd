@@ -8,10 +8,9 @@ local window = library:AddWindow("JESTER ┃ PRIVATE ", {
 local mainTab = window:AddTab("Main")
 
 -- ====================== BRAWL ======================
-local Brawl = mainTab:AddFolder("Brawl")
-Brawl:SetColor(Color3.fromRGB(255, 0, 0))
+local brawlFolder = mainTab:AddFolder("Brawl")
 
-Brawl:AddSwitch("Auto Join Brawl", function(bool)
+brawlFolder:AddSwitch("Auto Join Brawl", function(bool)
     getgenv().autoJoinBrawl = bool
     task.spawn(function()
         while getgenv().autoJoinBrawl do
@@ -24,7 +23,7 @@ Brawl:AddSwitch("Auto Join Brawl", function(bool)
     end)
 end)
 
-Brawl:AddSwitch("Auto Win Brawl", function(bool)
+brawlFolder:AddSwitch("Auto Win Brawl", function(bool)
     getgenv().autoWinBrawl = bool
     local Players = game:GetService("Players")
     local LocalPlayer = Players.LocalPlayer
