@@ -160,67 +160,7 @@ local recoverButton = Killer:AddButton("Recover Punch Anim", function() Recovery
 recoverButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 recoverButton.TextColor3 = Color3.fromRGB(255, 256, 255)
 
-Killer:AddSwitch("Auto Punch", function(state)
-    _G.fastHitActive = state
-    local LocalPlayer = game.Players.LocalPlayer
-    
-    local function startAutoPunch()
-        if not _G.fastHitActive then return end
-        
-        task.spawn(function()
-            while _G.fastHitActive do
-                local character = LocalPlayer.Character
-                if character and character:FindFirstChild("Humanoid") then
-                    local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
-                    if punch then
-                        punch.Parent = character
-                        if punch:FindFirstChild("attackTime") then
-                            punch.attackTime.Value = 0
-                        end
-                    end
-                end
-                task.wait(0.1)
-            end
-        end)
-        
-        task.spawn(function()
-            while _G.fastHitActive do
-                local character = LocalPlayer.Character
-                if character then
-                    local punch = character:FindFirstChild("Punch")
-                    if punch then
-                        punch:Activate()
-                    end
-                end
-                task.wait(0.1)
-            end
-        end)
-    end
-    
-    if state then
-        startAutoPunch()
-        
-        if not _G.autoPunchConnection then
-            _G.autoPunchConnection = LocalPlayer.CharacterAdded:Connect(function()
-                task.wait(0.6) -- Slightly longer delay for reliability
-                startAutoPunch()
-            end)
-        end
-    else
-        if _G.autoPunchConnection then
-            _G.autoPunchConnection:Disconnect()
-            _G.autoPunchConnection = nil
-        end
-        
-        local character = LocalPlayer.Character
-        if character then
-            local punch = character:FindFirstChild("Punch")
-            if punch then
-                punch.Parent = LocalPlayer.Backpack
-            end
-        end
-    end
-end)
+
 
 Killer:AddSwitch("Auto Punch [without animation ]", function(state)
     autoPunchNoAnim = state
