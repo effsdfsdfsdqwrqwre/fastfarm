@@ -1,19 +1,17 @@
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/memejames/elerium-v2-ui-library/refs/heads/main/Library", true))()
 
 local window = library:AddWindow("JESTER ┃ PRIVATE", {
-    main_color = Color3.fromRGB(20, 20, 20), -- Black
+    main_color = Color3.fromRGB(0, 0, 0),
     min_size = Vector2.new(500, 870),
     can_resize = false
 })
 
 local mainTab = window:AddTab("Main")
-
--- ====================== BRAWL ======================
 local brawlFolder = mainTab:AddFolder("Brawl")
 
 local titleLabel = brawlFolder:AddLabel("Brawl Farming")
 titleLabel.TextSize = 20
-titleLabel.Font = Enum.Font.Bangers        
+titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 brawlFolder:AddSwitch("Auto Join Brawl", function(bool)
@@ -31,6 +29,7 @@ end)
 
 brawlFolder:AddSwitch("Auto Win Brawl", function(bool)
     getgenv().autoWinBrawl = bool
+    
     local Players = game:GetService("Players")
     local LocalPlayer = Players.LocalPlayer
 
@@ -39,6 +38,7 @@ brawlFolder:AddSwitch("Auto Win Brawl", function(bool)
         local character = LocalPlayer.Character
         if not character then return false end
         if character:FindFirstChild("Punch") then return true end
+        
         local backpack = LocalPlayer.Backpack
         for _, tool in pairs(backpack:GetChildren()) do
             if tool:IsA("Tool") and tool.Name == "Punch" then
@@ -51,7 +51,7 @@ brawlFolder:AddSwitch("Auto Win Brawl", function(bool)
 
     local function isValidTarget(player)
         if not player or not player.Parent or player == LocalPlayer then return false end
-        if whitelist and whitelist[player.UserId] then return false end
+        -- whitelist check removed (was undefined)
         local character = player.Character
         if not character then return false end
         local humanoid = character:FindFirstChild("Humanoid")
@@ -114,6 +114,7 @@ brawlFolder:AddSwitch("Auto Win Brawl", function(bool)
                 local character = LocalPlayer.Character
                 local leftHand = character:FindFirstChild("LeftHand")
                 local rightHand = character:FindFirstChild("RightHand")
+                
                 for _, player in pairs(Players:GetPlayers()) do
                     if isValidTarget(player) then
                         local targetRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
@@ -150,21 +151,20 @@ brawlFolder:AddSwitch("Auto Win Brawl", function(bool)
     end)
 end)
 
-
-local titleLabel = brawlFolder:AddLabel(========")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+-- Fixed label
+brawlFolder:AddLabel("====================")
 
 brawlFolder:AddButton({
-    Title = "Set Time to Sunset",
+    Title = "Sunset",
     Callback = function()
-        game:GetService("Lighting").ClockTime = 18 -- 6:00 PM (sunset)
+        game:GetService("Lighting").ClockTime = 18
     end
 })
 
 brawlFolder:AddSwitch("Auto Punch", function(state)
     _G.fastHitActive = state
+    local LocalPlayer = game.Players.LocalPlayer  -- Fixed: was missing
+    
     if state then
         task.spawn(function()
             while _G.fastHitActive do
@@ -178,6 +178,7 @@ brawlFolder:AddSwitch("Auto Punch", function(state)
                 task.wait(0.1)
             end
         end)
+        
         task.spawn(function()
             while _G.fastHitActive do
                 local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
