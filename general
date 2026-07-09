@@ -249,7 +249,7 @@ end)
 local titleLabel = Killer:AddLabel("OP KILL PLAYERS")
 titleLabel.TextSize = 23
 titleLabel.Font = Enum.Font.Bangers
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 local targetDropdown = Killer:AddDropdown("Select Target", function(displayName)
     for _, player in ipairs(Players:GetPlayers()) do
@@ -402,7 +402,7 @@ end)
 local titleLabel = Killer:AddLabel("_________________________")
 titleLabel.TextSize = 23
 titleLabel.Font = Enum.Font.Bangers
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 Killer:AddSwitch("NaN", function(state)
     local player = game.Players.LocalPlayer
@@ -620,13 +620,13 @@ end)
 local titleLabel = Killer:AddLabel("_________________________")
 titleLabel.TextSize = 23
 titleLabel.Font = Enum.Font.Bangers
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 
 local titleLabel = Killer:AddLabel("AUTO KILL")
 titleLabel.TextSize = 23
 titleLabel.Font = Enum.Font.Bangers
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 
 -- God Mode (join brawl)
@@ -832,7 +832,7 @@ local fastTab = window:AddTab("Fast Farming")
 local titleLabel = fastTab:AddLabel("FAST REBIRTH")
 titleLabel.TextSize = 23
 titleLabel.Font = Enum.Font.Bangers
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 -- ==================== ANTI-IDLE & ANTI-AD ====================
 player.Idled:Connect(function()
