@@ -2040,10 +2040,7 @@ autoEquipToolsFolder:AddSwitch("Auto Punch", function(Value)
 end)
 
 
-
-
-
-local titleLabel = fastTab:AddLabel("BRAWL FARMING")
+local titleLabel = miscTab:AddLabel("BRAWL FARMING")
 titleLabel.TextSize = 23
 titleLabel.Font = Enum.Font.FredokaOne        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
