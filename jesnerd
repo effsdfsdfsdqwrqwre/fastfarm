@@ -763,6 +763,11 @@ local autoPunchNoAnim = false
 local targetDropdownItems = {}
 local availableTargets = {}   
 
+local titleLabel = Killer:AddLabel("TARGET PLAYERS")
+titleLabel.TextSize = 18
+titleLabel.Font = Enum.Font.Bangers        
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
 local targetDropdown = Killer:AddDropdown("Select Target", function(displayName)
     for _, player in ipairs(Players:GetPlayers()) do
         if player.DisplayName == displayName then
@@ -911,7 +916,7 @@ Killer:AddSwitch("View Player", function(bool)
     end)
 end)
 
-local titleLabel = Killer:AddLabel("____________________")
+local titleLabel = Killer:AddLabel("AUTO KILL")
 titleLabel.TextSize = 18
 titleLabel.Font = Enum.Font.Bangers        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1033,7 +1038,7 @@ Killer:AddSwitch("Auto Whitelist Friends", function(state)
     end
 end)
 
-local titleLabel = Killer:AddLabel("____________________")
+local titleLabel = Killer:AddLabel("OTHER KILL FEATURES")
 titleLabel.TextSize = 18
 titleLabel.Font = Enum.Font.Bangers        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
