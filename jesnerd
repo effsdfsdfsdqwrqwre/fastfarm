@@ -761,13 +761,7 @@ local spying = false
 local autoEquipPunch = false
 local autoPunchNoAnim = false
 local targetDropdownItems = {}
-local availableTargets = {}
-
-local titleLabel = Killer:AddLabel("____________________")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-
+local availableTargets = {}        
 local targetDropdown = Killer:AddDropdown("Select Target", function(displayName)
     for _, player in ipairs(Players:GetPlayers()) do
         if player.DisplayName == displayName then
