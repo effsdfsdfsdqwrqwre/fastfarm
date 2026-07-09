@@ -27,7 +27,7 @@ local availableTargets = {}
 local titleLabel = Killer:AddLabel("SELECT PACK")
 titleLabel.TextSize = 23
 titleLabel.Font = Enum.Font.Bangers
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 local dropdown = Killer:AddDropdown("Select Pet", function(text)
     local petsFolder = game.Players.LocalPlayer.petsFolder
