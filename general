@@ -24,10 +24,10 @@ local autoPunchNoAnim = false
 local targetDropdownItems = {}
 local availableTargets = {}
 
-local titleLabel = Killer:AddLabel("Select Pack")
+local titleLabel = Killer:AddLabel("SELECT PACK")
 titleLabel.TextSize = 23
-titleLabel.Font = Enum.Font.FredokaOne
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.Bangers
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
 
 local dropdown = Killer:AddDropdown("Select Pet", function(text)
     local petsFolder = game.Players.LocalPlayer.petsFolder
@@ -143,10 +143,11 @@ Killer:AddSwitch("Auto Whitelist Friends", function(state)
     end
 end)
 
-local titleLabel = Killer:AddLabel("knuckle sandwiches")
+
+local titleLabel = Killer:AddLabel("KNUCKLE SANDWICHES")
 titleLabel.TextSize = 23
-titleLabel.Font = Enum.Font.FredokaOne        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.Bangers
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
 
 
 local button = Killer:AddButton("Remove Punch Anim", function() local blockedAnimations = { ["rbxassetid://3638729053"] = true, ["rbxassetid://3638767427"] = true, } local function setupAnimationBlocking() local char = game.Players.LocalPlayer.Character if not char or not char:FindFirstChild("Humanoid") then return end local humanoid = char:FindFirstChild("Humanoid") for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do if track.Animation then local animId = track.Animation.AnimationId local animName = track.Name:lower() if blockedAnimations[animId] or animName:match("punch") or animName:match("attack") or animName:match("right") then track:Stop() end end end if not _G.AnimBlockConnection then local connection = humanoid.AnimationPlayed:Connect(function(track) if track.Animation then local animId = track.Animation.AnimationId local animName = track.Name:lower() if blockedAnimations[animId] or animName:match("punch") or animName:match("attack") or animName:match("right") then track:Stop() end end end) _G.AnimBlockConnection = connection end end setupAnimationBlocking() local function overrideToolActivation() local function processTool(tool) if tool and (tool.Name == "Punch" or tool.Name:match("Attack") or tool.Name:match("Right")) then if not tool:GetAttribute("ActivatedOverride") then tool:SetAttribute("ActivatedOverride", true) local connection = tool.Activated:Connect(function() task.wait(0.05) local char = game.Players.LocalPlayer.Character if char and char:FindFirstChild("Humanoid") then for _, track in pairs(char.Humanoid:GetPlayingAnimationTracks()) do if track.Animation then local animId = track.Animation.AnimationId local animName = track.Name:lower() if blockedAnimations[animId] or animName:match("punch") or animName:match("attack") or animName:match("right") then track:Stop() end end end end end) if not _G.ToolConnections then _G.ToolConnections = {} end _G.ToolConnections[tool] = connection end end end for _, tool in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do processTool(tool) end local char = game.Players.LocalPlayer.Character if char then for _, tool in pairs(char:GetChildren()) do if tool:IsA("Tool") then processTool(tool) end end end if not _G.BackpackAddedConnection then _G.BackpackAddedConnection = game.Players.LocalPlayer.Backpack.ChildAdded:Connect(function(child) if child:IsA("Tool") then task.wait(0.1) processTool(child) end end) end if not _G.CharacterToolAddedConnection and char then _G.CharacterToolAddedConnection = char.ChildAdded:Connect(function(child) if child:IsA("Tool") then task.wait(0.1) processTool(child) end end) end end overrideToolActivation() if not _G.AnimMonitorConnection then _G.AnimMonitorConnection = game:GetService("RunService").Heartbeat:Connect(function() if tick() % 0.5 < 0.01 then local char = game.Players.LocalPlayer.Character if char and char:FindFirstChild("Humanoid") then for _, track in pairs(char.Humanoid:GetPlayingAnimationTracks()) do if track.Animation then local animId = track.Animation.AnimationId local animName = track.Name:lower() if blockedAnimations[animId] or animName:match("punch") or animName:match("attack") or animName:match("right") then track:Stop() end end end end end end) end if not _G.CharacterAddedConnection then _G.CharacterAddedConnection = game.Players.LocalPlayer.CharacterAdded:Connect(function(newChar) task.wait(1) setupAnimationBlocking() overrideToolActivation() if _G.CharacterToolAddedConnection then _G.CharacterToolAddedConnection:Disconnect() end _G.CharacterToolAddedConnection = newChar.ChildAdded:Connect(function(child) if child:IsA("Tool") then task.wait(0.1) processTool(child) end end) end) end end)
@@ -255,10 +256,11 @@ Killer:AddSwitch("Fast punch", function(state)
     end
 end)
 
+
 local titleLabel = Killer:AddLabel("OP KILL PLAYERS")
 titleLabel.TextSize = 23
-titleLabel.Font = Enum.Font.FredokaOne        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.Bangers
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
 
 local targetDropdown = Killer:AddDropdown("Select Target", function(displayName)
     for _, player in ipairs(Players:GetPlayers()) do
@@ -408,10 +410,10 @@ Killer:AddSwitch("View Player", function(bool)
     end)
 end)
 
-local titleLabel = Killer:AddLabel("===========")
+local titleLabel = Killer:AddLabel("_________________________")
 titleLabel.TextSize = 23
-titleLabel.Font = Enum.Font.FredokaOne        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.Bangers
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
 
 Killer:AddSwitch("NaN", function(state)
     local player = game.Players.LocalPlayer
@@ -625,15 +627,17 @@ Killer:AddButton("Rejoin Server", function()
     TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
 end)
 
-local titleLabel = Killer:AddLabel("===========")
+
+local titleLabel = Killer:AddLabel("_________________________")
 titleLabel.TextSize = 23
-titleLabel.Font = Enum.Font.FredokaOne        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.Bangers
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
+
 
 local titleLabel = Killer:AddLabel("AUTO KILL")
 titleLabel.TextSize = 23
-titleLabel.Font = Enum.Font.FredokaOne        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.Bangers
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
 
 
 -- God Mode (join brawl)
@@ -835,10 +839,11 @@ end)
 
 local fastTab = window:AddTab("Fast Farming")
 
-local titleLabel = fastTab:AddLabel("REBIRTH")
+
+local titleLabel = fastTab:AddLabel("FAST REBIRTH")
 titleLabel.TextSize = 23
-titleLabel.Font = Enum.Font.FredokaOne        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.Bangers
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
 
 -- ==================== ANTI-IDLE & ANTI-AD ====================
 player.Idled:Connect(function()
@@ -994,10 +999,11 @@ task.spawn(function()
     end
 end)
 
-local titleLabel = fastTab:AddLabel("FAST STRENGTH")
+
+local titleLabel = fastTab:AddLabel("FAST REP")
 titleLabel.TextSize = 23
-titleLabel.Font = Enum.Font.FredokaOne        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.Bangers
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
 
 -- ==================== FAST REP ====================
 local farmRunning = false
@@ -1214,10 +1220,11 @@ fastTab:AddSwitch("Anti Afk", function(state)
     end
 end)
 
+
 local titleLabel = fastTab:AddLabel("OTHER")
 titleLabel.TextSize = 23
-titleLabel.Font = Enum.Font.FredokaOne        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.Bangers
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
 
 -- ==================== AUTO BOOSTS ====================
 local ProteinEggLabel = fastTab:AddLabel("Protein Eggs: 0")
@@ -2040,10 +2047,11 @@ autoEquipToolsFolder:AddSwitch("Auto Punch", function(Value)
 end)
 
 
+
 local titleLabel = miscTab:AddLabel("BRAWL FARMING")
 titleLabel.TextSize = 23
-titleLabel.Font = Enum.Font.FredokaOne        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.Bangers
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
 
 
 
