@@ -347,7 +347,7 @@ local ui_options = {
 	Indicator_2.Rotation = -90
 	Indicator_2.Size = UDim2.new(0, 15, 0, 15)
 	Indicator_2.ZIndex = 2
-	Indicator_2.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=139560198330664"
+	Indicator_2.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=86020734227642"
 
 	Box.Name = "Box"
 	Box.Parent = Dropdown
@@ -413,7 +413,7 @@ local ui_options = {
 	Folder.BackgroundTransparency = 1
 	Folder.Position = UDim2.new(0, 0, 0, 50)
 	Folder.Size = UDim2.new(1, 0, 0, 20)
-	Folder.Image = "rbxassetid://139560198330664"
+	Folder.Image = "rbxassetid://97320793507024"
 	Folder.ImageColor3 = Color3.new(0.0823529, 0.0862745, 0.0901961)
 	Folder.ScaleType = Enum.ScaleType.Slice
 	Folder.SliceCenter = Rect.new(4, 4, 4, 4)
