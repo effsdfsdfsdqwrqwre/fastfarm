@@ -215,3 +215,9 @@ brawlFolder:AddSwitch("Auto Punch", function(state)
         end
     end
 end)
+
+
+local titleLabel = brawlFolder:AddLabel("jester is gay")
+titleLabel.TextSize = 20
+titleLabel.Font = Enum.Font.Bangers
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
