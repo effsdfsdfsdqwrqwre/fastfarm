@@ -992,7 +992,7 @@ end)
 local titleLabel = fastTab:AddLabel("FAST REP")
 titleLabel.TextSize = 23
 titleLabel.Font = Enum.Font.Bangers
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 -- ==================== FAST REP ====================
 local farmRunning = false
@@ -1213,7 +1213,7 @@ end)
 local titleLabel = fastTab:AddLabel("OTHER")
 titleLabel.TextSize = 23
 titleLabel.Font = Enum.Font.Bangers
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 -- ==================== AUTO BOOSTS ====================
 local ProteinEggLabel = fastTab:AddLabel("Protein Eggs: 0")
@@ -2040,7 +2040,7 @@ end)
 local titleLabel = miscTab:AddLabel("BRAWL FARMING")
 titleLabel.TextSize = 23
 titleLabel.Font = Enum.Font.Bangers
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 
 
