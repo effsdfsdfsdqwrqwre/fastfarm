@@ -25,8 +25,8 @@ local targetDropdownItems = {}
 local availableTargets = {}
 
 local titleLabel = Killer:AddLabel("Select Pack")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
+titleLabel.TextSize = 23
+titleLabel.Font = Enum.Font.FredokaOne
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 local dropdown = Killer:AddDropdown("Select Pet", function(text)
@@ -144,8 +144,8 @@ Killer:AddSwitch("Auto Whitelist Friends", function(state)
 end)
 
 local titleLabel = Killer:AddLabel("knuckle sandwiches")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
+titleLabel.TextSize = 23
+titleLabel.Font = Enum.Font.FredokaOne        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 
@@ -255,9 +255,9 @@ Killer:AddSwitch("Fast punch", function(state)
     end
 end)
 
-local titleLabel = Killer:AddLabel("OP Kill Players")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
+local titleLabel = Killer:AddLabel("OP KILL PLAYERS")
+titleLabel.TextSize = 23
+titleLabel.Font = Enum.Font.FredokaOne        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 local targetDropdown = Killer:AddDropdown("Select Target", function(displayName)
@@ -272,7 +272,7 @@ local targetDropdown = Killer:AddDropdown("Select Target", function(displayName)
     end
 end)
 
-Killer:AddButton("Remove Selected Target", function()
+Killer:AddButton("Remove Target", function()
     if selectedTarget then
         for i, v in ipairs(targetPlayerNames) do
             if v == selectedTarget then
@@ -408,10 +408,9 @@ Killer:AddSwitch("View Player", function(bool)
     end)
 end)
 
-
-local titleLabel = Killer:AddLabel("____________________")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
+local titleLabel = Killer:AddLabel("===========")
+titleLabel.TextSize = 23
+titleLabel.Font = Enum.Font.FredokaOne        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 Killer:AddSwitch("NaN", function(state)
@@ -626,15 +625,16 @@ Killer:AddButton("Rejoin Server", function()
     TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
 end)
 
-local titleLabel = Killer:AddLabel("____________________")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
+local titleLabel = Killer:AddLabel("===========")
+titleLabel.TextSize = 23
+titleLabel.Font = Enum.Font.FredokaOne        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 local titleLabel = Killer:AddLabel("AUTO KILL")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
+titleLabel.TextSize = 23
+titleLabel.Font = Enum.Font.FredokaOne        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
 
 -- God Mode (join brawl)
 local godModeToggle = false
@@ -835,9 +835,9 @@ end)
 
 local fastTab = window:AddTab("Fast Farming")
 
-local titleLabel = fastTab:AddLabel("Rebirth")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
+local titleLabel = fastTab:AddLabel("REBIRTH")
+titleLabel.TextSize = 23
+titleLabel.Font = Enum.Font.FredokaOne        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 -- ==================== ANTI-IDLE & ANTI-AD ====================
@@ -994,9 +994,9 @@ task.spawn(function()
     end
 end)
 
-local titleLabel = fastTab:AddLabel("Fast Strength")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
+local titleLabel = fastTab:AddLabel("FAST STRENGTH")
+titleLabel.TextSize = 23
+titleLabel.Font = Enum.Font.FredokaOne        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 -- ==================== FAST REP ====================
@@ -1214,9 +1214,9 @@ fastTab:AddSwitch("Anti Afk", function(state)
     end
 end)
 
-local titleLabel = fastTab:AddLabel("Other")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
+local titleLabel = fastTab:AddLabel("OTHER")
+titleLabel.TextSize = 23
+titleLabel.Font = Enum.Font.FredokaOne        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 -- ==================== AUTO BOOSTS ====================
@@ -2043,12 +2043,10 @@ end)
 
 
 
-local titleLabel = miscTab:AddLabel("Brawl Farming")
-titleLabel.TextSize = 20
-titleLabel.Font = Enum.Font.Bangers        
+local titleLabel = fastTab:AddLabel("BRAWL FARMING")
+titleLabel.TextSize = 23
+titleLabel.Font = Enum.Font.FredokaOne        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-
-
 
 
 
