@@ -189,35 +189,21 @@ brawlFolder:AddSwitch("Auto Punch", function(state)
     end
 end)
 
-local Lighting = game:GetService("Lighting")
-
--- Night Switch
-brawlFolder:AddSwitch("NightTime", {
-    Text = "Night",
-    Default = false,
-    Callback = function(Value)
-        if Value then
-            Lighting.ClockTime = 0 -- Midnight
-        else
-            Lighting.ClockTime = 14 -- Daytime
+brawlFolder:AddSwitch("Auto Equip Punch", function(state)
+    autoEquipPunch = state
+    task.spawn(function()
+        while autoEquipPunch do
+            local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
+            if punch then
+                punch.Parent = LocalPlayer.Character
+            end
+            task.wait(0.1)
         end
-    end
-})
+    end)
+end)
 
--- Sunset Switch
-brawlFolder:AddSwitch("SunsetTime", {
-    Text = "Sunset",
-    Default = false,
-    Callback = function(Value)
-        if Value then
-            Lighting.ClockTime = 18.5 -- Sunset
-        else
-            Lighting.ClockTime = 14 -- Daytime
-        end
-    end
-})
 
-local mobileFolder = mainTab:AddFolder("Fists Of Steel")
+local mobileFolder = mainTab:AddFolder("Rock Farming")
  
 local function gettool()
     for i, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
