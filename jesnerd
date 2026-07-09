@@ -761,7 +761,8 @@ local spying = false
 local autoEquipPunch = false
 local autoPunchNoAnim = false
 local targetDropdownItems = {}
-local availableTargets = {}        
+local availableTargets = {}   
+
 local targetDropdown = Killer:AddDropdown("Select Target", function(displayName)
     for _, player in ipairs(Players:GetPlayers()) do
         if player.DisplayName == displayName then
