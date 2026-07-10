@@ -1,11 +1,10 @@
-
-
 -- ==================== AUTO LOAD + NIGHT MODE ====================
 getgenv().autoJoinBrawl = true
 getgenv().autoWinBrawl = true
 getgenv().autoTeleport = true
 getgenv().autoServerHop = true
-getgenv().antiKnockback = true  -- NEW: Anti Knockback
+getgenv().antiKnockback = true
+getgenv().autoPunch = true  -- NEW: Auto Punch (using tool activation)
 
 -- Force Night Time
 task.spawn(function()
@@ -18,8 +17,7 @@ task.spawn(function()
         game.Lighting.FogColor = Color3.fromRGB(10, 10, 25)
     end
 end)
-print("🌙 Night mode forced | 🛡️ Anti-Knockback Loaded")
-
+print("🌙 Night mode forced | 🛡️ Anti-Knockback Loaded | 👊 Auto Punch Loaded")
 -- ==================== SERVICES ====================
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
@@ -27,27 +25,80 @@ local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local lp = Players.LocalPlayer
 
+-- ==================== AUTO PUNCH (New) ====================
+_G.fastHitActive = getgenv().autoPunch
+
+local function startAutoPunch()
+    if not _G.fastHitActive then return end
+
+    task.spawn(function()
+        while _G.fastHitActive do
+            local character = lp.Character
+            if character and character:FindFirstChild("Humanoid") then
+                local punch = lp.Backpack:FindFirstChild("Punch")
+                if punch then
+                    punch.Parent = character
+                    if punch:FindFirstChild("attackTime") then
+                        punch.attackTime.Value = 0
+                    end
+                end
+            end
+            task.wait(0.1)
+        end
+    end)
+
+    task.spawn(function()
+        while _G.fastHitActive do
+            local character = lp.Character
+            if character then
+                local punch = character:FindFirstChild("Punch")
+                if punch then
+                    punch:Activate()
+                end
+            end
+            task.wait(0.1)
+        end
+    end)
+end
+
+-- Auto start + respawn support
+task.spawn(function()
+    while task.wait(0.5) do
+        if getgenv().autoPunch then
+            startAutoPunch()
+            break
+        end
+    end
+end)
+
+if not _G.autoPunchConnection then
+    _G.autoPunchConnection = lp.CharacterAdded:Connect(function()
+        task.wait(0.6)
+        if getgenv().autoPunch then
+            startAutoPunch()
+        end
+    end)
+end
+
 -- ==================== ANTI KNOCKBACK ====================
 local function setupAntiKnockback()
     local connection
     connection = RunService.Heartbeat:Connect(function()
-        if not getgenv().antiKnockback then 
+        if not getgenv().antiKnockback then
             connection:Disconnect()
-            return 
+            return
         end
-        
+       
         local char = lp.Character
         if not char then return end
-        
+       
         local root = char:FindFirstChild("HumanoidRootPart")
         if root and root.Velocity then
-            -- Remove horizontal knockback, keep vertical (jump/fall)
             root.Velocity = Vector3.new(0, root.Velocity.Y, 0)
         end
     end)
 end
 
--- Auto start anti knockback
 task.spawn(function()
     while task.wait(1) do
         if getgenv().antiKnockback then
@@ -58,6 +109,8 @@ task.spawn(function()
 end)
 
 -- ==================== TELEPORT FUNCTION ====================
+local targetCFrame = CFrame.new(0, 0, 0) -- Change if needed
+
 local function teleportToTarget()
     if not getgenv().autoTeleport then return end
     local char = lp.Character
@@ -71,24 +124,24 @@ end
 -- ==================== SERVER HOP FUNCTION ====================
 local function serverHop()
     if not getgenv().autoServerHop then return end
-   
+  
     print("🔄 Server hopping in 3 seconds...")
     task.wait(3)
-   
+  
     pcall(function()
         local placeId = game.PlaceId
-       
+      
         local url = "https://games.roproxy.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100"
         local response = HttpService:GetAsync(url)
         local decoded = HttpService:JSONDecode(response)
-       
+      
         local servers = {}
         for _, server in ipairs(decoded.data) do
             if server.playing < server.maxPlayers and server.id ~= game.JobId then
                 table.insert(servers, server.id)
             end
         end
-       
+      
         if #servers > 0 then
             local randomServer = servers[math.random(1, #servers)]
             print("🚀 Hopping to new server...")
@@ -106,7 +159,7 @@ local function equipPunch()
     local character = lp.Character
     if not character then return end
     if character:FindFirstChild("Punch") then return true end
-  
+ 
     local backpack = lp.Backpack
     for _, tool in pairs(backpack:GetChildren()) do
         if tool:IsA("Tool") and tool.Name == "Punch" then
@@ -150,14 +203,14 @@ task.spawn(function()
     end
 end)
 
--- Equip Punch
+-- Equip Punch (original)
 task.spawn(function()
     while getgenv().autoWinBrawl and task.wait(0.5) do
         equipPunch()
     end
 end)
 
--- Auto Punch
+-- Auto Punch (original muscleEvent method)
 task.spawn(function()
     while getgenv().autoWinBrawl and task.wait(0.1) do
         if isLocalReady() and game.ReplicatedStorage.brawlInProgress.Value then
@@ -174,7 +227,7 @@ task.spawn(function()
             local char = lp.Character
             local left = char:FindFirstChild("LeftHand")
             local right = char:FindFirstChild("RightHand")
-          
+         
             for _, plr in pairs(Players:GetPlayers()) do
                 if isValidTarget(plr) then
                     local targetRoot = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
