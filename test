@@ -7,9 +7,9 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 200)
-frame.Position = UDim2.new(0.5, -150, 0, 20)
-frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.Size = UDim2.new(0, 280, 0, 80)
+frame.Position = UDim2.new(0.5, -140, 0, 20)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 frame.BorderSizePixel = 0
 frame.Parent = gui
 
@@ -18,17 +18,17 @@ corner.CornerRadius = UDim.new(0, 10)
 corner.Parent = frame
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 30)
+title.Size = UDim2.new(1, 0, 0.35, 0)
 title.BackgroundTransparency = 1
-title.Text = "👑 King Time Debug"
+title.Text = "👑 Muscle King Time"
 title.Font = Enum.Font.GothamBold
 title.TextScaled = true
-title.TextColor3 = Color3.new(1, 0.3, 0.3)
+title.TextColor3 = Color3.new(1, 0.85, 0)
 title.Parent = frame
 
 local timeLabel = Instance.new("TextLabel")
-timeLabel.Size = UDim2.new(1, 0, 0, 40)
-timeLabel.Position = UDim2.new(0, 0, 0, 35)
+timeLabel.Size = UDim2.new(1, 0, 0.65, 0)
+timeLabel.Position = UDim2.new(0, 0, 0.35, 0)
 timeLabel.BackgroundTransparency = 1
 timeLabel.Font = Enum.Font.Gotham
 timeLabel.TextScaled = true
@@ -36,55 +36,35 @@ timeLabel.TextColor3 = Color3.new(1, 1, 1)
 timeLabel.Text = "Total King Time: 0h 0m 0s"
 timeLabel.Parent = frame
 
-local debugLabel = Instance.new("TextLabel")
-debugLabel.Size = UDim2.new(1, 0, 0, 120)
-debugLabel.Position = UDim2.new(0, 0, 0, 75)
-debugLabel.BackgroundTransparency = 1
-debugLabel.Font = Enum.Font.Code
-debugLabel.TextScaled = false
-debugLabel.TextSize = 12
-debugLabel.TextColor3 = Color3.new(0.6, 1, 0.6)
-debugLabel.TextXAlignment = Enum.TextXAlignment.Left
-debugLabel.TextYAlignment = Enum.TextYAlignment.Top
-debugLabel.Text = "Waiting for stats..."
-debugLabel.Parent = frame
-
 local function formatTime(seconds)
-    local h = math.floor(seconds / 3600)
-    local m = math.floor((seconds % 3600) / 60)
-    local s = seconds % 60
-    return string.format("%dh %dm %ds", h, m, s)
+    local hours = math.floor(seconds / 3600)
+    local minutes = math.floor((seconds % 3600) / 60)
+    local secs = seconds % 60
+    return string.format("%dh %dm %ds", hours, minutes, secs)
 end
 
 spawn(function()
     while true do
         local kingTime = 0
-        local debugText = "Found values:\n"
         
-        -- Check muscleKingTime
+        -- Primary check (most common)
         if player:FindFirstChild("muscleKingTime") then
             kingTime = player.muscleKingTime.Value
-            debugText = debugText .. "✓ muscleKingTime = " .. kingTime .. "\n"
-        else
-            debugText = debugText .. "✗ No muscleKingTime\n"
         end
         
-        -- Check leaderstats
-        if player:FindFirstChild("leaderstats") then
-            debugText = debugText .. "\nLeaderstats:\n"
-            for _, v in pairs(player.leaderstats:GetChildren()) do
-                if v:IsA("IntValue") or v:IsA("NumberValue") then
-                    debugText = debugText .. "   " .. v.Name .. " = " .. tostring(v.Value) .. "\n"
-                    if string.lower(v.Name):find("king") then
-                        kingTime = v.Value
-                    end
+        -- Backup checks
+        if kingTime == 0 and player:FindFirstChild("leaderstats") then
+            local ls = player.leaderstats
+            for _, stat in pairs(ls:GetChildren()) do
+                local name = string.lower(stat.Name)
+                if name:find("king") and name:find("time") or name == "kingtime" then
+                    kingTime = stat.Value
+                    break
                 end
             end
         end
         
         timeLabel.Text = "Total King Time: " .. formatTime(kingTime)
-        debugLabel.Text = debugText
-        
-        wait(2)
+        wait(1)
     end
 end)
