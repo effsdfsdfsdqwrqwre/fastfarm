@@ -1,6 +1,5 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))()
 
 local window = library:AddWindow("INVINCIBLE ┃ PRIVATE FARMING | HELLO, " .. player.DisplayName, {
@@ -10,7 +9,6 @@ local window = library:AddWindow("INVINCIBLE ┃ PRIVATE FARMING | HELLO, " .. p
 })
 
 local mainTab = window:AddTab("Main")
-
 local titleLabel = mainTab:AddLabel("King Time")
 titleLabel.TextSize = 23
 titleLabel.Font = Enum.Font.Bangers
@@ -21,17 +19,17 @@ local antiAFKConnections = {}
 
 local function createAntiAFKGui()
     if antiAFKGui then return end
-    
+   
     local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
     local VirtualUser = game:GetService("VirtualUser")
     local player = Players.LocalPlayer
-    
+   
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "InvincibleAntiAFK"
     screenGui.ResetOnSpawn = false
     screenGui.Parent = player:WaitForChild("PlayerGui")
-    
+   
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(0, 350, 0, 220)
     frame.Position = UDim2.new(0.7, 0, 0.1, 0)
@@ -40,16 +38,16 @@ local function createAntiAFKGui()
     frame.Active = true
     frame.Draggable = true
     frame.Parent = screenGui
-    
+   
     local uiCorner = Instance.new("UICorner")
     uiCorner.CornerRadius = UDim.new(0, 8)
     uiCorner.Parent = frame
-    
+   
     local uiStroke = Instance.new("UIStroke")
     uiStroke.Color = Color3.fromRGB(200, 0, 0)
     uiStroke.Thickness = 2
     uiStroke.Parent = frame
-    
+   
     -- Title
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, 0, 0, 40)
@@ -59,14 +57,14 @@ local function createAntiAFKGui()
     title.TextScaled = true
     title.Font = Enum.Font.GothamBold
     title.Parent = frame
-    
+   
     local titleLine = Instance.new("Frame")
     titleLine.Size = UDim2.new(1, -20, 0, 2)
     titleLine.Position = UDim2.new(0, 10, 0, 38)
     titleLine.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
     titleLine.BorderSizePixel = 0
     titleLine.Parent = frame
-    
+   
     -- Labels
     local timeLabel = Instance.new("TextLabel")
     timeLabel.Size = UDim2.new(1, -20, 0, 30)
@@ -78,7 +76,7 @@ local function createAntiAFKGui()
     timeLabel.Font = Enum.Font.Gotham
     timeLabel.TextSize = 18
     timeLabel.Parent = frame
-    
+   
     local fpsLabel = Instance.new("TextLabel")
     fpsLabel.Size = UDim2.new(1, -20, 0, 30)
     fpsLabel.Position = UDim2.new(0, 10, 0, 85)
@@ -89,7 +87,7 @@ local function createAntiAFKGui()
     fpsLabel.Font = Enum.Font.Gotham
     fpsLabel.TextSize = 18
     fpsLabel.Parent = frame
-    
+   
     local msLabel = Instance.new("TextLabel")
     msLabel.Size = UDim2.new(1, -20, 0, 30)
     msLabel.Position = UDim2.new(0, 10, 0, 120)
@@ -100,7 +98,7 @@ local function createAntiAFKGui()
     msLabel.Font = Enum.Font.Gotham
     msLabel.TextSize = 18
     msLabel.Parent = frame
-    
+   
     local statusLabel = Instance.new("TextLabel")
     statusLabel.Size = UDim2.new(1, -20, 0, 30)
     statusLabel.Position = UDim2.new(0, 10, 0, 170)
@@ -111,9 +109,9 @@ local function createAntiAFKGui()
     statusLabel.Font = Enum.Font.GothamBold
     statusLabel.TextSize = 16
     statusLabel.Parent = frame
-    
+   
     antiAFKGui = screenGui
-    
+   
     -- Anti-AFK Logic
     local idledConn = player.Idled:Connect(function()
         VirtualUser:CaptureController()
@@ -123,14 +121,14 @@ local function createAntiAFKGui()
         statusLabel.Text = "✅ Active - Preventing AFK Kick"
     end)
     table.insert(antiAFKConnections, idledConn)
-    
+   
     -- FPS Counter
     local fps = 0
     local fpsConn = RunService.RenderStepped:Connect(function()
         fps += 1
     end)
     table.insert(antiAFKConnections, fpsConn)
-    
+   
     task.spawn(function()
         while antiAFKGui and antiAFKGui.Parent do
             fpsLabel.Text = "🚀 FPS: " .. fps
@@ -138,7 +136,7 @@ local function createAntiAFKGui()
             task.wait(1)
         end
     end)
-    
+   
     -- Timer
     local startTime = tick()
     task.spawn(function()
@@ -151,7 +149,7 @@ local function createAntiAFKGui()
             task.wait(0.5)
         end
     end)
-    
+   
     -- Ping (simulated)
     task.spawn(function()
         while antiAFKGui and antiAFKGui.Parent do
@@ -160,7 +158,7 @@ local function createAntiAFKGui()
             task.wait(2)
         end
     end)
-    
+   
     print("Invincible Anti-AFK GUI Enabled")
 end
 
@@ -176,7 +174,7 @@ local function destroyAntiAFKGui()
     print("Invincible Anti-AFK GUI Disabled")
 end
 
--- ==================== SWITCH ====================
+-- ==================== SWITCHES ====================
 mainTab:AddSwitch("Anti Afk", function(state)
     if state then
         createAntiAFKGui()
@@ -235,7 +233,6 @@ spawn(function()
                 totalKingTime = ls.TotalKingTime.Value
             end
         end
-
         if totalKingTime == 0 then
             for _, v in ipairs(player:GetDescendants()) do
                 if (v:IsA("IntValue") or v:IsA("NumberValue")) then
@@ -247,34 +244,34 @@ spawn(function()
                 end
             end
         end
-
         timeLabel.Text = tostring(math.floor(totalKingTime))
     end
 end)
-local kingTimeEnabled = true
 
+local kingTimeEnabled = true
 local toggle = mainTab:AddToggle("King Time GUI", {
-    state = true,  -- starts enabled
+    state = true,
     callback = function(state)
         kingTimeEnabled = state
         gui.Enabled = state
     end
 })
 
-mainTab:AddSwitch("King Time Ui", function()
-    kingTimeEnabled = not kingTimeEnabled
+mainTab:AddSwitch("King Time Ui", function(state)
+    kingTimeEnabled = state
     gui.Enabled = kingTimeEnabled
     toggle:Set(kingTimeEnabled)
 end)
 
-mainTab:AddSwitch(Auto lift", function()
+mainTab:AddSwitch("Auto Lift", function(state)
+    if not state then return end
     local gamepassFolder = game:GetService("ReplicatedStorage").gamepassIds
     local player = game:GetService("Players").LocalPlayer
-    
+   
     if not player:FindFirstChild("ownedGamepasses") then
         Instance.new("Folder", player).Name = "ownedGamepasses"
     end
-    
+   
     for _, gamepass in pairs(gamepassFolder:GetChildren()) do
         local value = Instance.new("IntValue")
         value.Name = gamepass.Name
@@ -284,19 +281,15 @@ mainTab:AddSwitch(Auto lift", function()
     print("All gamepasses granted!")
 end)
 
-
 local titleLabel = mainTab:AddLabel("BRAWL FARMING")
 titleLabel.TextSize = 23
 titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-
-
 mainTab:AddSwitch("Auto Join Brawl", function(bool)
     getgenv().autoJoinBrawl = bool
     task.spawn(function()
         while getgenv().autoJoinBrawl and task.wait(0.5) do
-            if not getgenv().autoJoinBrawl then break end
             if game.Players.LocalPlayer.PlayerGui.gameGui.brawlJoinLabel.Visible then
                 game.ReplicatedStorage.rEvents.brawlEvent:FireServer("joinBrawl")
                 game.Players.LocalPlayer.PlayerGui.gameGui.brawlJoinLabel.Visible = false
@@ -305,10 +298,10 @@ mainTab:AddSwitch("Auto Join Brawl", function(bool)
     end)
 end)
 
-
 mainTab:AddSwitch("Auto Win Brawl", function(bool)
     getgenv().autoWinBrawl = bool
-    
+    local whitelist = {} -- Fixed: whitelist was undefined
+
     local function equipPunch()
         if not getgenv().autoWinBrawl then return end
         local character = game.Players.LocalPlayer.Character
@@ -324,115 +317,96 @@ mainTab:AddSwitch("Auto Win Brawl", function(bool)
         end
         return false
     end
-    
-    local function isValidTarget(player)
-        if not player or not player.Parent then return false end
-        if player == Players.LocalPlayer then return false end
-        if whitelist[player.UserId] then return false end
-        local character = player.Character
-        if not character or not character.Parent then return false end
-        local humanoid = character:FindFirstChild("Humanoid")
-        if not humanoid then return false end
-        if not humanoid.Health or humanoid.Health <= 0 then return false end
-        if humanoid:GetState() == Enum.HumanoidStateType.Dead then return false end
-        local rootPart = character:FindFirstChild("HumanoidRootPart")
-        if not rootPart or not rootPart.Parent then return false end
-        return true
-    end
-    
-    local function isLocalPlayerReady()
-        local player = game.Players.LocalPlayer
-        if not player then return false end
-        local character = player.Character
+   
+    local function isValidTarget(plr)
+        if not plr or not plr.Parent then return false end
+        if plr == Players.LocalPlayer then return false end
+        if whitelist[plr.UserId] then return false end
+        local character = plr.Character
         if not character or not character.Parent then return false end
         local humanoid = character:FindFirstChild("Humanoid")
         if not humanoid or humanoid.Health <= 0 then return false end
-        local leftHand = character:FindFirstChild("LeftHand")
-        local rightHand = character:FindFirstChild("RightHand")
-        return (leftHand ~= nil or rightHand ~= nil)
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if not rootPart then return false end
+        return true
     end
-    
+   
+    local function isLocalPlayerReady()
+        local character = game.Players.LocalPlayer.Character
+        if not character then return false end
+        local humanoid = character:FindFirstChild("Humanoid")
+        if not humanoid or humanoid.Health <= 0 then return false end
+        return true
+    end
+   
     local function safeTouchInterest(targetPart, localPart)
         if not targetPart or not targetPart.Parent then return false end
         if not localPart or not localPart.Parent then return false end
-        local success, err = pcall(function()
+        pcall(function()
             firetouchinterest(targetPart, localPart, 0)
             task.wait(0.01)
             firetouchinterest(targetPart, localPart, 1)
         end)
-        return success
     end
-    
-    -- Join Brawl Loop
+
+    -- Join Brawl
     task.spawn(function()
         while getgenv().autoWinBrawl and task.wait(0.5) do
-            if not getgenv().autoWinBrawl then break end
             if game.Players.LocalPlayer.PlayerGui.gameGui.brawlJoinLabel.Visible then
                 game.ReplicatedStorage.rEvents.brawlEvent:FireServer("joinBrawl")
                 game.Players.LocalPlayer.PlayerGui.gameGui.brawlJoinLabel.Visible = false
             end
         end
     end)
-    
-    -- Equipment loop
+   
+    -- Equipment
     task.spawn(function()
         while getgenv().autoWinBrawl and task.wait(0.5) do
-            if not getgenv().autoWinBrawl then break end
             equipPunch()
         end
     end)
-    
-    -- Auto Punch Loop
+   
+    -- Auto Punch
     task.spawn(function()
         while getgenv().autoWinBrawl and task.wait(0.1) do
-            if not getgenv().autoWinBrawl then break end
             if isLocalPlayerReady() and game.ReplicatedStorage.brawlInProgress.Value then
-                local player = game.Players.LocalPlayer
-                pcall(function() player.muscleEvent:FireServer("punch", "rightHand") end)
-                pcall(function() player.muscleEvent:FireServer("punch", "leftHand") end)
+                local plr = game.Players.LocalPlayer
+                pcall(function() plr.muscleEvent:FireServer("punch", "rightHand") end)
+                pcall(function() plr.muscleEvent:FireServer("punch", "leftHand") end)
             end
         end
     end)
-    
+   
     -- Main Kill Loop
     task.spawn(function()
         while getgenv().autoWinBrawl and task.wait(0.05) do
-            if not getgenv().autoWinBrawl then break end
             if isLocalPlayerReady() and game.ReplicatedStorage.brawlInProgress.Value then
                 local character = game.Players.LocalPlayer.Character
                 local leftHand = character:FindFirstChild("LeftHand")
                 local rightHand = character:FindFirstChild("RightHand")
-                for _, player in pairs(Players:GetPlayers()) do
-                    if not getgenv().autoWinBrawl then break end
-                    pcall(function()
-                        if isValidTarget(player) then
-                            local targetRoot = player.Character.HumanoidRootPart
-                            if leftHand then
-                                safeTouchInterest(targetRoot, leftHand)
-                            end
-                            if rightHand then
-                                safeTouchInterest(targetRoot, rightHand)
-                            end
-                        end
-                    end)
+                for _, plr in pairs(Players:GetPlayers()) do
+                    if isValidTarget(plr) then
+                        local targetRoot = plr.Character.HumanoidRootPart
+                        if leftHand then safeTouchInterest(targetRoot, leftHand) end
+                        if rightHand then safeTouchInterest(targetRoot, rightHand) end
+                    end
                     task.wait(0.01)
                 end
             end
         end
     end)
-    
-    -- Recovery system
+   
+    -- Recovery
     task.spawn(function()
         local lastPlayerCount = 0
         local stuckCounter = 0
         while getgenv().autoWinBrawl and task.wait(1) do
-            if not getgenv().autoWinBrawl then break end
             local currentPlayerCount = #Players:GetPlayers()
             if currentPlayerCount ~= lastPlayerCount then
                 stuckCounter = 0
                 lastPlayerCount = currentPlayerCount
             else
-                stuckCounter = stuckCounter + 1
+                stuckCounter += 1
                 if stuckCounter > 5 then
                     stuckCounter = 0
                     pcall(function()
@@ -456,9 +430,9 @@ mainTab:AddSwitch("Auto Punch", function(state)
     if state then
         task.spawn(function()
             while _G.fastHitActive do
-                local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
+                local punch = player.Backpack:FindFirstChild("Punch")
                 if punch then
-                    punch.Parent = LocalPlayer.Character
+                    punch.Parent = player.Character
                     if punch:FindFirstChild("attackTime") then
                         punch.attackTime.Value = 0
                     end
@@ -468,7 +442,7 @@ mainTab:AddSwitch("Auto Punch", function(state)
         end)
         task.spawn(function()
             while _G.fastHitActive do
-                local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
+                local punch = player.Character and player.Character:FindFirstChild("Punch")
                 if punch then
                     punch:Activate()
                 end
@@ -476,11 +450,11 @@ mainTab:AddSwitch("Auto Punch", function(state)
             end
         end)
     else
-        local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
+        local punch = player.Character and player.Character:FindFirstChild("Punch")
         if punch then
-            punch.Parent = LocalPlayer.Backpack
+            punch.Parent = player.Backpack
         end
     end
 end)
 
-
+print("Script Fixed & Loaded")
