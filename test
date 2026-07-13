@@ -1,4 +1,6 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
 local player = Players.LocalPlayer
 
 local gui = Instance.new("ScreenGui")
@@ -13,7 +15,9 @@ frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 frame.BorderSizePixel = 0
 frame.Parent = gui
 
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = frame
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0.4, 0)
@@ -31,40 +35,42 @@ timeLabel.BackgroundTransparency = 1
 timeLabel.Font = Enum.Font.Bangers
 timeLabel.TextScaled = true
 timeLabel.TextColor3 = Color3.new(1, 1, 1)
+timeLabel.Text = "Total Seconds: 0"
 timeLabel.Parent = frame
 
-local function getKingTime()
-    if player:FindFirstChild("muscleKingTime") then
-        return player.muscleKingTime.Value
-    end
+-- Better timer logic
+local lastServerValue = 0
+local lastSyncTime = tick()
 
-    if player:FindFirstChild("leaderstats") then
-        for _, stat in ipairs(player.leaderstats:GetChildren()) do
-            local name = stat.Name:lower()
-            if name:find("king") and name:find("time") then
-                return stat.Value
-            end
-        end
-    end
-
-    return 0
-end
-
-local function updateLabel()
-    timeLabel.Text = "Total Seconds: " .. getKingTime()
-end
-
--- Update when value changes
-local kingTimeValue = player:FindFirstChild("muscleKingTime")
-if kingTimeValue then
-    kingTimeValue.Changed:Connect(updateLabel)
-end
-
--- Also refresh every second
-task.spawn(function()
-    while task.wait(1) do
-        updateLabel()
-    end
+spawn(function()
+	while true do
+		-- Try to get the value from the main Value object
+		if player:FindFirstChild("muscleKingTime") then
+			lastServerValue = player.muscleKingTime.Value
+			lastSyncTime = tick()
+		else
+			-- Backup: look in leaderstats
+			if player:FindFirstChild("leaderstats") then
+				local ls = player.leaderstats
+				for _, stat in pairs(ls:GetChildren()) do
+					local name = string.lower(stat.Name)
+					if name:find("king") and name:find("time") then
+						lastServerValue = stat.Value
+						lastSyncTime = tick()
+						break
+					end
+				end
+			end
+		end
+		
+		task.wait(5) -- Sync with server every 5 seconds (good balance)
+	end
 end)
 
-updateLabel()
+-- Main display loop - updates every frame for smoothness
+RunService.RenderStepped:Connect(function()
+	local elapsed = tick() - lastSyncTime
+	local displayedTime = math.floor(lastServerValue + elapsed)
+	
+	timeLabel.Text = "Total Seconds: " .. displayedTime
+end)
