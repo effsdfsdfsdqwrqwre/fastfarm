@@ -1,6 +1,4 @@
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
 local player = Players.LocalPlayer
 
 local gui = Instance.new("ScreenGui")
@@ -25,7 +23,7 @@ title.BackgroundTransparency = 1
 title.Text = "King Time"
 title.Font = Enum.Font.Bangers
 title.TextScaled = true
-title.TextColor3 = Color3.new(1, 0.9, 0)
+title.TextColor3 = Color3.fromRGB(255, 230, 0)
 title.Parent = frame
 
 local timeLabel = Instance.new("TextLabel")
@@ -35,42 +33,57 @@ timeLabel.BackgroundTransparency = 1
 timeLabel.Font = Enum.Font.Bangers
 timeLabel.TextScaled = true
 timeLabel.TextColor3 = Color3.new(1, 1, 1)
-timeLabel.Text = "Total Seconds: 0"
 timeLabel.Parent = frame
 
--- Better timer logic
-local lastServerValue = 0
-local lastSyncTime = tick()
+local currentTime = 0
+local lastServerValue = -1
 
-spawn(function()
-	while true do
-		-- Try to get the value from the main Value object
-		if player:FindFirstChild("muscleKingTime") then
-			lastServerValue = player.muscleKingTime.Value
-			lastSyncTime = tick()
-		else
-			-- Backup: look in leaderstats
-			if player:FindFirstChild("leaderstats") then
-				local ls = player.leaderstats
-				for _, stat in pairs(ls:GetChildren()) do
-					local name = string.lower(stat.Name)
-					if name:find("king") and name:find("time") then
-						lastServerValue = stat.Value
-						lastSyncTime = tick()
-						break
-					end
-				end
-			end
-		end
-		
-		task.wait(5) -- Sync with server every 5 seconds (good balance)
-	end
-end)
+local function getKingTime()
+    local value = player:FindFirstChild("muscleKingTime")
+    if value and value:IsA("IntValue") then
+        return value.Value, value
+    end
 
--- Main display loop - updates every frame for smoothness
-RunService.RenderStepped:Connect(function()
-	local elapsed = tick() - lastSyncTime
-	local displayedTime = math.floor(lastServerValue + elapsed)
-	
-	timeLabel.Text = "Total Seconds: " .. displayedTime
+    local leaderstats = player:FindFirstChild("leaderstats")
+    if leaderstats then
+        for _, stat in ipairs(leaderstats:GetChildren()) do
+            if stat:IsA("IntValue") or stat:IsA("NumberValue") then
+                local n = stat.Name:lower()
+                if n:find("king") and n:find("time") then
+                    return stat.Value, stat
+                end
+            end
+        end
+    end
+
+    return 0, nil
+end
+
+local _, valueObject = getKingTime()
+
+if valueObject then
+    currentTime = valueObject.Value
+    lastServerValue = currentTime
+
+    valueObject.Changed:Connect(function(newValue)
+        currentTime = newValue
+        lastServerValue = newValue
+    end)
+end
+
+task.spawn(function()
+    while true do
+        task.wait(1)
+
+        local serverValue, obj = getKingTime()
+
+        if obj and serverValue ~= lastServerValue then
+            currentTime = serverValue
+            lastServerValue = serverValue
+        else
+            currentTime += 1
+        end
+
+        timeLabel.Text = "Total Seconds: " .. currentTime
+    end
 end)
