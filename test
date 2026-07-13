@@ -35,12 +35,10 @@ timeLabel.TextScaled = true
 timeLabel.TextColor3 = Color3.new(1, 1, 1)
 timeLabel.Parent = frame
 
--- Update loop (now shows raw seconds)
 spawn(function()
 	while wait(1) do
 		local totalKingTime = 0
 		
-		-- Try common leaderstat names
 		if player:FindFirstChild("leaderstats") then
 			local ls = player.leaderstats
 			
@@ -55,7 +53,6 @@ spawn(function()
 			end
 		end
 		
-		-- Fallback search
 		if totalKingTime == 0 then
 			for _, v in ipairs(player:GetDescendants()) do
 				if (v:IsA("IntValue") or v:IsA("NumberValue")) then
