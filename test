@@ -20,7 +20,7 @@ corner.Parent = frame
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0.4, 0)
 title.BackgroundTransparency = 1
-title.Text = "Total King Time"
+title.Text = "King Time"
 title.Font = Enum.Font.Bangers
 title.TextScaled = true
 title.TextColor3 = Color3.fromRGB(255, 230, 0)
@@ -35,29 +35,15 @@ timeLabel.TextScaled = true
 timeLabel.TextColor3 = Color3.new(1, 1, 1)
 timeLabel.Parent = frame
 
--- Function to format time (seconds → HH:MM:SS or longer)
-local function formatTime(seconds)
-	seconds = math.floor(seconds)
-	local hours = math.floor(seconds / 3600)
-	local minutes = math.floor((seconds % 3600) / 60)
-	local secs = seconds % 60
-	if hours > 0 then
-		return string.format("%d:%02d:%02d", hours, minutes, secs)
-	else
-		return string.format("%02d:%02d", minutes, secs)
-	end
-end
-
--- Update loop
+-- Update loop (now shows raw seconds)
 spawn(function()
 	while wait(1) do
 		local totalKingTime = 0
 		
-		-- Try common leaderstat names used in Muscle Legends
+		-- Try common leaderstat names
 		if player:FindFirstChild("leaderstats") then
 			local ls = player.leaderstats
 			
-			-- Most common possible names:
 			if ls:FindFirstChild("KingTime") then
 				totalKingTime = ls.KingTime.Value
 			elseif ls:FindFirstChild("King Time") then
@@ -69,10 +55,10 @@ spawn(function()
 			end
 		end
 		
-		-- Fallback: search any IntValue/NumberValue with "king" in name
+		-- Fallback search
 		if totalKingTime == 0 then
 			for _, v in ipairs(player:GetDescendants()) do
-				if v:IsA("IntValue") or v:IsA("NumberValue") then
+				if (v:IsA("IntValue") or v:IsA("NumberValue")) then
 					local name = v.Name:lower()
 					if name:find("king") and name:find("time") then
 						totalKingTime = v.Value
@@ -82,6 +68,6 @@ spawn(function()
 			end
 		end
 		
-		timeLabel.Text = formatTime(totalKingTime)
+		timeLabel.Text = tostring(math.floor(totalKingTime)) .. "s"
 	end
 end)
