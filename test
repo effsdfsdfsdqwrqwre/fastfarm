@@ -23,7 +23,7 @@ title.BackgroundTransparency = 1
 title.Text = "King Time"
 title.Font = Enum.Font.Bangers
 title.TextScaled = true
-title.TextColor3 = Color3.fromRGB(255, 230, 0)
+title.TextColor3 = Color3.fromRGB(85, 255, 170)
 title.Parent = frame
 
 local timeLabel = Instance.new("TextLabel")
@@ -68,6 +68,6 @@ spawn(function()
 			end
 		end
 		
-		timeLabel.Text = tostring(math.floor(totalKingTime)) .. "s"
+		timeLabel.Text = tostring(math.floor(totalKingTime))
 	end
 end)
