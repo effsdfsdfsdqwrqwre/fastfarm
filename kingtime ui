@@ -1,0 +1,70 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "KingTimeGUI"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 260, 0, 70)
+frame.Position = UDim2.new(0.5, -130, 0, 20)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
+frame.Parent = gui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = frame
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0.4, 0)
+title.BackgroundTransparency = 1
+title.Text = "King Time"
+title.Font = Enum.Font.Bangers
+title.TextScaled = true
+title.TextColor3 = Color3.fromRGB(85, 255, 170)
+title.Parent = frame
+
+local timeLabel = Instance.new("TextLabel")
+timeLabel.Size = UDim2.new(1, 0, 0.6, 0)
+timeLabel.Position = UDim2.new(0, 0, 0.4, 0)
+timeLabel.BackgroundTransparency = 1
+timeLabel.Font = Enum.Font.Bangers
+timeLabel.TextScaled = true
+timeLabel.TextColor3 = Color3.new(1, 1, 1)
+timeLabel.Parent = frame
+
+spawn(function()
+	while wait(1) do
+		local totalKingTime = 0
+		
+		if player:FindFirstChild("leaderstats") then
+			local ls = player.leaderstats
+			
+			if ls:FindFirstChild("KingTime") then
+				totalKingTime = ls.KingTime.Value
+			elseif ls:FindFirstChild("King Time") then
+				totalKingTime = ls["King Time"].Value
+			elseif ls:FindFirstChild("MuscleKingTime") then
+				totalKingTime = ls.MuscleKingTime.Value
+			elseif ls:FindFirstChild("TotalKingTime") then
+				totalKingTime = ls.TotalKingTime.Value
+			end
+		end
+		
+		if totalKingTime == 0 then
+			for _, v in ipairs(player:GetDescendants()) do
+				if (v:IsA("IntValue") or v:IsA("NumberValue")) then
+					local name = v.Name:lower()
+					if name:find("king") and name:find("time") then
+						totalKingTime = v.Value
+						break
+					end
+				end
+			end
+		end
+		
+		timeLabel.Text = tostring(math.floor(totalKingTime))
+	end
+end)
