@@ -1,64 +1,77 @@
--- LocalScript
--- Put in StarterPlayerScripts
-
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
 local player = Players.LocalPlayer
 
---========================
--- GUI
---========================
-
 local gui = Instance.new("ScreenGui")
-gui.Name = "MuscleKingTimer"
+gui.Name = "KingTimeGUI"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0,220,0,60)
-frame.Position = UDim2.new(0.5,-110,0,20)
-frame.BackgroundTransparency = 0.25
+frame.Size = UDim2.new(0, 250, 0, 70)
+frame.Position = UDim2.new(0.5, -125, 0, 20)
+frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+frame.BorderSizePixel = 0
 frame.Parent = gui
 
-local label = Instance.new("TextLabel")
-label.Size = UDim2.new(1,0,1,0)
-label.BackgroundTransparency = 1
-label.TextScaled = true
-label.Font = Enum.Font.GothamBold
-label.TextColor3 = Color3.new(1,1,1)
-label.Parent = frame
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = frame
 
---========================
--- Timer
---========================
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0.4, 0)
+title.BackgroundTransparency = 1
+title.Text = "👑 Muscle King Time"
+title.Font = Enum.Font.GothamBold
+title.TextScaled = true
+title.TextColor3 = Color3.new(1, 1, 0)
+title.Parent = frame
 
-local totalKingTime = 0
-local isKing = false
+local timeLabel = Instance.new("TextLabel")
+timeLabel.Size = UDim2.new(1, 0, 0.6, 0)
+timeLabel.Position = UDim2.new(0, 0, 0.4, 0)
+timeLabel.BackgroundTransparency = 1
+timeLabel.Font = Enum.Font.Gotham
+timeLabel.TextScaled = true
+timeLabel.TextColor3 = Color3.new(1, 1, 1)
+timeLabel.Text = "Total King Time: 0h 0m 0s"
+timeLabel.Parent = frame
 
--- Change this to however YOUR game identifies the Muscle King.
--- Example using a BoolValue named "IsMuscleKing"
-local kingValue = player:WaitForChild("IsMuscleKing")
+-- Main update loop
+local function formatTime(seconds)
+    local hours = math.floor(seconds / 3600)
+    local minutes = math.floor((seconds % 3600) / 60)
+    local secs = seconds % 60
+    return string.format("Total King Time: %dh %dm %ds", hours, minutes, secs)
+end
 
-kingValue.Changed:Connect(function(value)
-	isKing = value
-end)
-
-isKing = kingValue.Value
-
-RunService.Heartbeat:Connect(function(dt)
-	if isKing then
-		totalKingTime += dt
-	end
-
-	local hours = math.floor(totalKingTime / 3600)
-	local minutes = math.floor((totalKingTime % 3600) / 60)
-	local seconds = math.floor(totalKingTime % 60)
-
-	label.Text = string.format(
-		"Muscle King Time\n%02d:%02d:%02d",
-		hours,
-		minutes,
-		seconds
-	)
+spawn(function()
+    while true do
+        local kingTime = 0
+        
+        -- Try common leaderstat paths used in Muscle Legends
+        if player:FindFirstChild("leaderstats") then
+            local ls = player.leaderstats
+            
+            -- Most common possibilities:
+            if ls:FindFirstChild("KingTime") then
+                kingTime = ls.KingTime.Value
+            elseif ls:FindFirstChild("King Time") then
+                kingTime = ls["King Time"].Value
+            elseif ls:FindFirstChild("TimeAsKing") then
+                kingTime = ls.TimeAsKing.Value
+            elseif ls:FindFirstChild("MuscleKingTime") then
+                kingTime = ls.MuscleKingTime.Value
+            end
+        end
+        
+        -- Fallback: check directly on player if it's a Value
+        if kingTime == 0 then
+            if player:FindFirstChild("KingTime") then
+                kingTime = player.KingTime.Value
+            end
+        end
+        
+        timeLabel.Text = formatTime(kingTime)
+        wait(1) -- update every second
+    end
 end)
