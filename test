@@ -1,191 +1,64 @@
--- Muscle King Gym Timer GUI for Muscle Legends
--- Place this as a LocalScript inside StarterPlayer > StarterPlayerScripts
+-- LocalScript
+-- Put in StarterPlayerScripts
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
 
--- === CONFIGURATION ===
-local GYM_ZONE_NAME = "MuscleKingGymZone"  -- Change this to match the exact name of your gym zone Part in Workspace
-local SAVE_KEY = "MuscleKingTotalTime"
--- =====================
+--========================
+-- GUI
+--========================
 
--- Create ScreenGui
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "MuscleKingTimerGUI"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = playerGui
+local gui = Instance.new("ScreenGui")
+gui.Name = "MuscleKingTimer"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
 
--- Main Frame
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 280, 0, 140)
-mainFrame.Position = UDim2.new(1, -300, 0, 20)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-mainFrame.BorderSizePixel = 0
-mainFrame.BackgroundTransparency = 0.1
-mainFrame.Parent = screenGui
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0,220,0,60)
+frame.Position = UDim2.new(0.5,-110,0,20)
+frame.BackgroundTransparency = 0.25
+frame.Parent = gui
 
--- Corner rounding
-local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 12)
-uiCorner.Parent = mainFrame
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(1,0,1,0)
+label.BackgroundTransparency = 1
+label.TextScaled = true
+label.Font = Enum.Font.GothamBold
+label.TextColor3 = Color3.new(1,1,1)
+label.Parent = frame
 
--- Title
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, 0, 0, 40)
-titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "💪 MUSCLE KING TIME"
-titleLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
-titleLabel.TextScaled = true
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.Parent = mainFrame
+--========================
+-- Timer
+--========================
 
--- Time Display
-local timeLabel = Instance.new("TextLabel")
-timeLabel.Size = UDim2.new(1, -20, 0, 60)
-timeLabel.Position = UDim2.new(0, 10, 0, 45)
-timeLabel.BackgroundTransparency = 1
-timeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-timeLabel.TextScaled = true
-timeLabel.Font = Enum.Font.Gotham
-timeLabel.Text = "00h 00m 00s"
-timeLabel.Parent = mainFrame
+local totalKingTime = 0
+local isKing = false
 
--- Status
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, -20, 0, 20)
-statusLabel.Position = UDim2.new(0, 10, 1, -30)
-statusLabel.BackgroundTransparency = 1
-statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-statusLabel.TextScaled = true
-statusLabel.Font = Enum.Font.Gotham
-statusLabel.Text = "Outside Gym"
-statusLabel.Parent = mainFrame
+-- Change this to however YOUR game identifies the Muscle King.
+-- Example using a BoolValue named "IsMuscleKing"
+local kingValue = player:WaitForChild("IsMuscleKing")
 
--- Draggable
-local dragging, dragInput, dragStart, startPos
-mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
+kingValue.Changed:Connect(function(value)
+	isKing = value
 end)
 
-mainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
+isKing = kingValue.Value
 
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input == dragInput then
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
+RunService.Heartbeat:Connect(function(dt)
+	if isKing then
+		totalKingTime += dt
+	end
 
--- Timer variables
-local totalSeconds = 0
-local isInGym = false
-local timerConnection = nil
+	local hours = math.floor(totalKingTime / 3600)
+	local minutes = math.floor((totalKingTime % 3600) / 60)
+	local seconds = math.floor(totalKingTime % 60)
 
--- Load saved time (using a simple Value for demo - replace with DataStore for persistence across sessions)
-local timeValue = Instance.new("NumberValue")
-timeValue.Name = SAVE_KEY
-timeValue.Value = 0
-timeValue.Parent = player  -- This is per-session only. For true saving, use DataStoreService.
-
--- Format time function
-local function formatTime(seconds)
-    local hours = math.floor(seconds / 3600)
-    local minutes = math.floor((seconds % 3600) / 60)
-    local secs = seconds % 60
-    return string.format("%02dh %02dm %02ds", hours, minutes, secs)
-end
-
--- Update display
-local function updateDisplay()
-    timeLabel.Text = formatTime(totalSeconds)
-end
-
--- Timer loop
-local function startTimer()
-    if timerConnection then return end
-    
-    timerConnection = RunService.Heartbeat:Connect(function(dt)
-        if isInGym then
-            totalSeconds = totalSeconds + dt
-            updateDisplay()
-        end
-    end)
-end
-
-local function stopTimer()
-    if timerConnection then
-        timerConnection:Disconnect()
-        timerConnection = nil
-    end
-end
-
--- Zone detection (using Touched / TouchEnded on the gym zone)
-local function setupZoneDetection()
-    local gymZone = workspace:FindFirstChild(GYM_ZONE_NAME, true) -- search recursively
-    
-    if not gymZone then
-        warn("MuscleKingGymZone not found! Create a Part named '" .. GYM_ZONE_NAME .. "' in Workspace.")
-        statusLabel.Text = "Zone Not Found"
-        statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-        return
-    end
-    
-    gymZone.Touched:Connect(function(hit)
-        local character = player.Character
-        if character and hit and hit:IsDescendantOf(character) and not isInGym then
-            isInGym = true
-            statusLabel.Text = "IN MUSCLE KING GYM 🔥"
-            statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-            startTimer()
-        end
-    end)
-    
-    gymZone.TouchEnded:Connect(function(hit)
-        local character = player.Character
-        if character and hit and hit:IsDescendantOf(character) and isInGym then
-            -- Small debounce to avoid flickering
-            task.wait(0.2)
-            if not gymZone:GetTouchingParts():FindFirstChildWhichIsA("BasePart") then
-                isInGym = false
-                statusLabel.Text = "Outside Gym"
-                statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-                stopTimer()
-            end
-        end
-    end)
-end
-
--- Load saved time
-totalSeconds = timeValue.Value
-updateDisplay()
-
--- Initialize
-setupZoneDetection()
-print("Muscle King Timer GUI loaded! Look for the golden panel on the top right.")
-
--- Optional: Toggle visibility with K key
-UserInputService.InputBegan:Connect(function(input, gp)
-    if gp then return end
-    if input.KeyCode == Enum.KeyCode.K then
-        screenGui.Enabled = not screenGui.Enabled
-    end
+	label.Text = string.format(
+		"Muscle King Time\n%02d:%02d:%02d",
+		hours,
+		minutes,
+		seconds
+	)
 end)
