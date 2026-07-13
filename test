@@ -13,9 +13,7 @@ frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 frame.BorderSizePixel = 0
 frame.Parent = gui
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
-corner.Parent = frame
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0.4, 0)
@@ -33,30 +31,40 @@ timeLabel.BackgroundTransparency = 1
 timeLabel.Font = Enum.Font.Bangers
 timeLabel.TextScaled = true
 timeLabel.TextColor3 = Color3.new(1, 1, 1)
-timeLabel.Text = "Total Seconds: 0"
 timeLabel.Parent = frame
 
-spawn(function()
-    while true do
-        local kingTime = 0
-        
-        if player:FindFirstChild("muscleKingTime") then
-            kingTime = player.muscleKingTime.Value
-        end
-        
-        -- Backup if needed
-        if kingTime == 0 and player:FindFirstChild("leaderstats") then
-            local ls = player.leaderstats
-            for _, stat in pairs(ls:GetChildren()) do
-                local name = string.lower(stat.Name)
-                if name:find("king") and name:find("time") then
-                    kingTime = stat.Value
-                    break
-                end
+local function getKingTime()
+    if player:FindFirstChild("muscleKingTime") then
+        return player.muscleKingTime.Value
+    end
+
+    if player:FindFirstChild("leaderstats") then
+        for _, stat in ipairs(player.leaderstats:GetChildren()) do
+            local name = stat.Name:lower()
+            if name:find("king") and name:find("time") then
+                return stat.Value
             end
         end
-        
-        timeLabel.Text = "Total Seconds: " .. kingTime
-        wait(1)
+    end
+
+    return 0
+end
+
+local function updateLabel()
+    timeLabel.Text = "Total Seconds: " .. getKingTime()
+end
+
+-- Update when value changes
+local kingTimeValue = player:FindFirstChild("muscleKingTime")
+if kingTimeValue then
+    kingTimeValue.Changed:Connect(updateLabel)
+end
+
+-- Also refresh every second
+task.spawn(function()
+    while task.wait(1) do
+        updateLabel()
     end
 end)
+
+updateLabel()
