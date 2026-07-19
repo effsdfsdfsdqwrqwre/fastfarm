@@ -261,5 +261,3 @@ mt.__namecall = newcclosure(function(self, ...)
 end)
 
 setreadonly(mt, true)
-
-print("INVINCIBLE MM2 Script Loaded Successfully!")
