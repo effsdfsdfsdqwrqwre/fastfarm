@@ -2556,6 +2556,10 @@ miscTab:AddButton("Muscle King Boulder", function()
 end)
 
 
+
+Lua-- Your existing UI library setup
+local miscTab = window:AddTab("Misc")
+
 -- ==================== KING TIME GUI ====================
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -2570,7 +2574,7 @@ frame.Size = UDim2.new(0, 260, 0, 70)
 frame.Position = UDim2.new(0.5, -130, 0, 20)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 frame.BorderSizePixel = 0
-frame.Visible = true
+frame.Visible = false   -- Starts OFF
 frame.Parent = gui
 
 local corner = Instance.new("UICorner")
@@ -2595,7 +2599,7 @@ timeLabel.TextScaled = true
 timeLabel.TextColor3 = Color3.new(1, 1, 1)
 timeLabel.Parent = frame
 
--- Update loop
+-- Update loop (still runs in background)
 spawn(function()
     while wait(1) do
         local totalKingTime = 0
@@ -2632,12 +2636,11 @@ end)
 -- ==================== SWITCH IN MISC TAB ====================
 local kingTimeSwitch = miscTab:AddSwitch({
     Name = "King Time GUI",
-    Default = true,
+    Default = false,     -- Starts OFF
     Callback = function(state)
         frame.Visible = state
     end
 })
-
 
 
 
