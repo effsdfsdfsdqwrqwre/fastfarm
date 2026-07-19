@@ -1,74 +1,92 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
-local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Load UI Library
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))()
-local window = library:AddWindow("INVINCIBLE ┃ MM2", {
+
+-- Create Window
+local window = library:AddWindow("INVINCIBLE ┃ MM2 | " .. player.DisplayName, {
     main_color = Color3.fromRGB(255, 0, 100),
-    min_size = Vector2.new(540, 650),
-    can_resize = true
+    min_size = Vector2.new(540, 680),
+    can_resize = true,
+    toggle_key = Enum.KeyCode.RightShift -- Added default toggle key
 })
 
--- Main Variables
+-- Variables
 local espEnabled = false
-local roleESP = false
 local godmode = false
 local killAura = false
 local silentAim = false
 local autoCollect = false
 local speedHack = false
-local jumpPower = 50
-local currentSpeed = 16
-
+local flyEnabled = false
+local noclipEnabled = false
+local currentSpeed = 50
+local flySpeed = 50
+local flyBodyVelocity = nil
+local flyBodyGyro = nil
 local murderer = nil
 local sheriff = nil
+
+-- Wait for character
+player.CharacterAdded:Connect(function() task.wait(1) end)
+if not player.Character then player.CharacterAdded:Wait() end
 
 -- Helper Functions
 local function getRoles()
     murderer = nil
     sheriff = nil
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player then
+        if plr ~= player and plr.Character then
             local char = plr.Character
-            if char then
-                local knife = char:FindFirstChild("Knife")
-                local gun = char:FindFirstChild("Gun")
-                if knife then murderer = plr end
-                if gun then sheriff = plr end
+            if char:FindFirstChild("Knife") or char:FindFirstChild("knife") then 
+                murderer = plr 
+            end
+            if char:FindFirstChild("Gun") or char:FindFirstChild("gun") then 
+                sheriff = plr 
             end
         end
     end
 end
 
 local function createESP(plr, color, text)
-    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-        local highlight = Instance.new("Highlight")
-        highlight.Adornee = plr.Character
-        highlight.FillColor = color
-        highlight.OutlineColor = color
-        highlight.Parent = plr.Character
-        
-        local billboard = Instance.new("BillboardGui")
-        billboard.Adornee = plr.Character.HumanoidRootPart
-        billboard.Size = UDim2.new(0, 200, 0, 50)
-        billboard.StudsOffset = Vector3.new(0, 3, 0)
-        billboard.AlwaysOnTop = true
-        
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, 0, 1, 0)
-        label.BackgroundTransparency = 1
-        label.Text = text .. " [" .. plr.Name .. "]"
-        label.TextColor3 = color
-        label.TextScaled = true
-        label.Font = Enum.Font.GothamBold
-        label.Parent = billboard
-        
-        billboard.Parent = plr.Character
+    if not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then return end
+    
+    -- Clean old ESP
+    for _, v in ipairs(plr.Character:GetChildren()) do
+        if v:IsA("Highlight") or v:IsA("BillboardGui") then
+            v:Destroy()
+        end
     end
+    
+    local highlight = Instance.new("Highlight")
+    highlight.Adornee = plr.Character
+    highlight.FillColor = color
+    highlight.OutlineColor = color
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 0
+    highlight.Parent = plr.Character
+    
+    local billboard = Instance.new("BillboardGui")
+    billboard.Adornee = plr.Character.HumanoidRootPart
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 4, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Parent = plr.Character
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text .. " [" .. plr.Name .. "]"
+    label.TextColor3 = color
+    label.TextScaled = true
+    label.Font = Enum.Font.GothamBold
+    label.TextStrokeTransparency = 0.7
+    label.Parent = billboard
 end
 
 local function updateESP()
@@ -95,13 +113,47 @@ local function updateESP()
                 color = Color3.fromRGB(255, 0, 0)
                 label = "Murderer"
             elseif plr == sheriff then
-                color = Color3.fromRGB(0, 100, 255)
+                color = Color3.fromRGB(0, 150, 255)
                 label = "Sheriff"
             end
             
             createESP(plr, color, label)
         end
     end
+end
+
+-- Fly Functions
+local function StartFly()
+    local character = player.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    
+    local root = character.HumanoidRootPart
+    local humanoid = character:FindFirstChild("Humanoid")
+    
+    if flyBodyVelocity then flyBodyVelocity:Destroy() end
+    if flyBodyGyro then flyBodyGyro:Destroy() end
+    
+    flyBodyVelocity = Instance.new("BodyVelocity")
+    flyBodyVelocity.Name = "FlyVelocity"
+    flyBodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    flyBodyVelocity.Velocity = Vector3.new(0,0,0)
+    flyBodyVelocity.Parent = root
+    
+    flyBodyGyro = Instance.new("BodyGyro")
+    flyBodyGyro.Name = "FlyGyro"
+    flyBodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    flyBodyGyro.P = 10000
+    flyBodyGyro.D = 500
+    flyBodyGyro.Parent = root
+    
+    if humanoid then humanoid.PlatformStand = true end
+end
+
+local function EndFly()
+    if flyBodyVelocity then flyBodyVelocity:Destroy() flyBodyVelocity = nil end
+    if flyBodyGyro then flyBodyGyro:Destroy() flyBodyGyro = nil end
+    local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+    if humanoid then humanoid.PlatformStand = false end
 end
 
 -- Tabs
@@ -112,14 +164,11 @@ local tabMovement = window:AddTab("Movement")
 local tabMisc = window:AddTab("Misc")
 
 -- Main Tab
-tabMain:AddButton("Get All Coins", function()
-    for _, coin in ipairs(Workspace:GetDescendants()) do
-        if coin.Name == "Coin" or coin.Name:find("Coin") then
-            if coin:IsA("BasePart") then
-                firetouchinterest(player.Character.HumanoidRootPart, coin, 0)
-                task.wait()
-                firetouchinterest(player.Character.HumanoidRootPart, coin, 1)
-            end
+tabMain:AddButton("Collect All Coins", function()
+    for _, v in ipairs(Workspace:GetDescendants()) do
+        if (v.Name:find("Coin") or v.Name:find("coin")) and v:IsA("BasePart") then
+            firetouchinterest(player.Character.HumanoidRootPart, v, 0)
+            task.wait(0.03)
         end
     end
 end)
@@ -129,33 +178,16 @@ tabMain:AddToggle("Auto Collect Coins", false, function(state)
 end)
 
 -- Combat Tab
-tabCombat:AddToggle("Godmode (Invincible)", false, function(state)
+tabCombat:AddToggle("Godmode", false, function(state)
     godmode = state
-    if godmode and player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.MaxHealth = math.huge
-        player.Character.Humanoid.Health = math.huge
-    end
 end)
 
 tabCombat:AddToggle("Kill Aura", false, function(state)
     killAura = state
 end)
 
-tabCombat:AddToggle("Silent Aim (Gun)", false, function(state)
+tabCombat:AddToggle("Silent Aim", false, function(state)
     silentAim = state
-end)
-
-tabCombat:AddButton("Kill All (Murderer)", function()
-    if player.Backpack:FindFirstChild("Knife") or (player.Character and player.Character:FindFirstChild("Knife")) then
-        for _, plr in ipairs(Players:GetPlayers()) do
-            if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                local root = plr.Character.HumanoidRootPart
-                local myRoot = player.Character.HumanoidRootPart
-                myRoot.CFrame = root.CFrame * CFrame.new(0, 0, -3)
-                task.wait(0.1)
-            end
-        end
-    end
 end)
 
 -- Visuals Tab
@@ -164,67 +196,105 @@ tabVisuals:AddToggle("Player ESP", false, function(state)
     updateESP()
 end)
 
-tabVisuals:AddToggle("Role ESP", false, function(state)
-    roleESP = state
-end)
-
-tabVisuals:AddButton("Refresh ESP", function()
-    updateESP()
-end)
+tabVisuals:AddButton("Refresh ESP", updateESP)
 
 -- Movement Tab
 tabMovement:AddToggle("Speed Hack", false, function(state)
     speedHack = state
 end)
 
-tabMovement:AddSlider("WalkSpeed", 16, 16, 200, function(value)
+tabMovement:AddSlider("WalkSpeed", 16, 16, 250, function(value)
     currentSpeed = value
 end)
 
-tabMovement:AddSlider("JumpPower", 50, 50, 300, function(value)
-    jumpPower = value
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.JumpPower = value
+tabMovement:AddToggle("Fly", false, function(state)
+    flyEnabled = state
+    if state then
+        StartFly()
+    else
+        EndFly()
     end
 end)
 
--- Misc Tab
-tabMisc:AddButton("Server Hop", function()
-    -- Simple server hop (requires teleport service)
-    game:GetService("TeleportService"):Teleport(game.PlaceId, player)
+tabMovement:AddSlider("Fly Speed", 50, 10, 200, function(value)
+    flySpeed = value
 end)
 
+tabMovement:AddToggle("NoClip", false, function(state)
+    noclipEnabled = state
+end)
+
+-- Misc Tab
 tabMisc:AddButton("Rejoin", function()
     game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
 end)
 
-tabMisc:AddLabel("Made for fun • Use at your own risk")
-
--- Main Loops
+-- Main Loop
 RunService.Heartbeat:Connect(function()
-    if godmode and player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.Health = player.Character.Humanoid.MaxHealth
+    local character = player.Character
+    if not character then return end
+    
+    local root = character:FindFirstChild("HumanoidRootPart")
+    local humanoid = character:FindFirstChild("Humanoid")
+    if not root or not humanoid then return end
+    
+    -- Godmode
+    if godmode then
+        humanoid.MaxHealth = math.huge
+        humanoid.Health = math.huge
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
     end
     
-    if speedHack and player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.WalkSpeed = currentSpeed
+    -- Speed Hack
+    if speedHack then
+        humanoid.WalkSpeed = currentSpeed
+    else
+        humanoid.WalkSpeed = 16
     end
     
-    if autoCollect then
-        for _, coin in ipairs(Workspace:GetDescendants()) do
-            if coin.Name:find("Coin") and coin:IsA("BasePart") and (coin.Position - player.Character.HumanoidRootPart.Position).Magnitude < 50 then
-                firetouchinterest(player.Character.HumanoidRootPart, coin, 0)
-                task.wait(0.05)
+    -- Fly
+    if flyEnabled and flyBodyVelocity and flyBodyGyro then
+        local moveDir = Vector3.new()
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += root.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= root.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= root.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += root.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0,1,0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir -= Vector3.new(0,1,0) end
+        
+        local velocity = moveDir.Magnitude > 0 and moveDir.Unit * flySpeed or Vector3.new()
+        flyBodyVelocity.Velocity = velocity
+        flyBodyGyro.CFrame = root.CFrame
+    end
+    
+    -- NoClip
+    if noclipEnabled then
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide then
+                part.CanCollide = false
             end
         end
     end
     
-    if killAura and player.Character and (player.Backpack:FindFirstChild("Knife") or player.Character:FindFirstChild("Knife")) then
+    -- Auto Collect
+    if autoCollect then
+        for _, coin in ipairs(Workspace:GetDescendants()) do
+            if (coin.Name:find("Coin") or coin.Name:find("coin")) and coin:IsA("BasePart") then
+                if (coin.Position - root.Position).Magnitude < 40 then
+                    firetouchinterest(root, coin, 0)
+                end
+            end
+        end
+    end
+    
+    -- Kill Aura
+    if killAura and (player.Backpack:FindFirstChild("Knife") or character:FindFirstChild("Knife")) then
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                local dist = (plr.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                local dist = (plr.Character.HumanoidRootPart.Position - root.Position).Magnitude
                 if dist < 15 then
-                    player.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2)
+                    root.CFrame = plr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -4)
+                    -- Optional: fire click if needed
                 end
             end
         end
@@ -232,32 +302,21 @@ RunService.Heartbeat:Connect(function()
 end)
 
 -- ESP Loop
-spawn(function()
-    while task.wait(1) do
-        if espEnabled then
-            updateESP()
+task.spawn(function()
+    while true do
+        task.wait(1)
+        if espEnabled then 
+            updateESP() 
         end
         getRoles()
     end
 end)
 
--- Silent Aim (basic)
-local mt = getrawmetatable(game)
-local old = mt.__namecall
-setreadonly(mt, false)
+-- Force show window (some libraries need this)
+task.wait(0.5)
+print("✅ INVINCIBLE MM2 Script Loaded Successfully! (Fly + NoClip + ESP Fixed)")
 
-mt.__namecall = newcclosure(function(self, ...)
-    local args = {...}
-    local method = getnamecallmethod()
-    
-    if silentAim and method == "FireServer" and self.Name == "ShootGun" then
-        getRoles()
-        if murderer and murderer.Character then
-            args[1] = murderer.Character.HumanoidRootPart.Position
-        end
-    end
-    
-    return old(self, unpack(args))
+-- Optional: Auto-open UI if library supports it
+pcall(function()
+    window:Show()
 end)
-
-setreadonly(mt, true)
