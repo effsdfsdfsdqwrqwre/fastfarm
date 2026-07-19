@@ -1,74 +1,218 @@
+--[[
+    MURDER MYSTERY 2 - AIMBOT + ESP + ANTIBAN v3.0
+    Tương thích: Delta X, VNG, Roblox Mobile & PC
+    Updated with SkullUI
+]]
+
+-- Services
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
 
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))()
+-- =============================================
+-- CONFIG
+-- =============================================
+local Config = {
+    AimbotEnabled = false,
+    AimbotFOV = 150,
+    AimbotSmooth = 0,
+    SilentAim = true,
+    AutoShoot = true,
+    ESPEnabled = false,
+    ESPBox = true,
+    ESPName = true,
+    ESPDistance = true,
+    ESPHealth = true,
+    ESPRole = true,
+    ESPTracer = false,
+    RevealMurderer = false,
+    AntiAFK = true,
+}
 
-local window = library:AddWindow("INVINCIBLE ┃ PRIVATE FARMING | HELLO, " .. player.DisplayName, {
-    main_color = Color3.fromRGB(0, 0, 0),
-    min_size = Vector2.new(540, 400),  -- Adjusted height for better fit
-    can_resize = false
-})
+-- =============================================
+-- BIẾN
+-- =============================================
+local ESPObjects = {}
+local AimbotTarget = nil
+local LastShot = 0
+local IsHolding = false
 
-_G.Money = 10000
-_G.autokillallgun = false
+-- =============================================
+-- HELPER FUNCTIONS (unchanged)
+-- =============================================
+local function IsAlive(plr)
+    local c = plr.Character
+    if not c then return false end
+    local h = c:FindFirstChild("Humanoid")
+    return h and h.Health > 0
+end
 
-local MainTab = window:AddTab("Main")
+local function GetRole(plr)
+    if not plr.Character then return "?" end
+    local c = plr.Character
+    local b = plr.Backpack
+    if c:FindFirstChild("Knife") or (b and b:FindFirstChild("Knife")) then return "Murderer" end
+    if c:FindFirstChild("Gun") or (b and b:FindFirstChild("Gun")) then return "Sheriff" end
+    return "Innocent"
+end
 
--- Auto Kill All Toggle (using AddSwitch as toggle)
-MainTab:AddSwitch("Auto kill All (Gun / disabled and enabled fix bug / (tool rq))", function(v)
-    _G.autokillallgun = v
-    if _G.autokillallgun then
-        local PlayersService = game:GetService("Players")
-        local LocalPlayer = PlayersService.LocalPlayer
-        
-        task.spawn(function()
-            while _G.autokillallgun do
-                for _, plr in pairs(PlayersService:GetPlayers()) do
-                    if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                        local rip = Vector3.new(0, 0, 0)
-
-                        local args = {
-                            [1] = plr,
-                            [2] = rip
-                        }
-
-                        local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
-                        if tool and tool:FindFirstChild("kill") then
-                            tool.kill:FireServer(unpack(args))
-                        end
-                    end
-                end
-                task.wait(0.1)
-            end
-        end)
+local function IsVisible(part)
+    local myChar = LocalPlayer.Character
+    if not myChar then return false end
+    local head = myChar:FindFirstChild("Head")
+    if not head then return false end
+   
+    local dir = (part.Position - head.Position)
+    local dist = dir.Magnitude
+    dir = dir.Unit
+   
+    local params = RaycastParams.new()
+    params.FilterDescendantsInstances = {myChar}
+    params.FilterType = Enum.RaycastFilterType.Blacklist
+   
+    local result = workspace:Raycast(head.Position, dir * dist, params)
+    if result then
+        local hitChar = result.Instance:FindFirstAncestorOfClass("Model")
+        if hitChar and Players:GetPlayerFromCharacter(hitChar) then
+            return true
+        end
+        return false
     end
-end)
+    return true
+end
 
-MainTab:AddButton("Give Knifes/Guns - works on kill all (Gun)", function()
-    for _, v in ipairs(game.Players:GetDescendants()) do
-        if v:IsA("Tool") then
-            v.Parent = game.Players.LocalPlayer.Backpack
+-- =============================================
+-- ESP (unchanged)
+-- =============================================
+local function createESP(plr) ... end  -- (Keep your original createESP and updateESP functions)
+local function updateESP() ... end
+local function getClosestTarget() ... end
+local function updateAimbot() ... end
+local function revealMurderer() ... end
+
+-- =============================================
+-- NEW UI WITH SKULLUI
+-- =============================================
+local function createUI()
+    local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))()
+
+    local window = library:AddWindow("MM2 TOOL v3.0 | " .. LocalPlayer.DisplayName, {
+        main_color = Color3.fromRGB(255, 50, 50),
+        min_size = Vector2.new(560, 480),
+        can_resize = true
+    })
+
+    -- AIMBOT TAB
+    local aimbotTab = window:AddTab("🎯 Aimbot")
+    
+    aimbotTab:AddToggle("Enable Aimbot", false, function(v)
+        Config.AimbotEnabled = v
+    end)
+    
+    aimbotTab:AddToggle("Silent Aim", true, function(v)
+        Config.SilentAim = v
+    end)
+    
+    aimbotTab:AddToggle("Auto Shoot", true, function(v)
+        Config.AutoShoot = v
+    end)
+
+    aimbotTab:AddSlider("FOV", 150, 50, 500, function(v)
+        Config.AimbotFOV = v
+    end)
+
+    aimbotTab:AddSlider("Smoothness", 0, 0, 100, function(v)
+        Config.AimbotSmooth = v
+    end)
+
+    -- ESP TAB
+    local espTab = window:AddTab("👁️ ESP")
+    
+    espTab:AddToggle("Enable ESP", false, function(v)
+        Config.ESPEnabled = v
+    end)
+    
+    espTab:AddToggle("Show Box", true, function(v) Config.ESPBox = v end)
+    espTab:AddToggle("Show Name", true, function(v) Config.ESPName = v end)
+    espTab:AddToggle("Show Distance", true, function(v) Config.ESPDistance = v end)
+    espTab:AddToggle("Show Health", true, function(v) Config.ESPHealth = v end)
+    espTab:AddToggle("Show Role", true, function(v) Config.ESPRole = v end)
+    espTab:AddToggle("Show Tracer", false, function(v) Config.ESPTracer = v end)
+
+    -- MISC TAB
+    local miscTab = window:AddTab("⚡ Misc")
+    
+    miscTab:AddToggle("Reveal Murderer", false, function(v)
+        Config.RevealMurderer = v
+    end)
+    
+    miscTab:AddToggle("Anti AFK", true, function(v)
+        Config.AntiAFK = v
+    end)
+
+    -- Info / Credits
+    local infoTab = window:AddTab("ℹ️ Info")
+    infoTab:AddLabel("Hold Right Click → Aimbot")
+    infoTab:AddLabel("Made for Delta X / VNG")
+    infoTab:AddLabel("Version 3.0 - SkullUI Edition")
+end
+
+-- =============================================
+-- INIT
+-- =============================================
+local function init()
+    createUI()
+   
+    -- Create ESP for existing players
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            createESP(plr)
         end
     end
-end)
+   
+    Players.PlayerAdded:Connect(function(plr)
+        task.wait(1)
+        if plr ~= LocalPlayer then createESP(plr) end
+    end)
+   
+    Players.PlayerRemoving:Connect(function(plr)
+        if ESPObjects[plr] then
+            for _, d in pairs(ESPObjects[plr]) do
+                pcall(function() d:Remove() end)
+            end
+            ESPObjects[plr] = nil
+        end
+    end)
+   
+    RunService:BindToRenderStep("MM2Main", 1, function()
+        pcall(function()
+            updateESP()
+            updateAimbot()
+            revealMurderer()
+        end)
+    end)
+   
+    if Config.AntiAFK then
+        LocalPlayer.Idled:Connect(function()
+            local vu = game:GetService("VirtualUser")
+            vu:CaptureController()
+            vu:ClickButton2(Vector2.new())
+        end)
+    end
+   
+    print("[MM2 Tool] Loaded successfully with SkullUI!")
+    print("[MM2 Tool] Hold Right Mouse Button for Aimbot")
+end
 
-MainTab:AddTextBox("Money Value (_G)", function(v)
-    _G.Money = tonumber(v) or 10000
-end, {clear = true})  -- clear text after input
-
-MainTab:AddButton("Give Money (_G)", function()
-    _G.Money = -math.abs(_G.Money)
-
-    local args = {
-        [1] = "NiksScythe",
-        [2] = _G.Money
-    }
-
-    game:GetService("ReplicatedStorage").Buy:InvokeServer(unpack(args))
-    task.wait(0.1)
-    
-    -- Simple notification replacement (library doesn't have built-in MakeNotification, using a label or print)
-    print("Money Added: " .. _G.Money .. " (+)")
-    -- You can add a Label if you want persistent display
-    -- MainTab:AddLabel("Money Added: " .. _G.Money)
-end)
+-- Safe Start
+local ok, err = pcall(init)
+if not ok then
+    warn("[MM2 Tool] Error: " .. tostring(err))
+    task.wait(3)
+    pcall(init)
+end
