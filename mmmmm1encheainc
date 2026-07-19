@@ -1,5 +1,5 @@
 -- Murder Mystery 2 Style Game Script
--- Using Skull UI Library
+-- Skull UI Library
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -32,297 +32,184 @@ local PlayerData = {
     hasGun = false
 }
 
--- Create Tabs
-local MainTab = window:AddTab("Main")
-local WeaponTab = window:AddTab("Weapons")
-local TeleportTab = window:AddTab("Teleport")
+-- ====================== CREATE TABS ======================
+local MainTab      = window:AddTab("Main")
+local WeaponTab    = window:AddTab("Weapons")
+local TeleportTab  = window:AddTab("Teleport")
 local InventoryTab = window:AddTab("Inventory")
-local StatsTab = window:AddTab("Statistics")
-local SettingsTab = window:AddTab("Settings")
+local StatsTab     = window:AddTab("Statistics")
+local SettingsTab  = window:AddTab("Settings")
 
 -- ====================== MAIN TAB ======================
-local GameSection = MainTab:AddSection("Game Management")
+MainTab:AddLabel("=== Game Management ===")
 
-local RoleLabel = MainTab:AddLabel("Current Role: " .. PlayerData.role)
-local StatusLabel = MainTab:AddLabel("Status: Waiting")
-local TimeLabel = MainTab:AddLabel("Time Left: --:--")
+local RoleLabel    = MainTab:AddLabel("Current Role: " .. PlayerData.role)
+local StatusLabel  = MainTab:AddLabel("Status: Waiting")
+local TimeLabel    = MainTab:AddLabel("Time Left: --:--")
 
-MainTab:AddButton({
-    Name = "Start Game",
-    Callback = function()
-        startGame()
+MainTab:AddButton("Start Game", function()
+    startGame()
+end)
+
+MainTab:AddButton("End Game", function()
+    endGame()
+end)
+
+-- ====================== WEAPONS TAB ======================
+WeaponTab:AddLabel("=== Weapon System ===")
+
+WeaponTab:AddButton("Get Knife", function()
+    giveWeapon("Knife")
+end)
+
+WeaponTab:AddButton("Get Gun", function()
+    giveWeapon("Gun")
+end)
+
+local autoKillData = WeaponTab:AddSwitch("Enable AutoKill", function(state)
+    GameState.autoKillEnabled = state
+    if state then
+        library:Notification("AutoKill", "AutoKill Enabled", 3)
+        startAutoKill()
+    else
+        library:Notification("AutoKill", "AutoKill Disabled", 3)
     end
-})
+end)
 
-MainTab:AddButton({
-    Name = "End Game",
-    Callback = function()
-        endGame()
-    end
-})
+local currentTarget = "Nearest Player"
 
--- ====================== WEAPON TAB ======================
-local WeaponSection = WeaponTab:AddSection("Weapon System")
+WeaponTab:AddDropdown("AutoKill Target", function(selected)
+    currentTarget = selected
+    GameState.autoKillTarget = selected
+    library:Notification("Target", "Target set to: " .. selected, 2)
+end):Add("Everyone"):Add("Nearest Player"):Add("Random")
 
-WeaponTab:AddButton({
-    Name = "Get Knife",
-    Callback = function()
-        giveWeapon("Knife")
-    end
-})
-
-WeaponTab:AddButton({
-    Name = "Get Gun",
-    Callback = function()
-        giveWeapon("Gun")
-    end
-})
-
-local AutoKillToggle = WeaponTab:AddToggle({
-    Name = "Enable AutoKill",
-    Default = false,
-    Callback = function(Value)
-        GameState.autoKillEnabled = Value
-        if Value then
-            library:Notification("AutoKill", "AutoKill has been enabled", 3)
-            startAutoKill()
-        else
-            library:Notification("AutoKill", "AutoKill has been disabled", 3)
-        end
-    end
-})
-
-local TargetDropdown = WeaponTab:AddDropdown({
-    Name = "AutoKill Target",
-    Options = {"Everyone", "Nearest Player", "Random"},
-    Default = "Nearest Player",
-    Callback = function(Option)
-        GameState.autoKillTarget = Option
-        library:Notification("Target Set", "Target: " .. Option, 2)
-    end
-})
-
-WeaponTab:AddButton({
-    Name = "Instant Kill",
-    Callback = function()
-        instantKill()
-    end
-})
+WeaponTab:AddButton("Instant Kill", function()
+    instantKill()
+end)
 
 -- ====================== TELEPORT TAB ======================
-local TeleportSection = TeleportTab:AddSection("Map Teleports")
+TeleportTab:AddLabel("=== Map Teleports ===")
 
-TeleportTab:AddButton({
-    Name = "Teleport to Lobby",
-    Callback = function()
-        teleportToLobby()
-    end
-})
+TeleportTab:AddButton("Teleport to Lobby", function() teleportToLobby() end)
+TeleportTab:AddButton("Teleport to Map 1", function() teleportToMap("Map1") end)
+TeleportTab:AddButton("Teleport to Map 2", function() teleportToMap("Map2") end)
+TeleportTab:AddButton("Teleport to Map 3", function() teleportToMap("Map3") end)
 
-TeleportTab:AddButton({
-    Name = "Teleport to Map 1",
-    Callback = function()
-        teleportToMap("Map1")
-    end
-})
-
-TeleportTab:AddButton({
-    Name = "Teleport to Map 2",
-    Callback = function()
-        teleportToMap("Map2")
-    end
-})
-
-TeleportTab:AddButton({
-    Name = "Teleport to Map 3",
-    Callback = function()
-        teleportToMap("Map3")
-    end
-})
-
-local PlayerTeleportSection = TeleportTab:AddSection("Player Teleport")
-
-TeleportTab:AddTextbox({
-    Name = "Player Name",
-    Placeholder = "Enter player name",
-    Callback = function(Text)
-        teleportToPlayer(Text)
-    end
-})
+TeleportTab:AddLabel("=== Player Teleport ===")
+TeleportTab:AddTextBox("Enter Player Name", function(text)
+    teleportToPlayer(text)
+end)
 
 -- ====================== INVENTORY TAB ======================
-local InventorySection = InventoryTab:AddSection("Item Management")
+InventoryTab:AddLabel("=== Inventory Management ===")
 
-InventoryTab:AddButton({
-    Name = "Get All Items",
-    Callback = function()
-        giveAllItems()
-    end
-})
+InventoryTab:AddButton("Get All Items", function() giveAllItems() end)
+InventoryTab:AddButton("Get All Weapons", function() giveAllWeapons() end)
+InventoryTab:AddButton("Add 10000 Coins", function()
+    PlayerData.coins += 10000
+    updateStats()
+    library:Notification("Coins", "+10000 Coins Added!", 3)
+end)
 
-InventoryTab:AddButton({
-    Name = "Get All Weapons",
-    Callback = function()
-        giveAllWeapons()
-    end
-})
+InventoryTab:AddLabel("--- Individual Items ---")
+local items = {"Knife_Default", "Knife_Classic", "Gun_Revolver", "Gun_Sheriff", "Emote_Wave", "Emote_Dance", "Pet_Dog", "Pet_Cat"}
 
-InventoryTab:AddButton({
-    Name = "Add 10000 Coins",
-    Callback = function()
-        PlayerData.coins = PlayerData.coins + 10000
-        updateStats()
-        library:Notification("Coins", "+10000 Coins Added!", 3)
-    end
-})
-
-local ItemSection = InventoryTab:AddSection("Individual Items")
-
-local commonItems = {
-    "Knife_Default", "Knife_Classic", "Gun_Revolver", "Gun_Sheriff",
-    "Emote_Wave", "Emote_Dance", "Pet_Dog", "Pet_Cat"
-}
-
-for _, item in ipairs(commonItems) do
-    InventoryTab:AddButton({
-        Name = "Get " .. item,
-        Callback = function()
-            giveSpecificItem(item)
-        end
-    })
+for _, item in ipairs(items) do
+    InventoryTab:AddButton("Get " .. item, function()
+        giveSpecificItem(item)
+    end)
 end
 
 -- ====================== STATS TAB ======================
-local StatsSection = StatsTab:AddSection("Player Statistics")
+StatsTab:AddLabel("=== Player Statistics ===")
 
-local CoinsLabel = StatsTab:AddLabel("Coins: " .. PlayerData.coins)
-local RoundsLabel = StatsTab:AddLabel("Rounds Played: " .. GameState.currentRound)
+local CoinsLabel  = StatsTab:AddLabel("Coins: 0")
+local RoundsLabel = StatsTab:AddLabel("Rounds Played: 0")
 local WeaponLabel = StatsTab:AddLabel("Weapons: None")
 
 -- ====================== SETTINGS TAB ======================
-local SettingsSection = SettingsTab:AddSection("Game Settings")
+SettingsTab:AddLabel("=== Settings ===")
 
-SettingsTab:AddSlider({
-    Name = "Round Time (seconds)",
-    Min = 60,
-    Max = 600,
-    Default = 180,
-    Increment = 30,
-    Callback = function(Value)
-        GameState.roundTime = Value
+SettingsTab:AddSlider("Round Time (s)", function(value)
+    GameState.roundTime = value
+end, {min = 60, max = 600})
+
+SettingsTab:AddSwitch("God Mode", function(state)
+    setGodMode(state)
+end)
+
+SettingsTab:AddSlider("WalkSpeed", function(value)
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = value
     end
-})
+end, {min = 16, max = 100})
 
-SettingsTab:AddToggle({
-    Name = "God Mode",
-    Default = false,
-    Callback = function(Value)
-        setGodMode(Value)
-    end
-})
-
-SettingsTab:AddSlider({
-    Name = "WalkSpeed",
-    Min = 16,
-    Max = 100,
-    Default = 16,
-    Increment = 1,
-    Callback = function(Value)
-        if player.Character and player.Character:FindFirstChild("Humanoid") then
-            player.Character.Humanoid.WalkSpeed = Value
-        end
-    end
-})
-
--- ====================== GAME FUNCTIONS ======================
+-- ====================== FUNCTIONS ======================
 function startGame()
     if GameState.isGameActive then
-        library:Notification("Error", "Game is already running", 3)
+        library:Notification("Error", "Game already running!", 3)
         return
     end
-
     GameState.isGameActive = true
-    GameState.currentRound = GameState.currentRound + 1
+    GameState.currentRound += 1
     PlayerData.alive = true
 
     assignRoles()
-    StatusLabel:Set("Status: In Game")
-    RoundsLabel:Set("Rounds Played: " .. GameState.currentRound)
+    StatusLabel.Text = "Status: In Game"
+    RoundsLabel.Text = "Rounds Played: " .. GameState.currentRound
 
-    library:Notification("Game Started", "Round " .. GameState.currentRound .. " has begun!", 3)
+    library:Notification("Game", "Round " .. GameState.currentRound .. " Started!", 4)
     startTimer()
 end
 
 function endGame()
-    if not GameState.isGameActive then
-        library:Notification("Error", "No active game to end", 3)
-        return
-    end
-
+    if not GameState.isGameActive then return end
     GameState.isGameActive = false
-    StatusLabel:Set("Status: Ended")
+    StatusLabel.Text = "Status: Ended"
 
-    local reward = 50
-    if PlayerData.role == "Murderer" and PlayerData.alive then
-        reward = 200
-    elseif PlayerData.role == "Sheriff" and PlayerData.alive then
-        reward = 150
-    end
-
-    PlayerData.coins = PlayerData.coins + reward
+    local reward = (PlayerData.role == "Murderer" and 200) or (PlayerData.role == "Sheriff" and 150) or 50
+    PlayerData.coins += reward
     updateStats()
 
-    library:Notification("Game Ended", "+" .. reward .. " Coins Awarded!", 5)
-    TimeLabel:Set("Time Left: --:--")
+    library:Notification("Game Ended", "+" .. reward .. " Coins", 5)
 end
 
 function assignRoles()
     local roles = {"Innocent", "Sheriff", "Murderer"}
-    local randomRole = roles[math.random(1, #roles)]
-
-    PlayerData.role = randomRole
-    RoleLabel:Set("Current Role: " .. randomRole)
-
-    library:Notification("Role Assigned", "You are " .. randomRole .. "!", 5)
+    PlayerData.role = roles[math.random(#roles)]
+    RoleLabel.Text = "Current Role: " .. PlayerData.role
+    library:Notification("Role", "You are " .. PlayerData.role .. "!", 5)
 end
 
 function startTimer()
     spawn(function()
         local timeLeft = GameState.roundTime
         while timeLeft > 0 and GameState.isGameActive do
-            local minutes = math.floor(timeLeft / 60)
-            local seconds = timeLeft % 60
-            TimeLabel:Set(string.format("Time Left: %02d:%02d", minutes, seconds))
+            local m = math.floor(timeLeft / 60)
+            local s = timeLeft % 60
+            TimeLabel.Text = string.format("Time Left: %02d:%02d", m, s)
             wait(1)
-            timeLeft = timeLeft - 1
+            timeLeft -= 1
         end
-        if GameState.isGameActive then
-            endGame()
-        end
+        if GameState.isGameActive then endGame() end
     end)
 end
 
 function updateStats()
-    CoinsLabel:Set("Coins: " .. PlayerData.coins)
-    RoundsLabel:Set("Rounds Played: " .. GameState.currentRound)
-
-    local weapons = {}
-    if PlayerData.hasKnife then table.insert(weapons, "Knife") end
-    if PlayerData.hasGun then table.insert(weapons, "Gun") end
-
-    WeaponLabel:Set("Weapons: " .. (#weapons > 0 and table.concat(weapons, ", ") or "None"))
+    CoinsLabel.Text = "Coins: " .. PlayerData.coins
+    RoundsLabel.Text = "Rounds Played: " .. GameState.currentRound
+    local w = {}
+    if PlayerData.hasKnife then table.insert(w, "Knife") end
+    if PlayerData.hasGun then table.insert(w, "Gun") end
+    WeaponLabel.Text = "Weapons: " .. (#w > 0 and table.concat(w, ", ") or "None")
 end
 
--- Weapon Functions
-function giveWeapon(weaponType)
-    if weaponType == "Knife" then
-        PlayerData.hasKnife = true
-        library:Notification("Weapon", "Knife obtained!", 3)
-    elseif weaponType == "Gun" then
-        PlayerData.hasGun = true
-        library:Notification("Weapon", "Gun obtained!", 3)
-    end
+function giveWeapon(typ)
+    if typ == "Knife" then PlayerData.hasKnife = true
+    elseif typ == "Gun" then PlayerData.hasGun = true end
     updateStats()
+    library:Notification("Weapon", typ .. " obtained!", 3)
 end
 
 function startAutoKill()
@@ -330,9 +217,7 @@ function startAutoKill()
         while GameState.autoKillEnabled do
             if PlayerData.hasKnife or PlayerData.hasGun then
                 local target = findTarget()
-                if target then
-                    killPlayer(target)
-                end
+                if target then killPlayer(target) end
             end
             wait(0.5)
         end
@@ -340,20 +225,14 @@ function startAutoKill()
 end
 
 function findTarget()
-    local target = nil
-    local closest = math.huge
-
+    local closest, target = math.huge, nil
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
             if GameState.autoKillTarget == "Nearest Player" then
-                local distance = (plr.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                if distance < closest then
-                    closest = distance
-                    target = plr
-                end
+                local dist = (plr.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                if dist < closest then closest, target = dist, plr end
             elseif GameState.autoKillTarget == "Random" then
-                target = plr
-                break
+                return plr
             elseif GameState.autoKillTarget == "Everyone" then
                 return plr
             end
@@ -364,90 +243,76 @@ end
 
 function killPlayer(target)
     if target and target.Character and target.Character:FindFirstChild("Humanoid") then
-        -- Add your actual kill method here (e.g. fire server event, etc.)
         library:Notification("Kill", "Killed " .. target.Name, 2)
+        -- Put your real kill method here
     end
 end
 
 function instantKill()
-    local target = findTarget()
-    if target then
-        killPlayer(target)
-    else
-        library:Notification("Error", "No target found", 3)
-    end
+    local t = findTarget()
+    if t then killPlayer(t) else library:Notification("Error", "No target found", 3) end
 end
 
--- Teleport Functions
+-- Teleport functions (same as before)
 function teleportToLobby()
     if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         player.Character.HumanoidRootPart.CFrame = CFrame.new(0, 50, 0)
-        library:Notification("Teleport", "Teleported to Lobby", 2)
+        library:Notification("Teleport", "→ Lobby", 2)
     end
 end
 
-function teleportToMap(mapName)
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        local positions = {
-            Map1 = CFrame.new(100, 50, 100),
-            Map2 = CFrame.new(200, 50, 200),
-            Map3 = CFrame.new(300, 50, 300)
-        }
-        if positions[mapName] then
-            player.Character.HumanoidRootPart.CFrame = positions[mapName]
-            library:Notification("Teleport", "Teleported to " .. mapName, 2)
-        end
+function teleportToMap(map)
+    local pos = {Map1 = CFrame.new(100,50,100), Map2 = CFrame.new(200,50,200), Map3 = CFrame.new(300,50,300)}
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and pos[map] then
+        player.Character.HumanoidRootPart.CFrame = pos[map]
+        library:Notification("Teleport", "→ " .. map, 2)
     end
 end
 
-function teleportToPlayer(playerName)
-    local target = Players:FindFirstChild(playerName)
+function teleportToPlayer(name)
+    local target = Players:FindFirstChild(name)
     if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            player.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
-            library:Notification("Teleport", "Teleported to " .. playerName, 2)
-        end
+        player.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
+        library:Notification("Teleport", "→ " .. name, 2)
     else
         library:Notification("Error", "Player not found", 3)
     end
 end
 
--- Inventory Functions
 function giveAllItems()
     PlayerData.hasKnife = true
     PlayerData.hasGun = true
-    PlayerData.coins = PlayerData.coins + 50000
+    PlayerData.coins += 50000
     updateStats()
-    library:Notification("Inventory", "All items granted!", 3)
+    library:Notification("Inventory", "All items given!", 3)
 end
 
 function giveAllWeapons()
     PlayerData.hasKnife = true
     PlayerData.hasGun = true
     updateStats()
-    library:Notification("Inventory", "All weapons granted!", 3)
+    library:Notification("Inventory", "All weapons given!", 3)
 end
 
-function giveSpecificItem(itemName)
-    library:Notification("Item", itemName .. " obtained!", 2)
+function giveSpecificItem(item)
+    library:Notification("Item", item .. " obtained!", 2)
 end
 
--- Settings Functions
 function setGodMode(enabled)
     if player.Character and player.Character:FindFirstChild("Humanoid") then
-        local hum = player.Character.Humanoid
+        local h = player.Character.Humanoid
         if enabled then
-            hum.MaxHealth = math.huge
-            hum.Health = math.huge
-            library:Notification("God Mode", "God Mode Enabled", 3)
+            h.MaxHealth = math.huge
+            h.Health = math.huge
+            library:Notification("God Mode", "Enabled", 3)
         else
-            hum.MaxHealth = 100
-            hum.Health = 100
-            library:Notification("God Mode", "God Mode Disabled", 3)
+            h.MaxHealth = 100
+            h.Health = 100
+            library:Notification("God Mode", "Disabled", 3)
         end
     end
 end
 
 -- Initialize
-library:Notification("MM2 Script", "Script loaded successfully!", 5)
 updateStats()
+library:Notification("MM2 Script", "Loaded Successfully!", 5)
