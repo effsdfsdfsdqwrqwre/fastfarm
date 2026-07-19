@@ -8,7 +8,7 @@ local Workspace = game:GetService("Workspace")
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))()
 
 -- Create Window
-local window = library:AddWindow("INVINCIBLE ┃ MM2 | " .. player.DisplayName, {
+local window = library:AddWindow("MM2 Hub, {
     main_color = Color3.fromRGB(255, 0, 100),
     min_size = Vector2.new(540, 680),
     can_resize = true,
@@ -24,13 +24,10 @@ local autoCollect = false
 local speedHack = false
 local flyEnabled = false
 local noclipEnabled = false
-
 local currentSpeed = 50
 local flySpeed = 50
-
 local flyBodyVelocity = nil
 local flyBodyGyro = nil
-
 local murderer = nil
 local sheriff = nil
 
@@ -58,7 +55,7 @@ end
 
 local function createESP(plr, color, text)
     if not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then return end
-    
+   
     -- Clean old ESP
     for _, v in ipairs(plr.Character:GetChildren()) do
         if v:IsA("Highlight") or v:IsA("BillboardGui") then
@@ -103,7 +100,6 @@ local function updateESP()
             end
         end
     end
-
     if not espEnabled then return end
 
     getRoles()
@@ -111,7 +107,7 @@ local function updateESP()
         if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
             local color = Color3.fromRGB(255, 255, 255)
             local label = "Innocent"
-            
+           
             if plr == murderer then
                 color = Color3.fromRGB(255, 0, 0)
                 label = "Murderer"
@@ -119,7 +115,7 @@ local function updateESP()
                 color = Color3.fromRGB(0, 150, 255)
                 label = "Sheriff"
             end
-            
+           
             createESP(plr, color, label)
         end
     end
@@ -129,10 +125,9 @@ end
 local function StartFly()
     local character = player.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-    
+   
     local root = character.HumanoidRootPart
     local humanoid = character:FindFirstChild("Humanoid")
-
     if flyBodyVelocity then flyBodyVelocity:Destroy() end
     if flyBodyGyro then flyBodyGyro:Destroy() end
 
@@ -176,26 +171,25 @@ tabMain:AddButton("Collect All Coins", function()
     end
 end)
 
-tabMain:AddToggle("Auto Collect Coins", false, function(state)
+tabMain:AddSwitch("Auto Collect Coins", function(state)
     autoCollect = state
 end)
 
 -- ==================== COMBAT ====================
-tabCombat:AddToggle("Godmode", false, function(state)
+tabCombat:AddSwitch("Godmode", function(state)
     godmode = state
 end)
 
-tabCombat:AddToggle("Kill Aura", false, function(state)
+tabCombat:AddSwitch("Kill Aura", function(state)
     killAura = state
 end)
 
-tabCombat:AddToggle("Silent Aim", false, function(state)
+tabCombat:AddSwitch("Silent Aim", function(state)
     silentAim = state
-    -- Silent Aim logic can be expanded here if needed
 end)
 
 -- ==================== VISUALS ====================
-tabVisuals:AddToggle("Player ESP", false, function(state)
+tabVisuals:AddSwitch("Player ESP", function(state)
     espEnabled = state
     updateESP()
 end)
@@ -203,11 +197,11 @@ end)
 tabVisuals:AddButton("Refresh ESP", updateESP)
 
 -- ==================== MOVEMENT ====================
-tabMovement:AddToggle("Speed Hack (50)", false, function(state)
+tabMovement:AddSwitch("Speed Hack (50)", function(state)
     speedHack = state
 end)
 
-tabMovement:AddToggle("Fly", false, function(state)
+tabMovement:AddSwitch("Fly", function(state)
     flyEnabled = state
     if state then
         StartFly()
@@ -216,7 +210,7 @@ tabMovement:AddToggle("Fly", false, function(state)
     end
 end)
 
-tabMovement:AddToggle("NoClip", false, function(state)
+tabMovement:AddSwitch("NoClip", function(state)
     noclipEnabled = state
 end)
 
@@ -307,5 +301,5 @@ task.spawn(function()
 end)
 
 task.wait(0.5)
-print("✅ INVINCIBLE MM2 Script Loaded Successfully! (All features as Buttons/Switches)")
+print("✅ INVINCIBLE MM2 Script Loaded Successfully!")
 pcall(function() window:Show() end)
