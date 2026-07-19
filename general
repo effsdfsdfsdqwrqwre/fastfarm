@@ -2370,7 +2370,7 @@ miscTab:AddSwitch("Auto Join Brawl", function(bool)
 end)
 
 
-miscTab:AddSwitch("Auto Win Brawl", function(bool)
+miscTab:AddSwitch("Auto Win Brawls", function(bool)
     getgenv().autoWinBrawl = bool
     
     local function equipPunch()
