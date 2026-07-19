@@ -3,7 +3,6 @@ local player = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Load UI Library
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))()
@@ -13,7 +12,7 @@ local window = library:AddWindow("INVINCIBLE ┃ MM2 | " .. player.DisplayName, 
     main_color = Color3.fromRGB(255, 0, 100),
     min_size = Vector2.new(540, 680),
     can_resize = true,
-    toggle_key = Enum.KeyCode.RightShift -- Added default toggle key
+    toggle_key = Enum.KeyCode.RightShift
 })
 
 -- Variables
@@ -25,16 +24,20 @@ local autoCollect = false
 local speedHack = false
 local flyEnabled = false
 local noclipEnabled = false
+
 local currentSpeed = 50
 local flySpeed = 50
+
 local flyBodyVelocity = nil
 local flyBodyGyro = nil
+
 local murderer = nil
 local sheriff = nil
 
 -- Wait for character
-player.CharacterAdded:Connect(function() task.wait(1) end)
-if not player.Character then player.CharacterAdded:Wait() end
+if not player.Character then
+    player.CharacterAdded:Wait()
+end
 
 -- Helper Functions
 local function getRoles()
@@ -43,11 +46,11 @@ local function getRoles()
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= player and plr.Character then
             local char = plr.Character
-            if char:FindFirstChild("Knife") or char:FindFirstChild("knife") then 
-                murderer = plr 
+            if char:FindFirstChild("Knife") or char:FindFirstChild("knife") then
+                murderer = plr
             end
-            if char:FindFirstChild("Gun") or char:FindFirstChild("gun") then 
-                sheriff = plr 
+            if char:FindFirstChild("Gun") or char:FindFirstChild("gun") then
+                sheriff = plr
             end
         end
     end
@@ -62,7 +65,7 @@ local function createESP(plr, color, text)
             v:Destroy()
         end
     end
-    
+
     local highlight = Instance.new("Highlight")
     highlight.Adornee = plr.Character
     highlight.FillColor = color
@@ -70,14 +73,14 @@ local function createESP(plr, color, text)
     highlight.FillTransparency = 0.5
     highlight.OutlineTransparency = 0
     highlight.Parent = plr.Character
-    
+
     local billboard = Instance.new("BillboardGui")
     billboard.Adornee = plr.Character.HumanoidRootPart
     billboard.Size = UDim2.new(0, 200, 0, 50)
     billboard.StudsOffset = Vector3.new(0, 4, 0)
     billboard.AlwaysOnTop = true
     billboard.Parent = plr.Character
-    
+
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 1, 0)
     label.BackgroundTransparency = 1
@@ -90,6 +93,7 @@ local function createESP(plr, color, text)
 end
 
 local function updateESP()
+    -- Clean all ESP
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= player and plr.Character then
             for _, v in ipairs(plr.Character:GetChildren()) do
@@ -99,11 +103,10 @@ local function updateESP()
             end
         end
     end
-    
+
     if not espEnabled then return end
-    
+
     getRoles()
-    
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
             local color = Color3.fromRGB(255, 255, 255)
@@ -129,23 +132,23 @@ local function StartFly()
     
     local root = character.HumanoidRootPart
     local humanoid = character:FindFirstChild("Humanoid")
-    
+
     if flyBodyVelocity then flyBodyVelocity:Destroy() end
     if flyBodyGyro then flyBodyGyro:Destroy() end
-    
+
     flyBodyVelocity = Instance.new("BodyVelocity")
     flyBodyVelocity.Name = "FlyVelocity"
     flyBodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
     flyBodyVelocity.Velocity = Vector3.new(0,0,0)
     flyBodyVelocity.Parent = root
-    
+
     flyBodyGyro = Instance.new("BodyGyro")
     flyBodyGyro.Name = "FlyGyro"
     flyBodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
     flyBodyGyro.P = 10000
     flyBodyGyro.D = 500
     flyBodyGyro.Parent = root
-    
+
     if humanoid then humanoid.PlatformStand = true end
 end
 
@@ -163,7 +166,7 @@ local tabVisuals = window:AddTab("Visuals")
 local tabMovement = window:AddTab("Movement")
 local tabMisc = window:AddTab("Misc")
 
--- Main Tab
+-- ==================== MAIN ====================
 tabMain:AddButton("Collect All Coins", function()
     for _, v in ipairs(Workspace:GetDescendants()) do
         if (v.Name:find("Coin") or v.Name:find("coin")) and v:IsA("BasePart") then
@@ -177,7 +180,7 @@ tabMain:AddToggle("Auto Collect Coins", false, function(state)
     autoCollect = state
 end)
 
--- Combat Tab
+-- ==================== COMBAT ====================
 tabCombat:AddToggle("Godmode", false, function(state)
     godmode = state
 end)
@@ -188,9 +191,10 @@ end)
 
 tabCombat:AddToggle("Silent Aim", false, function(state)
     silentAim = state
+    -- Silent Aim logic can be expanded here if needed
 end)
 
--- Visuals Tab
+-- ==================== VISUALS ====================
 tabVisuals:AddToggle("Player ESP", false, function(state)
     espEnabled = state
     updateESP()
@@ -198,13 +202,9 @@ end)
 
 tabVisuals:AddButton("Refresh ESP", updateESP)
 
--- Movement Tab
-tabMovement:AddToggle("Speed Hack", false, function(state)
+-- ==================== MOVEMENT ====================
+tabMovement:AddToggle("Speed Hack (50)", false, function(state)
     speedHack = state
-end)
-
-tabMovement:AddSlider("WalkSpeed", 16, 16, 250, function(value)
-    currentSpeed = value
 end)
 
 tabMovement:AddToggle("Fly", false, function(state)
@@ -216,15 +216,11 @@ tabMovement:AddToggle("Fly", false, function(state)
     end
 end)
 
-tabMovement:AddSlider("Fly Speed", 50, 10, 200, function(value)
-    flySpeed = value
-end)
-
 tabMovement:AddToggle("NoClip", false, function(state)
     noclipEnabled = state
 end)
 
--- Misc Tab
+-- ==================== MISC ====================
 tabMisc:AddButton("Rejoin", function()
     game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
 end)
@@ -233,25 +229,24 @@ end)
 RunService.Heartbeat:Connect(function()
     local character = player.Character
     if not character then return end
-    
     local root = character:FindFirstChild("HumanoidRootPart")
     local humanoid = character:FindFirstChild("Humanoid")
     if not root or not humanoid then return end
-    
+
     -- Godmode
     if godmode then
         humanoid.MaxHealth = math.huge
         humanoid.Health = math.huge
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
     end
-    
+
     -- Speed Hack
     if speedHack then
         humanoid.WalkSpeed = currentSpeed
     else
         humanoid.WalkSpeed = 16
     end
-    
+
     -- Fly
     if flyEnabled and flyBodyVelocity and flyBodyGyro then
         local moveDir = Vector3.new()
@@ -261,12 +256,12 @@ RunService.Heartbeat:Connect(function()
         if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += root.CFrame.RightVector end
         if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0,1,0) end
         if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir -= Vector3.new(0,1,0) end
-        
+
         local velocity = moveDir.Magnitude > 0 and moveDir.Unit * flySpeed or Vector3.new()
         flyBodyVelocity.Velocity = velocity
         flyBodyGyro.CFrame = root.CFrame
     end
-    
+
     -- NoClip
     if noclipEnabled then
         for _, part in ipairs(character:GetDescendants()) do
@@ -275,7 +270,7 @@ RunService.Heartbeat:Connect(function()
             end
         end
     end
-    
+
     -- Auto Collect
     if autoCollect then
         for _, coin in ipairs(Workspace:GetDescendants()) do
@@ -286,7 +281,7 @@ RunService.Heartbeat:Connect(function()
             end
         end
     end
-    
+
     -- Kill Aura
     if killAura and (player.Backpack:FindFirstChild("Knife") or character:FindFirstChild("Knife")) then
         for _, plr in ipairs(Players:GetPlayers()) do
@@ -294,7 +289,6 @@ RunService.Heartbeat:Connect(function()
                 local dist = (plr.Character.HumanoidRootPart.Position - root.Position).Magnitude
                 if dist < 15 then
                     root.CFrame = plr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -4)
-                    -- Optional: fire click if needed
                 end
             end
         end
@@ -305,18 +299,13 @@ end)
 task.spawn(function()
     while true do
         task.wait(1)
-        if espEnabled then 
-            updateESP() 
+        if espEnabled then
+            updateESP()
         end
         getRoles()
     end
 end)
 
--- Force show window (some libraries need this)
 task.wait(0.5)
-print("✅ INVINCIBLE MM2 Script Loaded Successfully! (Fly + NoClip + ESP Fixed)")
-
--- Optional: Auto-open UI if library supports it
-pcall(function()
-    window:Show()
-end)
+print("✅ INVINCIBLE MM2 Script Loaded Successfully! (All features as Buttons/Switches)")
+pcall(function() window:Show() end)
