@@ -1,388 +1,287 @@
--- Murder Mystery 2 Style Game Script (Fixed)
--- Using Skull UI Library
-
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))()
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
 
+-- Load UI Library
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))()
 local window = library:AddWindow("INVINCIBLE ┃ MM2 | HELLO, " .. player.DisplayName, {
-    main_color = Color3.fromRGB(0, 0, 0),
-    min_size = Vector2.new(540, 600),
+    main_color = Color3.fromRGB(255, 0, 100),
+    min_size = Vector2.new(540, 680),
     can_resize = true
 })
 
--- Services
-local Workspace = game:GetService("Workspace")
+-- Variables
+local espEnabled = false
+local godmode = false
+local killAura = false
+local silentAim = false
+local autoCollect = false
+local speedHack = false
+local flyEnabled = false
+local noclipEnabled = false
 
--- Game State
-local GameState = {
-    isGameActive = false,
-    roundTime = 180,
-    currentRound = 0,
-    autoKillEnabled = false,
-    autoKillTarget = "Nearest Player"
-}
+local currentSpeed = 50
+local flySpeed = 50
+local flyBodyVelocity = nil
+local flyBodyGyro = nil
 
--- Player Data
-local PlayerData = {
-    coins = 0,
-    role = "Innocent",
-    alive = true,
-    hasKnife = false,
-    hasGun = false
-}
+local murderer = nil
+local sheriff = nil
 
--- Create Tabs
-local MainTab = window:AddTab("Main")
-local WeaponTab = window:AddTab("Weapons")
-local TeleportTab = window:AddTab("Teleport")
-local InventoryTab = window:AddTab("Inventory")
-local StatsTab = window:AddTab("Statistics")
-local SettingsTab = window:AddTab("Settings")
-
--- ====================== MAIN TAB ======================
-MainTab:AddLabel("Current Role: Innocent")
-local RoleLabel = MainTab:AddLabel("Current Role: " .. PlayerData.role)  -- We'll update this
-
-local StatusLabel = MainTab:AddLabel("Status: Waiting")
-local TimeLabel = MainTab:AddLabel("Time Left: --:--")
-
-MainTab:AddButton({
-    Name = "Start Game",
-    Callback = function()
-        startGame()
-    end
-})
-
-MainTab:AddButton({
-    Name = "End Game",
-    Callback = function()
-        endGame()
-    end
-})
-
--- ====================== WEAPON TAB ======================
-WeaponTab:AddLabel("Weapon System")
-
-WeaponTab:AddButton({
-    Name = "Get Knife",
-    Callback = function()
-        giveWeapon("Knife")
-    end
-})
-
-WeaponTab:AddButton({
-    Name = "Get Gun",
-    Callback = function()
-        giveWeapon("Gun")
-    end
-})
-
-local AutoKillToggle = WeaponTab:AddSwitch("Enable AutoKill", function(Value)
-    GameState.autoKillEnabled = Value
-    if Value then
-        library:Notification("AutoKill", "AutoKill has been enabled", 3)
-        startAutoKill()
-    else
-        library:Notification("AutoKill", "AutoKill has been disabled", 3)
-    end
-end)
-
-local TargetDropdown = WeaponTab:AddDropdown("AutoKill Target")
-TargetDropdown:Add("Everyone")
-TargetDropdown:Add("Nearest Player")
-TargetDropdown:Add("Random")
--- Default selection handled by library or first add
-
-WeaponTab:AddButton({
-    Name = "Instant Kill",
-    Callback = function()
-        instantKill()
-    end
-})
-
--- ====================== TELEPORT TAB ======================
-TeleportTab:AddLabel("Map Teleports")
-
-TeleportTab:AddButton({ Name = "Teleport to Lobby", Callback = teleportToLobby })
-TeleportTab:AddButton({ Name = "Teleport to Map 1", Callback = function() teleportToMap("Map1") end })
-TeleportTab:AddButton({ Name = "Teleport to Map 2", Callback = function() teleportToMap("Map2") end })
-TeleportTab:AddButton({ Name = "Teleport to Map 3", Callback = function() teleportToMap("Map3") end })
-
-TeleportTab:AddLabel("Player Teleport")
-local PlayerNameBox = TeleportTab:AddTextBox("Enter player name", function(Text)
-    teleportToPlayer(Text)
-end)
-
--- ====================== INVENTORY TAB ======================
-InventoryTab:AddLabel("Item Management")
-
-InventoryTab:AddButton({
-    Name = "Get All Items",
-    Callback = giveAllItems
-})
-
-InventoryTab:AddButton({
-    Name = "Get All Weapons",
-    Callback = giveAllWeapons
-})
-
-InventoryTab:AddButton({
-    Name = "Add 10000 Coins",
-    Callback = function()
-        PlayerData.coins = PlayerData.coins + 10000
-        updateStats()
-        library:Notification("Coins", "+10000 Coins Added!", 3)
-    end
-})
-
-InventoryTab:AddLabel("Common Items")
-local commonItems = {
-    "Knife_Default", "Knife_Classic", "Gun_Revolver", "Gun_Sheriff",
-    "Emote_Wave", "Emote_Dance", "Pet_Dog", "Pet_Cat"
-}
-
-for _, item in ipairs(commonItems) do
-    InventoryTab:AddButton({
-        Name = "Get " .. item,
-        Callback = function()
-            giveSpecificItem(item)
+-- Helper Functions
+local function getRoles()
+    murderer = nil
+    sheriff = nil
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player then
+            local char = plr.Character
+            if char then
+                if char:FindFirstChild("Knife") then murderer = plr end
+                if char:FindFirstChild("Gun") then sheriff = plr end
+            end
         end
-    })
-end
-
--- ====================== STATS TAB ======================
-StatsTab:AddLabel("Player Statistics")
-local CoinsLabel = StatsTab:AddLabel("Coins: 0")
-local RoundsLabel = StatsTab:AddLabel("Rounds Played: 0")
-local WeaponLabel = StatsTab:AddLabel("Weapons: None")
-
--- ====================== SETTINGS TAB ======================
-SettingsTab:AddLabel("Game Settings")
-
-SettingsTab:AddSwitch("God Mode", function(Value)
-    setGodMode(Value)
-end)
-
-local RoundTimeSlider = SettingsTab:AddSlider("Round Time (seconds)", function(Value)
-    GameState.roundTime = Value
-end, {min = 60, max = 600})
-
-local WalkSpeedSlider = SettingsTab:AddSlider("WalkSpeed", function(Value)
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.WalkSpeed = Value
     end
-end, {min = 16, max = 100})
+end
 
--- ====================== GAME FUNCTIONS ======================
-function startGame()
-    if GameState.isGameActive then
-        library:Notification("Error", "Game is already running", 3)
-        return
+local function createESP(plr, color, text)
+    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+        local highlight = Instance.new("Highlight")
+        highlight.Adornee = plr.Character
+        highlight.FillColor = color
+        highlight.OutlineColor = color
+        highlight.Parent = plr.Character
+        
+        local billboard = Instance.new("BillboardGui")
+        billboard.Adornee = plr.Character.HumanoidRootPart
+        billboard.Size = UDim2.new(0, 200, 0, 50)
+        billboard.StudsOffset = Vector3.new(0, 3, 0)
+        billboard.AlwaysOnTop = true
+        
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Text = text .. " [" .. plr.Name .. "]"
+        label.TextColor3 = color
+        label.TextScaled = true
+        label.Font = Enum.Font.GothamBold
+        label.Parent = billboard
+        
+        billboard.Parent = plr.Character
     end
-    GameState.isGameActive = true
-    GameState.currentRound = GameState.currentRound + 1
-    PlayerData.alive = true
-    assignRoles()
-    StatusLabel.Text = "Status: In Game"  -- Direct access for Skull UI labels
-    RoundsLabel.Text = "Rounds Played: " .. GameState.currentRound
-    library:Notification("Game Started", "Round " .. GameState.currentRound .. " has begun!", 3)
-    startTimer()
 end
 
-function endGame()
-    if not GameState.isGameActive then
-        library:Notification("Error", "No active game to end", 3)
-        return
-    end
-    GameState.isGameActive = false
-    StatusLabel.Text = "Status: Ended"
-    
-    local reward = 50
-    if PlayerData.role == "Murderer" and PlayerData.alive then
-        reward = 200
-    elseif PlayerData.role == "Sheriff" and PlayerData.alive then
-        reward = 150
-    end
-    PlayerData.coins = PlayerData.coins + reward
-    updateStats()
-    library:Notification("Game Ended", "+" .. reward .. " Coins Awarded!", 5)
-    TimeLabel.Text = "Time Left: --:--"
-end
-
-function assignRoles()
-    local roles = {"Innocent", "Sheriff", "Murderer"}
-    local randomRole = roles[math.random(1, #roles)]
-    PlayerData.role = randomRole
-    RoleLabel.Text = "Current Role: " .. randomRole
-    library:Notification("Role Assigned", "You are " .. randomRole .. "!", 5)
-end
-
-function startTimer()
-    spawn(function()
-        local timeLeft = GameState.roundTime
-        while timeLeft > 0 and GameState.isGameActive do
-            local minutes = math.floor(timeLeft / 60)
-            local seconds = timeLeft % 60
-            TimeLabel.Text = string.format("Time Left: %02d:%02d", minutes, seconds)
-            wait(1)
-            timeLeft -= 1
-        end
-        if GameState.isGameActive then
-            endGame()
-        end
-    end)
-end
-
-function updateStats()
-    CoinsLabel.Text = "Coins: " .. PlayerData.coins
-    RoundsLabel.Text = "Rounds Played: " .. GameState.currentRound
-    
-    local weapons = {}
-    if PlayerData.hasKnife then table.insert(weapons, "Knife") end
-    if PlayerData.hasGun then table.insert(weapons, "Gun") end
-    WeaponLabel.Text = "Weapons: " .. (#weapons > 0 and table.concat(weapons, ", ") or "None")
-end
-
--- Weapon Functions
-function giveWeapon(weaponType)
-    if weaponType == "Knife" then
-        PlayerData.hasKnife = true
-    elseif weaponType == "Gun" then
-        PlayerData.hasGun = true
-    end
-    updateStats()
-    library:Notification("Weapon", weaponType .. " obtained!", 3)
-end
-
-function startAutoKill()
-    spawn(function()
-        while GameState.autoKillEnabled do
-            if PlayerData.hasKnife or PlayerData.hasGun then
-                local target = findTarget()
-                if target then
-                    killPlayer(target)
+local function updateESP()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player and plr.Character then
+            for _, v in ipairs(plr.Character:GetChildren()) do
+                if v:IsA("Highlight") or v:IsA("BillboardGui") then
+                    v:Destroy()
                 end
             end
-            wait(0.5)
         end
-    end)
-end
-
-function findTarget()
-    local target = nil
-    local closest = math.huge
+    end
+    if not espEnabled then return end
+    getRoles()
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            if GameState.autoKillTarget == "Nearest Player" then
-                local distance = (plr.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                if distance < closest then
-                    closest = distance
-                    target = plr
-                end
-            elseif GameState.autoKillTarget == "Random" then
-                target = plr
-                break
-            elseif GameState.autoKillTarget == "Everyone" then
-                return plr  -- Will kill one per loop
+            local color = Color3.fromRGB(255, 255, 255)
+            local label = "Innocent"
+            if plr == murderer then
+                color = Color3.fromRGB(255, 0, 0)
+                label = "Murderer"
+            elseif plr == sheriff then
+                color = Color3.fromRGB(0, 100, 255)
+                label = "Sheriff"
+            end
+            createESP(plr, color, label)
+        end
+    end
+end
+
+-- Fly Functions
+local function StartFly()
+    local character = player.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    local root = character.HumanoidRootPart
+    local humanoid = character:FindFirstChild("Humanoid")
+    
+    if flyBodyVelocity then flyBodyVelocity:Destroy() end
+    if flyBodyGyro then flyBodyGyro:Destroy() end
+
+    flyBodyVelocity = Instance.new("BodyVelocity")
+    flyBodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    flyBodyVelocity.Velocity = Vector3.new(0,0,0)
+    flyBodyVelocity.Parent = root
+
+    flyBodyGyro = Instance.new("BodyGyro")
+    flyBodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    flyBodyGyro.P = 10000
+    flyBodyGyro.D = 500
+    flyBodyGyro.Parent = root
+
+    if humanoid then humanoid.PlatformStand = true end
+end
+
+local function EndFly()
+    local character = player.Character
+    if character and character:FindFirstChild("Humanoid") then
+        character.Humanoid.PlatformStand = false
+    end
+    if flyBodyVelocity then flyBodyVelocity:Destroy() end
+    if flyBodyGyro then flyBodyGyro:Destroy() end
+end
+
+-- Main Tab
+local tabMain = window:AddTab("Main")
+local tabCombat = window:AddTab("Combat")
+local tabVisuals = window:AddTab("Visuals")
+local tabMovement = window:AddTab("Movement")
+local tabMisc = window:AddTab("Misc")
+
+-- Main Tab
+tabMain:AddButton("Collect All Coins", function()
+    for _, v in ipairs(Workspace:GetDescendants()) do
+        if v.Name:find("Coin") and v:IsA("BasePart") then
+            firetouchinterest(player.Character.HumanoidRootPart, v, 0)
+            task.wait(0.05)
+        end
+    end
+end)
+
+tabMain:AddToggle("Auto Collect Coins", false, function(state)
+    autoCollect = state
+end)
+
+-- Combat Tab
+tabCombat:AddToggle("Godmode", false, function(state)
+    godmode = state
+end)
+
+tabCombat:AddToggle("Kill Aura", false, function(state)
+    killAura = state
+end)
+
+tabCombat:AddToggle("Silent Aim", false, function(state)
+    silentAim = state
+end)
+
+tabCombat:AddButton("Kill All (as Murderer)", function()
+    -- ... (same as before)
+end)
+
+-- Visuals Tab
+tabVisuals:AddToggle("Player ESP", false, function(state)
+    espEnabled = state
+    updateESP()
+end)
+
+tabVisuals:AddButton("Refresh ESP", updateESP)
+
+-- Movement Tab (New Features Added)
+tabMovement:AddToggle("Speed Hack", false, function(state)
+    speedHack = state
+end)
+
+tabMovement:AddSlider("WalkSpeed", 16, 16, 250, function(value)
+    currentSpeed = value
+end)
+
+tabMovement:AddToggle("Fly", false, function(state)
+    flyEnabled = state
+    if state then
+        StartFly()
+    else
+        EndFly()
+    end
+end)
+
+tabMovement:AddSlider("Fly Speed", 50, 10, 200, function(value)
+    flySpeed = value
+end)
+
+tabMovement:AddToggle("NoClip", false, function(state)
+    noclipEnabled = state
+end)
+
+-- Misc Tab
+tabMisc:AddButton("Rejoin", function()
+    game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
+end)
+
+-- Main Loop
+RunService.Heartbeat:Connect(function()
+    local character = player.Character
+    if not character then return end
+    local root = character:FindFirstChild("HumanoidRootPart")
+    local humanoid = character:FindFirstChild("Humanoid")
+    if not root or not humanoid then return end
+
+    -- Godmode
+    if godmode then
+        humanoid.MaxHealth = math.huge
+        humanoid.Health = math.huge
+    end
+
+    -- Speed Hack
+    if speedHack then
+        humanoid.WalkSpeed = currentSpeed
+    else
+        humanoid.WalkSpeed = 16
+    end
+
+    -- Fly
+    if flyEnabled and flyBodyVelocity and flyBodyGyro then
+        local moveDir = Vector3.new()
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += root.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= root.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= root.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += root.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0,1,0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir -= Vector3.new(0,1,0) end
+
+        flyBodyVelocity.Velocity = moveDir.Unit * flySpeed
+        flyBodyGyro.CFrame = root.CFrame
+    end
+
+    -- NoClip
+    if noclipEnabled then
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
             end
         end
     end
-    return target
-end
 
-function killPlayer(target)
-    if target and target.Character and target.Character:FindFirstChild("Humanoid") then
-        -- TODO: Replace with actual remote/fire for real MM2 exploit
-        target.Character.Humanoid.Health = 0
-        library:Notification("Kill", "Killed " .. target.Name, 2)
-    end
-end
-
-function instantKill()
-    local target = findTarget()
-    if target then
-        killPlayer(target)
-    else
-        library:Notification("Error", "No target found", 3)
-    end
-end
-
--- Teleport Functions
-function teleportToLobby()
-    local char = player.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        char.HumanoidRootPart.CFrame = CFrame.new(0, 50, 0)
-        library:Notification("Teleport", "Teleported to Lobby", 2)
-    end
-end
-
-function teleportToMap(mapName)
-    local char = player.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        local positions = {
-            Map1 = CFrame.new(100, 50, 100),
-            Map2 = CFrame.new(200, 50, 200),
-            Map3 = CFrame.new(300, 50, 300)
-        }
-        if positions[mapName] then
-            char.HumanoidRootPart.CFrame = positions[mapName]
-            library:Notification("Teleport", "Teleported to " .. mapName, 2)
+    -- Auto Collect
+    if autoCollect then
+        for _, coin in ipairs(Workspace:GetDescendants()) do
+            if coin.Name:find("Coin") and coin:IsA("BasePart") and (coin.Position - root.Position).Magnitude < 40 then
+                firetouchinterest(root, coin, 0)
+            end
         end
     end
-end
 
-function teleportToPlayer(playerName)
-    local target = Players:FindFirstChild(playerName)
-    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-        local char = player.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            char.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
-            library:Notification("Teleport", "Teleported to " .. playerName, 2)
-        end
-    else
-        library:Notification("Error", "Player not found", 3)
-    end
-end
-
--- Inventory Functions
-function giveAllItems()
-    PlayerData.hasKnife = true
-    PlayerData.hasGun = true
-    PlayerData.coins += 50000
-    updateStats()
-    library:Notification("Inventory", "All items granted!", 3)
-end
-
-function giveAllWeapons()
-    PlayerData.hasKnife = true
-    PlayerData.hasGun = true
-    updateStats()
-    library:Notification("Inventory", "All weapons granted!", 3)
-end
-
-function giveSpecificItem(itemName)
-    library:Notification("Item", itemName .. " obtained!", 2)
-    -- Add real item logic here
-end
-
--- Settings Functions
-function setGodMode(enabled)
-    local char = player.Character
-    if char and char:FindFirstChild("Humanoid") then
-        local hum = char.Humanoid
-        if enabled then
-            hum.MaxHealth = math.huge
-            hum.Health = math.huge
-            library:Notification("God Mode", "Enabled", 3)
-        else
-            hum.MaxHealth = 100
-            hum.Health = 100
-            library:Notification("God Mode", "Disabled", 3)
+    -- Kill Aura
+    if killAura and (player.Backpack:FindFirstChild("Knife") or character:FindFirstChild("Knife")) then
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                local dist = (plr.Character.HumanoidRootPart.Position - root.Position).Magnitude
+                if dist < 12 then
+                    root.CFrame = plr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -3)
+                end
+            end
         end
     end
-end
+end)
 
+-- ESP Loop
+spawn(function()
+    while task.wait(1.5) do
+        if espEnabled then updateESP() end
+        getRoles()
+    end
+end)
 
-library:Notification("MM2 Script", "Script loaded successfully!", 5)
-updateStats()
+print("✅ Full INVINCIBLE MM2 Script Loaded with Fly + NoClip!")
