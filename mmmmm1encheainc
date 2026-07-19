@@ -1,40 +1,29 @@
--- Murder Mystery 2風ゲーム スクリプト
--- Rayfield UIライブラリを使用
+-- Murder Mystery 2 Style Game Script
+-- Using Skull UI Library
 
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))()
 
-local Window = Rayfield:CreateWindow({
-    Name = "Murder Mystery 2 Game",
-    LoadingTitle = "MM2 ゲームシステム",
-    LoadingSubtitle = "by Your Name",
-    ConfigurationSaving = {
-        Enabled = false,
-        FolderName = nil,
-        FileName = "MM2Config"
-    },
-    Discord = {
-        Enabled = false,
-        Invite = "noinvitelink",
-        RememberJoins = true
-    },
-    KeySystem = false
+local window = library:AddWindow("INVINCIBLE ┃ MM2 | HELLO, " .. player.DisplayName, {
+    main_color = Color3.fromRGB(0, 0, 0),
+    min_size = Vector2.new(540, 1080),
+    can_resize = false
 })
 
--- プレイヤーとサービス
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+-- Services
 local Workspace = game:GetService("Workspace")
 
--- ゲームの状態管理
+-- Game State
 local GameState = {
     isGameActive = false,
     roundTime = 180,
     currentRound = 0,
     autoKillEnabled = false,
-    autoKillTarget = nil
+    autoKillTarget = "Nearest Player"
 }
 
--- プレイヤーデータ
+-- Player Data
 local PlayerData = {
     coins = 0,
     role = "Innocent",
@@ -43,330 +32,270 @@ local PlayerData = {
     hasGun = false
 }
 
--- タブの作成
-local MainTab = Window:CreateTab("メイン", 4483362458)
-local WeaponTab = Window:CreateTab("武器", 4483362458)
-local TeleportTab = Window:CreateTab("テレポート", 4483362458)
-local InventoryTab = Window:CreateTab("インベントリ", 4483362458)
-local StatsTab = Window:CreateTab("統計", 4483362458)
-local SettingsTab = Window:CreateTab("設定", 4483362458)
+-- Create Tabs
+local MainTab = window:AddTab("Main")
+local WeaponTab = window:AddTab("Weapons")
+local TeleportTab = window:AddTab("Teleport")
+local InventoryTab = window:AddTab("Inventory")
+local StatsTab = window:AddTab("Statistics")
+local SettingsTab = window:AddTab("Settings")
 
--- メインタブ
-local GameSection = MainTab:CreateSection("ゲーム管理")
+-- ====================== MAIN TAB ======================
+local GameSection = MainTab:AddSection("Game Management")
 
-local RoleLabel = MainTab:CreateLabel("現在の役職: " .. PlayerData.role)
-local StatusLabel = MainTab:CreateLabel("ステータス: 待機中")
-local TimeLabel = MainTab:CreateLabel("残り時間: --:--")
+local RoleLabel = MainTab:AddLabel("Current Role: " .. PlayerData.role)
+local StatusLabel = MainTab:AddLabel("Status: Waiting")
+local TimeLabel = MainTab:AddLabel("Time Left: --:--")
 
-local StartButton = MainTab:CreateButton({
-    Name = "ゲーム開始",
+MainTab:AddButton({
+    Name = "Start Game",
     Callback = function()
         startGame()
-    end,
+    end
 })
 
-local EndButton = MainTab:CreateButton({
-    Name = "ゲーム終了",
+MainTab:AddButton({
+    Name = "End Game",
     Callback = function()
         endGame()
-    end,
+    end
 })
 
--- 武器タブ
-local WeaponSection = WeaponTab:CreateSection("武器システム")
+-- ====================== WEAPON TAB ======================
+local WeaponSection = WeaponTab:AddSection("Weapon System")
 
-WeaponTab:CreateButton({
-    Name = "ナイフを入手",
+WeaponTab:AddButton({
+    Name = "Get Knife",
     Callback = function()
         giveWeapon("Knife")
-    end,
+    end
 })
 
-WeaponTab:CreateButton({
-    Name = "銃を入手",
+WeaponTab:AddButton({
+    Name = "Get Gun",
     Callback = function()
         giveWeapon("Gun")
-    end,
+    end
 })
 
-local AutoKillToggle = WeaponTab:CreateToggle({
-    Name = "AutoKill有効化",
-    CurrentValue = false,
-    Flag = "AutoKill",
+local AutoKillToggle = WeaponTab:AddToggle({
+    Name = "Enable AutoKill",
+    Default = false,
     Callback = function(Value)
         GameState.autoKillEnabled = Value
         if Value then
-            Rayfield:Notify({
-                Title = "AutoKill",
-                Content = "AutoKillが有効になりました",
-                Duration = 3,
-                Image = 4483362458,
-            })
+            library:Notification("AutoKill", "AutoKill has been enabled", 3)
             startAutoKill()
         else
-            Rayfield:Notify({
-                Title = "AutoKill",
-                Content = "AutoKillが無効になりました",
-                Duration = 3,
-                Image = 4483362458,
-            })
+            library:Notification("AutoKill", "AutoKill has been disabled", 3)
         end
-    end,
+    end
 })
 
-local TargetDropdown = WeaponTab:CreateDropdown({
-    Name = "ターゲット選択",
-    Options = {"全員", "最寄りのプレイヤー", "ランダム"},
-    CurrentOption = "最寄りのプレイヤー",
-    Flag = "Target",
+local TargetDropdown = WeaponTab:AddDropdown({
+    Name = "AutoKill Target",
+    Options = {"Everyone", "Nearest Player", "Random"},
+    Default = "Nearest Player",
     Callback = function(Option)
         GameState.autoKillTarget = Option
-        Rayfield:Notify({
-            Title = "ターゲット設定",
-            Content = "ターゲット: " .. Option,
-            Duration = 2,
-            Image = 4483362458,
-        })
-    end,
+        library:Notification("Target Set", "Target: " .. Option, 2)
+    end
 })
 
-WeaponTab:CreateButton({
-    Name = "即座にキル",
+WeaponTab:AddButton({
+    Name = "Instant Kill",
     Callback = function()
         instantKill()
-    end,
+    end
 })
 
--- テレポートタブ
-local TeleportSection = TeleportTab:CreateSection("マップテレポート")
+-- ====================== TELEPORT TAB ======================
+local TeleportSection = TeleportTab:AddSection("Map Teleports")
 
-TeleportTab:CreateButton({
-    Name = "ロビーへテレポート",
+TeleportTab:AddButton({
+    Name = "Teleport to Lobby",
     Callback = function()
         teleportToLobby()
-    end,
+    end
 })
 
-TeleportTab:CreateButton({
-    Name = "マップ1へテレポート",
+TeleportTab:AddButton({
+    Name = "Teleport to Map 1",
     Callback = function()
         teleportToMap("Map1")
-    end,
+    end
 })
 
-TeleportTab:CreateButton({
-    Name = "マップ2へテレポート",
+TeleportTab:AddButton({
+    Name = "Teleport to Map 2",
     Callback = function()
         teleportToMap("Map2")
-    end,
+    end
 })
 
-TeleportTab:CreateButton({
-    Name = "マップ3へテレポート",
+TeleportTab:AddButton({
+    Name = "Teleport to Map 3",
     Callback = function()
         teleportToMap("Map3")
-    end,
+    end
 })
 
-local PlayerTeleportSection = TeleportTab:CreateSection("プレイヤーテレポート")
+local PlayerTeleportSection = TeleportTab:AddSection("Player Teleport")
 
-local TeleportToPlayerInput = TeleportTab:CreateInput({
-    Name = "プレイヤー名",
-    PlaceholderText = "プレイヤー名を入力",
-    RemoveTextAfterFocusLost = false,
+TeleportTab:AddTextbox({
+    Name = "Player Name",
+    Placeholder = "Enter player name",
     Callback = function(Text)
         teleportToPlayer(Text)
-    end,
+    end
 })
 
--- インベントリタブ
-local InventorySection = InventoryTab:CreateSection("アイテム管理")
+-- ====================== INVENTORY TAB ======================
+local InventorySection = InventoryTab:AddSection("Item Management")
 
-InventoryTab:CreateButton({
-    Name = "全アイテム入手",
+InventoryTab:AddButton({
+    Name = "Get All Items",
     Callback = function()
         giveAllItems()
-    end,
+    end
 })
 
-InventoryTab:CreateButton({
-    Name = "全武器入手",
+InventoryTab:AddButton({
+    Name = "Get All Weapons",
     Callback = function()
         giveAllWeapons()
-    end,
+    end
 })
 
-InventoryTab:CreateButton({
-    Name = "コイン10000追加",
+InventoryTab:AddButton({
+    Name = "Add 10000 Coins",
     Callback = function()
         PlayerData.coins = PlayerData.coins + 10000
         updateStats()
-        Rayfield:Notify({
-            Title = "コイン追加",
-            Content = "+10000コイン獲得！",
-            Duration = 3,
-            Image = 4483362458,
-        })
-    end,
+        library:Notification("Coins", "+10000 Coins Added!", 3)
+    end
 })
 
-local ItemList = InventoryTab:CreateSection("個別アイテム")
+local ItemSection = InventoryTab:AddSection("Individual Items")
 
 local commonItems = {
-    "Knife_Default",
-    "Knife_Classic",
-    "Gun_Revolver",
-    "Gun_Sheriff",
-    "Emote_Wave",
-    "Emote_Dance",
-    "Pet_Dog",
-    "Pet_Cat"
+    "Knife_Default", "Knife_Classic", "Gun_Revolver", "Gun_Sheriff",
+    "Emote_Wave", "Emote_Dance", "Pet_Dog", "Pet_Cat"
 }
 
 for _, item in ipairs(commonItems) do
-    InventoryTab:CreateButton({
-        Name = item .. " を入手",
+    InventoryTab:AddButton({
+        Name = "Get " .. item,
         Callback = function()
             giveSpecificItem(item)
-        end,
+        end
     })
 end
 
--- 統計タブ
-local StatsSection = StatsTab:CreateSection("プレイヤー統計")
+-- ====================== STATS TAB ======================
+local StatsSection = StatsTab:AddSection("Player Statistics")
 
-local CoinsLabel = StatsTab:CreateLabel("コイン: " .. PlayerData.coins)
-local RoundsLabel = StatsTab:CreateLabel("ラウンド数: " .. GameState.currentRound)
-local WeaponLabel = StatsTab:CreateLabel("所持武器: なし")
+local CoinsLabel = StatsTab:AddLabel("Coins: " .. PlayerData.coins)
+local RoundsLabel = StatsTab:AddLabel("Rounds Played: " .. GameState.currentRound)
+local WeaponLabel = StatsTab:AddLabel("Weapons: None")
 
--- 設定タブ
-local SettingsSection = SettingsTab:CreateSection("ゲーム設定")
+-- ====================== SETTINGS TAB ======================
+local SettingsSection = SettingsTab:AddSection("Game Settings")
 
-local RoundTimeSlider = SettingsTab:CreateSlider({
-    Name = "ラウンド時間 (秒)",
-    Range = {60, 600},
+SettingsTab:AddSlider({
+    Name = "Round Time (seconds)",
+    Min = 60,
+    Max = 600,
+    Default = 180,
     Increment = 30,
-    CurrentValue = 180,
-    Flag = "RoundTime",
     Callback = function(Value)
         GameState.roundTime = Value
-    end,
+    end
 })
 
-SettingsTab:CreateToggle({
-    Name = "無敵モード",
-    CurrentValue = false,
-    Flag = "GodMode",
+SettingsTab:AddToggle({
+    Name = "God Mode",
+    Default = false,
     Callback = function(Value)
         setGodMode(Value)
-    end,
+    end
 })
 
-SettingsTab:CreateSlider({
-    Name = "移動速度",
-    Range = {16, 100},
+SettingsTab:AddSlider({
+    Name = "WalkSpeed",
+    Min = 16,
+    Max = 100,
+    Default = 16,
     Increment = 1,
-    CurrentValue = 16,
-    Flag = "WalkSpeed",
     Callback = function(Value)
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-            LocalPlayer.Character.Humanoid.WalkSpeed = Value
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.WalkSpeed = Value
         end
-    end,
+    end
 })
 
--- ゲーム関数
+-- ====================== GAME FUNCTIONS ======================
 function startGame()
     if GameState.isGameActive then
-        Rayfield:Notify({
-            Title = "エラー",
-            Content = "ゲームは既に進行中です",
-            Duration = 3,
-            Image = 4483362458,
-        })
+        library:Notification("Error", "Game is already running", 3)
         return
     end
-    
+
     GameState.isGameActive = true
     GameState.currentRound = GameState.currentRound + 1
     PlayerData.alive = true
-    
+
     assignRoles()
-    StatusLabel:Set("ステータス: ゲーム中")
-    RoundsLabel:Set("ラウンド数: " .. GameState.currentRound)
-    
-    Rayfield:Notify({
-        Title = "ゲーム開始",
-        Content = "ラウンド " .. GameState.currentRound .. " が開始されました！",
-        Duration = 3,
-        Image = 4483362458,
-    })
-    
+    StatusLabel:Set("Status: In Game")
+    RoundsLabel:Set("Rounds Played: " .. GameState.currentRound)
+
+    library:Notification("Game Started", "Round " .. GameState.currentRound .. " has begun!", 3)
     startTimer()
 end
 
 function endGame()
     if not GameState.isGameActive then
-        Rayfield:Notify({
-            Title = "エラー",
-            Content = "進行中のゲームがありません",
-            Duration = 3,
-            Image = 4483362458,
-        })
+        library:Notification("Error", "No active game to end", 3)
         return
     end
-    
+
     GameState.isGameActive = false
-    StatusLabel:Set("ステータス: 終了")
-    
+    StatusLabel:Set("Status: Ended")
+
     local reward = 50
     if PlayerData.role == "Murderer" and PlayerData.alive then
         reward = 200
     elseif PlayerData.role == "Sheriff" and PlayerData.alive then
         reward = 150
     end
-    
+
     PlayerData.coins = PlayerData.coins + reward
     updateStats()
-    
-    Rayfield:Notify({
-        Title = "ゲーム終了",
-        Content = "+" .. reward .. " コイン獲得！",
-        Duration = 5,
-        Image = 4483362458,
-    })
-    
-    TimeLabel:Set("残り時間: --:--")
+
+    library:Notification("Game Ended", "+" .. reward .. " Coins Awarded!", 5)
+    TimeLabel:Set("Time Left: --:--")
 end
 
 function assignRoles()
     local roles = {"Innocent", "Sheriff", "Murderer"}
     local randomRole = roles[math.random(1, #roles)]
-    
+
     PlayerData.role = randomRole
-    RoleLabel:Set("現在の役職: " .. randomRole)
-    
-    Rayfield:Notify({
-        Title = "役職決定",
-        Content = "あなたは " .. randomRole .. " です！",
-        Duration = 5,
-        Image = 4483362458,
-    })
+    RoleLabel:Set("Current Role: " .. randomRole)
+
+    library:Notification("Role Assigned", "You are " .. randomRole .. "!", 5)
 end
 
 function startTimer()
     spawn(function()
         local timeLeft = GameState.roundTime
-        
         while timeLeft > 0 and GameState.isGameActive do
             local minutes = math.floor(timeLeft / 60)
             local seconds = timeLeft % 60
-            TimeLabel:Set(string.format("残り時間: %02d:%02d", minutes, seconds))
-            
+            TimeLabel:Set(string.format("Time Left: %02d:%02d", minutes, seconds))
             wait(1)
             timeLeft = timeLeft - 1
         end
-        
         if GameState.isGameActive then
             endGame()
         end
@@ -374,40 +303,25 @@ function startTimer()
 end
 
 function updateStats()
-    CoinsLabel:Set("コイン: " .. PlayerData.coins)
-    RoundsLabel:Set("ラウンド数: " .. GameState.currentRound)
-    
+    CoinsLabel:Set("Coins: " .. PlayerData.coins)
+    RoundsLabel:Set("Rounds Played: " .. GameState.currentRound)
+
     local weapons = {}
-    if PlayerData.hasKnife then table.insert(weapons, "ナイフ") end
-    if PlayerData.hasGun then table.insert(weapons, "銃") end
-    
-    if #weapons > 0 then
-        WeaponLabel:Set("所持武器: " .. table.concat(weapons, ", "))
-    else
-        WeaponLabel:Set("所持武器: なし")
-    end
+    if PlayerData.hasKnife then table.insert(weapons, "Knife") end
+    if PlayerData.hasGun then table.insert(weapons, "Gun") end
+
+    WeaponLabel:Set("Weapons: " .. (#weapons > 0 and table.concat(weapons, ", ") or "None"))
 end
 
--- 武器システム
+-- Weapon Functions
 function giveWeapon(weaponType)
     if weaponType == "Knife" then
         PlayerData.hasKnife = true
-        Rayfield:Notify({
-            Title = "武器入手",
-            Content = "ナイフを入手しました！",
-            Duration = 3,
-            Image = 4483362458,
-        })
+        library:Notification("Weapon", "Knife obtained!", 3)
     elseif weaponType == "Gun" then
         PlayerData.hasGun = true
-        Rayfield:Notify({
-            Title = "武器入手",
-            Content = "銃を入手しました！",
-            Duration = 3,
-            Image = 4483362458,
-        })
+        library:Notification("Weapon", "Gun obtained!", 3)
     end
-    
     updateStats()
 end
 
@@ -428,36 +342,30 @@ end
 function findTarget()
     local target = nil
     local closest = math.huge
-    
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            if GameState.autoKillTarget == "最寄りのプレイヤー" then
-                local distance = (player.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            if GameState.autoKillTarget == "Nearest Player" then
+                local distance = (plr.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
                 if distance < closest then
                     closest = distance
-                    target = player
+                    target = plr
                 end
-            elseif GameState.autoKillTarget == "ランダム" then
-                target = player
+            elseif GameState.autoKillTarget == "Random" then
+                target = plr
                 break
-            elseif GameState.autoKillTarget == "全員" then
-                return player
+            elseif GameState.autoKillTarget == "Everyone" then
+                return plr
             end
         end
     end
-    
     return target
 end
 
 function killPlayer(target)
     if target and target.Character and target.Character:FindFirstChild("Humanoid") then
-        -- キルロジックをここに実装
-        Rayfield:Notify({
-            Title = "キル",
-            Content = target.Name .. " をキルしました",
-            Duration = 2,
-            Image = 4483362458,
-        })
+        -- Add your actual kill method here (e.g. fire server event, etc.)
+        library:Notification("Kill", "Killed " .. target.Name, 2)
     end
 end
 
@@ -466,149 +374,80 @@ function instantKill()
     if target then
         killPlayer(target)
     else
-        Rayfield:Notify({
-            Title = "エラー",
-            Content = "ターゲットが見つかりません",
-            Duration = 3,
-            Image = 4483362458,
-        })
+        library:Notification("Error", "No target found", 3)
     end
 end
 
--- テレポートシステム
+-- Teleport Functions
 function teleportToLobby()
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        -- ロビーの座標（環境に合わせて変更してください）
-        LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, 50, 0)
-        
-        Rayfield:Notify({
-            Title = "テレポート",
-            Content = "ロビーへテレポートしました",
-            Duration = 2,
-            Image = 4483362458,
-        })
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(0, 50, 0)
+        library:Notification("Teleport", "Teleported to Lobby", 2)
     end
 end
 
 function teleportToMap(mapName)
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local mapPositions = {
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local positions = {
             Map1 = CFrame.new(100, 50, 100),
             Map2 = CFrame.new(200, 50, 200),
             Map3 = CFrame.new(300, 50, 300)
         }
-        
-        if mapPositions[mapName] then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = mapPositions[mapName]
-            
-            Rayfield:Notify({
-                Title = "テレポート",
-                Content = mapName .. " へテレポートしました",
-                Duration = 2,
-                Image = 4483362458,
-            })
+        if positions[mapName] then
+            player.Character.HumanoidRootPart.CFrame = positions[mapName]
+            library:Notification("Teleport", "Teleported to " .. mapName, 2)
         end
     end
 end
 
 function teleportToPlayer(playerName)
-    local targetPlayer = Players:FindFirstChild(playerName)
-    
-    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
-            
-            Rayfield:Notify({
-                Title = "テレポート",
-                Content = playerName .. " へテレポートしました",
-                Duration = 2,
-                Image = 4483362458,
-            })
+    local target = Players:FindFirstChild(playerName)
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
+            library:Notification("Teleport", "Teleported to " .. playerName, 2)
         end
     else
-        Rayfield:Notify({
-            Title = "エラー",
-            Content = "プレイヤーが見つかりません",
-            Duration = 3,
-            Image = 4483362458,
-        })
+        library:Notification("Error", "Player not found", 3)
     end
 end
 
--- インベントリシステム
+-- Inventory Functions
 function giveAllItems()
     PlayerData.hasKnife = true
     PlayerData.hasGun = true
     PlayerData.coins = PlayerData.coins + 50000
-    
     updateStats()
-    
-    Rayfield:Notify({
-        Title = "全アイテム入手",
-        Content = "全アイテムを入手しました！",
-        Duration = 3,
-        Image = 4483362458,
-    })
+    library:Notification("Inventory", "All items granted!", 3)
 end
 
 function giveAllWeapons()
     PlayerData.hasKnife = true
     PlayerData.hasGun = true
-    
     updateStats()
-    
-    Rayfield:Notify({
-        Title = "全武器入手",
-        Content = "全武器を入手しました！",
-        Duration = 3,
-        Image = 4483362458,
-    })
+    library:Notification("Inventory", "All weapons granted!", 3)
 end
 
 function giveSpecificItem(itemName)
-    Rayfield:Notify({
-        Title = "アイテム入手",
-        Content = itemName .. " を入手しました！",
-        Duration = 2,
-        Image = 4483362458,
-    })
+    library:Notification("Item", itemName .. " obtained!", 2)
 end
 
--- 設定関数
+-- Settings Functions
 function setGodMode(enabled)
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        local hum = player.Character.Humanoid
         if enabled then
-            LocalPlayer.Character.Humanoid.MaxHealth = math.huge
-            LocalPlayer.Character.Humanoid.Health = math.huge
-            
-            Rayfield:Notify({
-                Title = "無敵モード",
-                Content = "無敵モードが有効になりました",
-                Duration = 3,
-                Image = 4483362458,
-            })
+            hum.MaxHealth = math.huge
+            hum.Health = math.huge
+            library:Notification("God Mode", "God Mode Enabled", 3)
         else
-            LocalPlayer.Character.Humanoid.MaxHealth = 100
-            LocalPlayer.Character.Humanoid.Health = 100
-            
-            Rayfield:Notify({
-                Title = "無敵モード",
-                Content = "無敵モードが無効になりました",
-                Duration = 3,
-                Image = 4483362458,
-            })
+            hum.MaxHealth = 100
+            hum.Health = 100
+            library:Notification("God Mode", "God Mode Disabled", 3)
         end
     end
 end
 
--- 初期化
-Rayfield:Notify({
-    Title = "MM2 ゲームシステム",
-    Content = "すべての機能が読み込まれました！",
-    Duration = 5,
-    Image = 4483362458,
-})
-
+-- Initialize
+library:Notification("MM2 Script", "Script loaded successfully!", 5)
 updateStats()
-
-print("MM2 Game System with all features loaded!")
