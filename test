@@ -1,175 +1,74 @@
-if getgenv().AutoKillLoaded then return end
-getgenv().AutoKillLoaded = true
-
--- ================== SETTINGS ==================
-local AutoFarmEnabled = true
-local AutoServerHopEnabled = true
-local ServerHopInterval = 60 -- seconds
-local KillOnlyWeakerEnabled = true -- set to false to kill everyone
-local AutoWhitelistFriendsEnabled = true -- New: Auto whitelist friends
--- =============================================
-
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
-local LocalPlayer = Players.LocalPlayer
+local player = Players.LocalPlayer
 
-local LastServerHop = os.clock()
-local LastAttack = 0
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))()
 
--- Whitelist system
-local playerWhitelist = {}
-local friendWhitelistActive = AutoWhitelistFriendsEnabled
+local window = library:AddWindow("INVINCIBLE ┃ PRIVATE FARMING | HELLO, " .. player.DisplayName, {
+    main_color = Color3.fromRGB(0, 0, 0),
+    min_size = Vector2.new(540, 400),  -- Adjusted height for better fit
+    can_resize = false
+})
 
--- Initialize friend whitelist
-if friendWhitelistActive then
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and LocalPlayer:IsFriendsWith(player.UserId) then
-            playerWhitelist[player.Name] = true
-        end
-    end
-    
-    Players.PlayerAdded:Connect(function(player)
-        if friendWhitelistActive and player ~= LocalPlayer and LocalPlayer:IsFriendsWith(player.UserId) then
-            playerWhitelist[player.Name] = true
-        end
-    end)
-end
+_G.Money = 10000
+_G.autokillallgun = false
 
--- Stats
-local function GetPlayerStatValue(plr, statNames)
-    if not plr then return nil end
-    if type(statNames) == "string" then statNames = {statNames} end
-   
-    for _, name in statNames do
-        local val = plr:GetAttribute(name)
-        if val ~= nil then return tonumber(val) end
-    end
-   
-    local stats = plr:FindFirstChild("leaderstats")
-    if stats then
-        for _, name in statNames do
-            local v = stats:FindFirstChild(name)
-            if v and v:IsA("ValueBase") then return tonumber(v.Value) end
-        end
-    end
-    return nil
-end
+local MainTab = window:AddTab("Main")
 
-local function GetLocalPlayerDamage()
-    return GetPlayerStatValue(LocalPlayer, {"Damage", "DMG", "Attack", "Strength", "Str"}) or 1
-end
+-- Auto Kill All Toggle (using AddSwitch as toggle)
+MainTab:AddSwitch("Auto kill All (Gun / disabled and enabled fix bug / (tool rq))", function(v)
+    _G.autokillallgun = v
+    if _G.autokillallgun then
+        local PlayersService = game:GetService("Players")
+        local LocalPlayer = PlayersService.LocalPlayer
+        
+        task.spawn(function()
+            while _G.autokillallgun do
+                for _, plr in pairs(PlayersService:GetPlayers()) do
+                    if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                        local rip = Vector3.new(0, 0, 0)
 
-local function GetTargetHealth(target)
-    local hum = target.Character and target.Character:FindFirstChildOfClass("Humanoid")
-    return hum and hum.MaxHealth or 100
-end
+                        local args = {
+                            [1] = plr,
+                            [2] = rip
+                        }
 
-local function ShouldKillPlayer(target)
-    if playerWhitelist[target.Name] then
-        return false -- Never kill whitelisted friends
-    end
-    if not KillOnlyWeakerEnabled then return true end
-    local myDmg = GetLocalPlayerDamage()
-    local theirHP = GetTargetHealth(target)
-    return math.ceil(theirHP / myDmg) <= 5
-end
-
--- Server Hop
-local function ServerHop()
-    local placeId = game.PlaceId
-    local myJobId = game.JobId
-   
-    for attempt = 1, 6 do
-        local success, response = pcall(function()
-            return HttpService:JSONDecode(game:HttpGet(
-                "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Desc&limit=100"
-            ))
-        end)
-       
-        if not success or not response or not response.data then
-            task.wait(2 + attempt)
-            continue
-        end
-       
-        local candidates = {}
-        for _, srv in response.data do
-            if srv.id == myJobId then continue end
-            if srv.playing >= srv.maxPlayers then continue end
-            if srv.playing < 8 then continue end
-           
-            local fill = srv.playing / srv.maxPlayers
-            if fill > 0.25 and fill < 0.9 then
-                table.insert(candidates, srv)
+                        local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+                        if tool and tool:FindFirstChild("kill") then
+                            tool.kill:FireServer(unpack(args))
+                        end
+                    end
+                end
+                task.wait(0.1)
             end
-        end
-       
-        if #candidates == 0 then
-            task.wait(3 + attempt * 1.5)
-            continue
-        end
-       
-        local target = candidates[math.random(1, #candidates)]
-        pcall(function()
-            TeleportService:TeleportToPlaceInstance(placeId, target.id, LocalPlayer)
         end)
-        task.wait(5 + attempt * 2)
     end
-end
+end)
 
--- Main Loop
-RunService.Heartbeat:Connect(function()
-    -- Server Hop
-    if AutoServerHopEnabled and (os.clock() - LastServerHop) >= ServerHopInterval then
-        LastServerHop = os.clock()
-        task.spawn(ServerHop)
-    end
-    if not AutoFarmEnabled then return end
-   
-    local Character = LocalPlayer.Character
-    if not Character then return end
-   
-    local Humanoid = Character:FindFirstChildOfClass("Humanoid")
-    if not Humanoid or Humanoid.Health <= 0 then return end
-   
-    local Punch = Character:FindFirstChild("Punch")
-    if not Punch then
-        local tool = LocalPlayer.Backpack:FindFirstChild("Punch")
-        if tool then Humanoid:EquipTool(tool) end
-        return
-    end
-   
-    if (os.clock() - LastAttack) < 0.08 then return end
-    LastAttack = os.clock()
-   
-    -- Speed up attack
-    local attackTime = Punch:FindFirstChild("attackTime")
-    if attackTime then attackTime.Value = 0 end
-    Punch:Activate()
-   
-    -- Kill loop
-    for _, other in Players:GetPlayers() do
-        if other == LocalPlayer then continue end
-        if not ShouldKillPlayer(other) then continue end
-       
-        local char = other.Character
-        if not char then continue end
-       
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        local head = char:FindFirstChild("Head")
-        local root = char:FindFirstChild("HumanoidRootPart")
-        local Hand = Character:FindFirstChild("LeftHand") or Character:FindFirstChild("Left Arm")
-       
-        if hum and head and root and hum.Health > 0 and Hand then
-            local wasAnchored = root.Anchored
-            root.Anchored = true
-            firetouchinterest(head, Hand, 0)
-            task.wait()
-            firetouchinterest(head, Hand, 1)
-            root.Anchored = wasAnchored
+MainTab:AddButton("Give Knifes/Guns - works on kill all (Gun)", function()
+    for _, v in ipairs(game.Players:GetDescendants()) do
+        if v:IsA("Tool") then
+            v.Parent = game.Players.LocalPlayer.Backpack
         end
     end
 end)
 
-print("✅ Auto Kill + Server Hop + Friend Whitelist Loaded!")
+MainTab:AddTextBox("Money Value (_G)", function(v)
+    _G.Money = tonumber(v) or 10000
+end, {clear = true})  -- clear text after input
+
+MainTab:AddButton("Give Money (_G)", function()
+    _G.Money = -math.abs(_G.Money)
+
+    local args = {
+        [1] = "NiksScythe",
+        [2] = _G.Money
+    }
+
+    game:GetService("ReplicatedStorage").Buy:InvokeServer(unpack(args))
+    task.wait(0.1)
+    
+    -- Simple notification replacement (library doesn't have built-in MakeNotification, using a label or print)
+    print("Money Added: " .. _G.Money .. " (+)")
+    -- You can add a Label if you want persistent display
+    -- MainTab:AddLabel("Money Added: " .. _G.Money)
+end)
