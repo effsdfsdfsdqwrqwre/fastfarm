@@ -1,129 +1,4 @@
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/red%20dark%20ui", true))() 
 
-local window = library:AddWindow("INVINCIBLE ┃ PRIVATE KILLING ", {
-    main_color = Color3.fromRGB(0, 0, 0),
-    min_size = Vector2.new(540, 1080),
-    can_resize = false,
-})
-
-local Killer = window:AddTab("Killer")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local playerWhitelist = {}
-local targetPlayerNames = {}
-local autoGoodKarma = false
-local autoBadKarma = false
-local autoKill = false
-local killTarget = false
-local spying = false
-local autoEquipPunch = false
-local autoPunchNoAnim = false
-local targetDropdownItems = {}
-local availableTargets = {}
-
-local titleLabel = Killer:AddLabel("Select Pack")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-
-local dropdown = Killer:AddDropdown("Select Pet", function(text)
-    local petsFolder = game.Players.LocalPlayer.petsFolder
-    for _, folder in pairs(petsFolder:GetChildren()) do
-        if folder:IsA("Folder") then
-            for _, pet in pairs(folder:GetChildren()) do
-                game:GetService("ReplicatedStorage").rEvents.equipPetEvent:FireServer("unequipPet", pet)
-            end
-        end
-    end
-    task.wait(0.2)
-
-    local petName = text
-    local petsToEquip = {}
-    for _, pet in pairs(game.Players.LocalPlayer.petsFolder.Unique:GetChildren()) do
-        if pet.Name == petName then
-            table.insert(petsToEquip, pet)
-        end
-    end
-    local maxPets = 8
-    local equippedCount = math.min(#petsToEquip, maxPets)
-    for i = 1, equippedCount do
-        game:GetService("ReplicatedStorage").rEvents.equipPetEvent:FireServer("equipPet", petsToEquip[i])
-        task.wait(0.1)
-    end
-end)
-
-local Wild_Wizard = dropdown:Add("Wild Wizard")
-local Powerful_Monster = dropdown:Add("Mighty Monster")
-
--- Auto Good Karma
-Killer:AddSwitch("Auto Good Karma", function(bool)
-    autoGoodKarma = bool
-    task.spawn(function()
-        while autoGoodKarma do
-            local playerChar = LocalPlayer.Character
-            local rightHand = playerChar and playerChar:FindFirstChild("RightHand")
-            local leftHand = playerChar and playerChar:FindFirstChild("LeftHand")
-            if playerChar and rightHand and leftHand then
-                for _, target in ipairs(Players:GetPlayers()) do
-                    if target ~= LocalPlayer then
-                        local evilKarma = target:FindFirstChild("evilKarma")
-                        local goodKarma = target:FindFirstChild("goodKarma")
-                        if evilKarma and goodKarma and evilKarma:IsA("IntValue") and goodKarma:IsA("IntValue") and evilKarma.Value > goodKarma.Value then
-                            local rootPart = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
-                            if rootPart then
-                                firetouchinterest(rightHand, rootPart, 1)
-                                firetouchinterest(leftHand, rootPart, 1)
-                                firetouchinterest(rightHand, rootPart, 0)
-                                firetouchinterest(leftHand, rootPart, 0)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait(0.01)
-        end
-    end)
-end)
-
--- Auto Bad Karma
-Killer:AddSwitch("Auto Bad Karma", function(bool)
-    autoBadKarma = bool
-    task.spawn(function()
-        while autoBadKarma do
-            local playerChar = LocalPlayer.Character
-            local rightHand = playerChar and playerChar:FindFirstChild("RightHand")
-            local leftHand = playerChar and playerChar:FindFirstChild("LeftHand")
-            if playerChar and rightHand and leftHand then
-                for _, target in ipairs(Players:GetPlayers()) do
-                    if target ~= LocalPlayer then
-                        local evilKarma = target:FindFirstChild("evilKarma")
-                        local goodKarma = target:FindFirstChild("goodKarma")
-                        if evilKarma and goodKarma and evilKarma:IsA("IntValue") and goodKarma:IsA("IntValue") and goodKarma.Value > evilKarma.Value then
-                            local rootPart = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
-                            if rootPart then
-                                firetouchinterest(rightHand, rootPart, 1)
-                                firetouchinterest(leftHand, rootPart, 1)
-                                firetouchinterest(rightHand, rootPart, 0)
-                                firetouchinterest(leftHand, rootPart, 0)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait(0.01)
-        end
-    end)
-end)
-
--- Auto Whitelist Friends
-local friendWhitelistActive = false
-Killer:AddSwitch("Auto Whitelist Friends", function(state)
-    friendWhitelistActive = state
-    if state then
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and LocalPlayer:IsFriendsWith(player.UserId) then
-                playerWhitelist[player.Name] = true
-            end
         end
         Players.PlayerAdded:Connect(function(player)
             if friendWhitelistActive and player ~= LocalPlayer and LocalPlayer:IsFriendsWith(player.UserId) then
@@ -410,88 +285,6 @@ titleLabel.TextSize = 18
 titleLabel.Font = Enum.Font.Bangers        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-Killer:AddSwitch("NaN", function(state)
-    local player = game.Players.LocalPlayer
-    local targetCFrame = CFrame.new(
-        -38.9849625, 0.111833394, 23.6454487,
-        0.228692636, 5.38890532e-08, 0.973498702,
-        9.52623491e-09, 1, -5.75939509e-08,
-        -0.973498702, 2.24450893e-08, 0.228692636
-    )
-
-    -- Cleanup old connection
-    if _G.NaNLockConnection then
-        _G.NaNLockConnection:Disconnect()
-        _G.NaNLockConnection = nil
-    end
-
-    if state then
-        -- === TURNED ON ===
-        
-        -- NaN size
-        local args = {"changeSize", 0/0}
-        game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("changeSpeedSizeRemote"):InvokeServer(unpack(args))
-
-        -- Function to apply teleport + lock
-        local function applyLock(character)
-            if not character then return end
-            local root = character:WaitForChild("HumanoidRootPart", 5)
-            if not root then return end
-
-            root.CFrame = targetCFrame
-            root.Anchored = true
-            root.Velocity = Vector3.new(0, 0, 0)
-            root.RotVelocity = Vector3.new(0, 0, 0)
-
-            -- Strong continuous lock
-            if _G.NaNLockConnection then
-                _G.NaNLockConnection:Disconnect()
-            end
-
-            _G.NaNLockConnection = game:GetService("RunService").Heartbeat:Connect(function()
-                if root and root.Parent then
-                    root.CFrame = targetCFrame
-                    root.Velocity = Vector3.new(0, 0, 0)
-                    root.RotVelocity = Vector3.new(0, 0, 0)
-                end
-            end)
-        end
-
-        -- Apply to current character
-        local character = player.Character or player.CharacterAdded:Wait()
-        applyLock(character)
-
-        -- Auto re-apply on respawn
-        if not _G.NaNCharacterAddedConn then
-            _G.NaNCharacterAddedConn = player.CharacterAdded:Connect(function(newChar)
-                task.wait(0.1) -- small delay to let character fully load
-                applyLock(newChar)
-            end)
-        end
-
-    else
-        -- === TURNED OFF ===
-        local character = player.Character
-        if character then
-            local root = character:FindFirstChild("HumanoidRootPart")
-            if root then
-                root.Anchored = false
-                root.Velocity = Vector3.new(0, 5, 0)
-            end
-        end
-
-        -- Clean up connections
-        if _G.NaNLockConnection then
-            _G.NaNLockConnection:Disconnect()
-            _G.NaNLockConnection = nil
-        end
-
-        if _G.NaNCharacterAddedConn then
-            _G.NaNCharacterAddedConn:Disconnect()
-            _G.NaNCharacterAddedConn = nil
-        end
-    end
-end)
 
 local AntiKnockbackToggle = Killer:AddSwitch("Anti Knockback", function(state)
     getgenv().AntiKnockback = state
@@ -645,6 +438,43 @@ Killer:AddSwitch("God mode (for pussies)", function(State)
         end)
     end
 end)
+
+local godDamageActive = false  
+  
+Killer:AddSwitch("Damage With Godmode", function(state)  
+    godDamageActive = state  
+    if state then  
+        task.spawn(function()  
+            while godDamageActive do  
+                local player = game.Players.LocalPlayer  
+                local groundSlam = player.Backpack:FindFirstChild("Ground Slam") or (player.Character and player.Character:FindFirstChild("Ground Slam"))  
+  
+                if groundSlam then  
+                    -- Equipar  
+                    if groundSlam.Parent == player.Backpack then  
+                        groundSlam.Parent = player.Character  
+                    end  
+  
+                    -- Quitar delay  
+                    if groundSlam:FindFirstChild("attackTime") then  
+                        groundSlam.attackTime.Value = 0  
+                    end  
+  
+                    -- Lanzar evento  
+                    player.muscleEvent:FireServer("slam")  
+  
+                    -- Activar herramienta  
+                    groundSlam:Activate()  
+                end  
+  
+                task.wait(0.1) -- delay pequeÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â±o  
+            end  
+        end)  
+    end  
+end)
+
+
+
 
 -- Auto Follow System
 local following = false
@@ -828,6 +658,15 @@ Killer:AddButton("Goofball Button", function()
         end)
     end
 end)
+
+local LocalPlayer = game.Players.LocalPlayer
+local combinedActive = false
+local platform = nil
+local autoPunchConnection1 = nil
+local autoPunchConnection2 = nil
+
+
+
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -1495,10 +1334,3 @@ task.spawn(function()
 		task.wait(0.1)
 	end
 end)
-
-
-
-
-
-
-
