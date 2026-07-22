@@ -1,1 +1,231 @@
 
+-[[
+	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
+]]
+print("🚀 Angel Hub V5 - Muscle Legends | Auto Punch Mejorado")
+
+local player = game.Players.LocalPlayer
+local KEY_CORRECTA = "invincible"
+
+local gui = Instance.new("ScreenGui")
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local connections = {}
+
+-- ==================== KEY SCREEN ====================
+local keyFrame = Instance.new("Frame", gui)
+keyFrame.Size = UDim2.new(0, 340, 0, 230)
+keyFrame.Position = UDim2.new(0.5, -170, 0.5, -115)
+keyFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+Instance.new("UICorner", keyFrame).CornerRadius = UDim.new(0, 16)
+
+local title = Instance.new("TextLabel", keyFrame)
+title.Size = UDim2.new(1,0,0,60)
+title.BackgroundTransparency = 1
+title.Text = "KEY SYSTEM"
+title.TextColor3 = Color3.new(1,1,1)
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+Instance.new("UIStroke", title).Thickness = 3
+Instance.new("UIStroke", title).Color = Color3.fromRGB(0,170,255)
+
+local subtitle = Instance.new("TextLabel", keyFrame)
+subtitle.Size = UDim2.new(1,0,0,25)
+subtitle.Position = UDim2.new(0,0,0,55)
+subtitle.BackgroundTransparency = 1
+subtitle.Text = "Muscle Legends"
+subtitle.TextColor3 = Color3.fromRGB(100,200,255)
+subtitle.TextScaled = true
+subtitle.Font = Enum.Font.Gotham
+
+local textbox = Instance.new("TextBox", keyFrame)
+textbox.Size = UDim2.new(0,290,0,50)
+textbox.Position = UDim2.new(0,25,0,90)
+textbox.PlaceholderText = "Pega la key aquí..."
+textbox.TextColor3 = Color3.new(1,1,1)
+textbox.BackgroundColor3 = Color3.fromRGB(30,30,30)
+textbox.TextScaled = true
+textbox.Font = Enum.Font.Gotham
+Instance.new("UICorner", textbox).CornerRadius = UDim.new(0,10)
+
+local verifyBtn = Instance.new("TextButton", keyFrame)
+verifyBtn.Size = UDim2.new(0,290,0,50)
+verifyBtn.Position = UDim2.new(0,25,0,150)
+verifyBtn.Text = "Verificar Key"
+verifyBtn.BackgroundColor3 = Color3.fromRGB(0,170,255)
+verifyBtn.TextColor3 = Color3.new(1,1,1)
+verifyBtn.TextScaled = true
+verifyBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", verifyBtn).CornerRadius = UDim.new(0,10)
+
+-- ==================== HUB ====================
+local function abrirHub()
+    keyFrame:Destroy()
+
+    local main = Instance.new("Frame", gui)
+    main.Size = UDim2.new(0, 380, 0, 520)
+    main.Position = UDim2.new(0.5, -190, 0.5, -260)
+    main.BackgroundColor3 = Color3.fromRGB(15,15,15)
+    Instance.new("UICorner", main).CornerRadius = UDim.new(0,16)
+
+    local header = Instance.new("Frame", main)
+    header.Size = UDim2.new(1,0,0,70)
+    header.BackgroundColor3 = Color3.fromRGB(0,140,255)
+    Instance.new("UICorner", header).CornerRadius = UDim.new(0,16)
+
+    local headerTitle = Instance.new("TextLabel", header)
+    headerTitle.Size = UDim2.new(1,-70,1,0)
+    headerTitle.BackgroundTransparency = 1
+    headerTitle.Text = "💪 ANGEL HUB V5 - MUSCLE LEGENDS"
+    headerTitle.TextColor3 = Color3.new(1,1,1)
+    headerTitle.TextScaled = true
+    headerTitle.Font = Enum.Font.GothamBold
+
+    -- Minimizar
+    local minBtn = Instance.new("TextButton", header)
+    minBtn.Size = UDim2.new(0,40,0,40)
+    minBtn.Position = UDim2.new(1,-50,0.5,-20)
+    minBtn.BackgroundTransparency = 1
+    minBtn.Text = "–"
+    minBtn.TextColor3 = Color3.new(1,1,1)
+    minBtn.TextScaled = true
+    minBtn.MouseButton1Click:Connect(function()
+        main.Visible = false
+        local float = Instance.new("TextButton", gui)
+        float.Size = UDim2.new(0,50,0,50)
+        float.Position = UDim2.new(0,20,0,20)
+        float.BackgroundColor3 = Color3.fromRGB(0,140,255)
+        float.Text = "💪"
+        float.TextScaled = true
+        Instance.new("UICorner", float).CornerRadius = UDim.new(1,0)
+        float.MouseButton1Click:Connect(function()
+            main.Visible = true
+            float:Destroy()
+        end)
+    end)
+
+    local content = Instance.new("ScrollingFrame", main)
+    content.Size = UDim2.new(1,-20,1,-90)
+    content.Position = UDim2.new(0,10,0,80)
+    content.BackgroundTransparency = 1
+    content.ScrollBarThickness = 6
+    content.CanvasSize = UDim2.new(0,0,0,900)
+
+    local y = 10
+
+    local function createToggle(name, callback)
+        local toggle = Instance.new("TextButton", content)
+        toggle.Size = UDim2.new(1,-20,0,65)
+        toggle.Position = UDim2.new(0,10,0,y)
+        toggle.BackgroundColor3 = Color3.fromRGB(30,30,30)
+        toggle.Text = ""
+        toggle.AutoButtonColor = false
+        Instance.new("UICorner", toggle).CornerRadius = UDim.new(0,12)
+
+        local circle = Instance.new("Frame", toggle)
+        circle.Size = UDim2.new(0,32,0,32)
+        circle.Position = UDim2.new(0,15,0.5,-16)
+        circle.BackgroundColor3 = Color3.fromRGB(60,60,60)
+        Instance.new("UICorner", circle).CornerRadius = UDim.new(1,0)
+
+        local label = Instance.new("TextLabel", toggle)
+        label.Size = UDim2.new(1,-70,1,0)
+        label.Position = UDim2.new(0,60,0,0)
+        label.BackgroundTransparency = 1
+        label.Text = name
+        label.TextColor3 = Color3.new(1,1,1)
+        label.TextScaled = true
+        label.Font = Enum.Font.GothamSemibold
+        label.TextXAlignment = Enum.TextXAlignment.Left
+
+        local enabled = false
+        toggle.MouseButton1Click:Connect(function()
+            enabled = not enabled
+            circle.BackgroundColor3 = enabled and Color3.fromRGB(0,170,255) or Color3.fromRGB(60,60,60)
+            circle.Position = enabled and UDim2.new(0,33,0.5,-16) or UDim2.new(0,15,0.5,-16)
+            callback(enabled)
+        end)
+        y = y + 75
+    end
+
+    -- ==================== FUNCIONES ====================
+    createToggle("Auto Farm + Punch (Recomendado)", function(state)
+        if state then
+            connections.main = game:GetService("RunService").Heartbeat:Connect(function()
+                pcall(function()
+                    -- Auto Punch
+                    game:GetService("VirtualInputManager"):SendMouseButtonEvent(0,0,0,true,game,1)
+                    task.wait(0.06)
+                    game:GetService("VirtualInputManager"):SendMouseButtonEvent(0,0,0,false,game,1)
+
+                    -- Auto Farm (Pesas cercanas)
+                    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        for _, v in pairs(workspace:GetDescendants()) do
+                            if v:FindFirstChild("ProximityPrompt") and (v.Position - root.Position).Magnitude < 18 then
+                                fireproximityprompt(v.ProximityPrompt)
+                            end
+                        end
+                    end
+                end)
+            end)
+        else
+            if connections.main then connections.main:Disconnect() end
+        end
+    end)
+
+    createToggle("Anti AFK", function(state)
+        if state then
+            connections.afk = player.Idled:Connect(function()
+                game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                task.wait(1)
+                game:GetService("VirtualUser"):Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+            end)
+        else
+            if connections.afk then connections.afk:Disconnect() end
+        end
+    end)
+
+    createToggle("Anti Knockback", function(state)
+        if state then
+            connections.knock = game:GetService("RunService").Heartbeat:Connect(function()
+                local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    root.Velocity = Vector3.new(root.Velocity.X * 0.1, root.Velocity.Y, root.Velocity.Z * 0.1)
+                end
+            end)
+        else
+            if connections.knock then connections.knock:Disconnect() end
+        end
+    end)
+
+    createToggle("Infinite Jump", function(state)
+        if state then
+            connections.jump = game:GetService("UserInputService").JumpRequest:Connect(function()
+                local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+                if hum then hum:ChangeState("Jumping") end
+            end)
+        else
+            if connections.jump then connections.jump:Disconnect() end
+        end
+    end)
+
+    print("🎉 Angel Hub cargado - Usa 'Auto Farm + Punch' para entrenar más rápido")
+end
+
+-- Verificar Key
+verifyBtn.MouseButton1Click:Connect(function()
+    if textbox.Text == KEY_CORRECTA then
+        verifyBtn.Text = "correct!"
+        verifyBtn.BackgroundColor3 = Color3.fromRGB(0,255,100)
+        task.wait(0.8)
+        abrirHub()
+    else
+        verifyBtn.Text = "❌ Key incorrect "
+        verifyBtn.BackgroundColor3 = Color3.fromRGB(255,60,60)
+        task.wait(2)
+        verifyBtn.Text = "VerifyKey"
+        verifyBtn.BackgroundColor3 = Color3.fromRGB(0,170,255)
+    end
+end)
