@@ -1,4 +1,135 @@
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/ui%20one"))()
 
+local window = library:AddWindow("INVINCIBLE PRIVATE KILLING", {
+    title_bar = {Color3.fromRGB(3, 0, 0), Color3.fromRGB(1, 0, 0), Color3.fromRGB(0, 0, 0)},
+    title_bar_transparency = 0.2,
+    background = {Color3.fromRGB(0, 0, 0), Color3.fromRGB(5, 0, 0), Color3.fromRGB(1, 0, 0)},
+    background_transparency = 0.1,
+    main_color = Color3.fromRGB(4, 0, 0),
+    min_size = Vector2.new(520, 660),
+    can_resize = true
+})
+
+
+
+local Killer = window:AddTab("Killer")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local playerWhitelist = {}
+local targetPlayerNames = {}
+local autoGoodKarma = false
+local autoBadKarma = false
+local autoKill = false
+local killTarget = false
+local spying = false
+local autoEquipPunch = false
+local autoPunchNoAnim = false
+local targetDropdownItems = {}
+local availableTargets = {}
+
+local titleLabel = Killer:AddLabel("Select Pack")
+titleLabel.TextSize = 18
+titleLabel.Font = Enum.Font.Bangers        
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+local dropdown = Killer:AddDropdown("Select Pet", function(text)
+    local petsFolder = game.Players.LocalPlayer.petsFolder
+    for _, folder in pairs(petsFolder:GetChildren()) do
+        if folder:IsA("Folder") then
+            for _, pet in pairs(folder:GetChildren()) do
+                game:GetService("ReplicatedStorage").rEvents.equipPetEvent:FireServer("unequipPet", pet)
+            end
+        end
+    end
+    task.wait(0.2)
+
+    local petName = text
+    local petsToEquip = {}
+    for _, pet in pairs(game.Players.LocalPlayer.petsFolder.Unique:GetChildren()) do
+        if pet.Name == petName then
+            table.insert(petsToEquip, pet)
+        end
+    end
+    local maxPets = 8
+    local equippedCount = math.min(#petsToEquip, maxPets)
+    for i = 1, equippedCount do
+        game:GetService("ReplicatedStorage").rEvents.equipPetEvent:FireServer("equipPet", petsToEquip[i])
+        task.wait(0.1)
+    end
+end)
+
+local Wild_Wizard = dropdown:Add("Wild Wizard")
+local Powerful_Monster = dropdown:Add("Mighty Monster")
+
+-- Auto Good Karma
+Killer:AddSwitch("Auto Good Karma", function(bool)
+    autoGoodKarma = bool
+    task.spawn(function()
+        while autoGoodKarma do
+            local playerChar = LocalPlayer.Character
+            local rightHand = playerChar and playerChar:FindFirstChild("RightHand")
+            local leftHand = playerChar and playerChar:FindFirstChild("LeftHand")
+            if playerChar and rightHand and leftHand then
+                for _, target in ipairs(Players:GetPlayers()) do
+                    if target ~= LocalPlayer then
+                        local evilKarma = target:FindFirstChild("evilKarma")
+                        local goodKarma = target:FindFirstChild("goodKarma")
+                        if evilKarma and goodKarma and evilKarma:IsA("IntValue") and goodKarma:IsA("IntValue") and evilKarma.Value > goodKarma.Value then
+                            local rootPart = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+                            if rootPart then
+                                firetouchinterest(rightHand, rootPart, 1)
+                                firetouchinterest(leftHand, rootPart, 1)
+                                firetouchinterest(rightHand, rootPart, 0)
+                                firetouchinterest(leftHand, rootPart, 0)
+                            end
+                        end
+                    end
+                end
+            end
+            task.wait(0.01)
+        end
+    end)
+end)
+
+-- Auto Bad Karma
+Killer:AddSwitch("Auto Bad Karma", function(bool)
+    autoBadKarma = bool
+    task.spawn(function()
+        while autoBadKarma do
+            local playerChar = LocalPlayer.Character
+            local rightHand = playerChar and playerChar:FindFirstChild("RightHand")
+            local leftHand = playerChar and playerChar:FindFirstChild("LeftHand")
+            if playerChar and rightHand and leftHand then
+                for _, target in ipairs(Players:GetPlayers()) do
+                    if target ~= LocalPlayer then
+                        local evilKarma = target:FindFirstChild("evilKarma")
+                        local goodKarma = target:FindFirstChild("goodKarma")
+                        if evilKarma and goodKarma and evilKarma:IsA("IntValue") and goodKarma:IsA("IntValue") and goodKarma.Value > evilKarma.Value then
+                            local rootPart = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+                            if rootPart then
+                                firetouchinterest(rightHand, rootPart, 1)
+                                firetouchinterest(leftHand, rootPart, 1)
+                                firetouchinterest(rightHand, rootPart, 0)
+                                firetouchinterest(leftHand, rootPart, 0)
+                            end
+                        end
+                    end
+                end
+            end
+            task.wait(0.01)
+        end
+    end)
+end)
+
+-- Auto Whitelist Friends
+local friendWhitelistActive = false
+Killer:AddSwitch("Auto Whitelist Friends", function(state)
+    friendWhitelistActive = state
+    if state then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and LocalPlayer:IsFriendsWith(player.UserId) then
+                playerWhitelist[player.Name] = true
+            end
         end
         Players.PlayerAdded:Connect(function(player)
             if friendWhitelistActive and player ~= LocalPlayer and LocalPlayer:IsFriendsWith(player.UserId) then
