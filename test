@@ -1,9 +1,3 @@
-
--[[
-	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
-]]
-print("🚀 Angel Hub V5 - Muscle Legends | Auto Punch Mejorado")
-
 local player = game.Players.LocalPlayer
 local KEY_CORRECTA = "invincible"
 
@@ -27,22 +21,23 @@ title.Text = "KEY SYSTEM"
 title.TextColor3 = Color3.new(1,1,1)
 title.TextScaled = true
 title.Font = Enum.Font.GothamBold
-Instance.new("UIStroke", title).Thickness = 3
-Instance.new("UIStroke", title).Color = Color3.fromRGB(0,170,255)
+local stroke = Instance.new("UIStroke", title)
+stroke.Thickness = 3
+stroke.Color = Color3.fromRGB(178, 34, 34) -- Blood Red
 
 local subtitle = Instance.new("TextLabel", keyFrame)
 subtitle.Size = UDim2.new(1,0,0,25)
 subtitle.Position = UDim2.new(0,0,0,55)
 subtitle.BackgroundTransparency = 1
 subtitle.Text = "Muscle Legends"
-subtitle.TextColor3 = Color3.fromRGB(100,200,255)
+subtitle.TextColor3 = Color3.fromRGB(220, 60, 60)
 subtitle.TextScaled = true
 subtitle.Font = Enum.Font.Gotham
 
 local textbox = Instance.new("TextBox", keyFrame)
 textbox.Size = UDim2.new(0,290,0,50)
 textbox.Position = UDim2.new(0,25,0,90)
-textbox.PlaceholderText = "Pega la key aquí..."
+textbox.PlaceholderText = "Paste key here..."
 textbox.TextColor3 = Color3.new(1,1,1)
 textbox.BackgroundColor3 = Color3.fromRGB(30,30,30)
 textbox.TextScaled = true
@@ -52,8 +47,8 @@ Instance.new("UICorner", textbox).CornerRadius = UDim.new(0,10)
 local verifyBtn = Instance.new("TextButton", keyFrame)
 verifyBtn.Size = UDim2.new(0,290,0,50)
 verifyBtn.Position = UDim2.new(0,25,0,150)
-verifyBtn.Text = "Verificar Key"
-verifyBtn.BackgroundColor3 = Color3.fromRGB(0,170,255)
+verifyBtn.Text = "Verify Key"
+verifyBtn.BackgroundColor3 = Color3.fromRGB(178, 34, 34) -- Blood Red
 verifyBtn.TextColor3 = Color3.new(1,1,1)
 verifyBtn.TextScaled = true
 verifyBtn.Font = Enum.Font.GothamBold
@@ -71,18 +66,18 @@ local function abrirHub()
 
     local header = Instance.new("Frame", main)
     header.Size = UDim2.new(1,0,0,70)
-    header.BackgroundColor3 = Color3.fromRGB(0,140,255)
+    header.BackgroundColor3 = Color3.fromRGB(178, 34, 34) -- Blood Red
     Instance.new("UICorner", header).CornerRadius = UDim.new(0,16)
 
     local headerTitle = Instance.new("TextLabel", header)
     headerTitle.Size = UDim2.new(1,-70,1,0)
     headerTitle.BackgroundTransparency = 1
-    headerTitle.Text = "💪 ANGEL HUB V5 - MUSCLE LEGENDS"
+    headerTitle.Text = "💪 INVINCIBLE HUB - MUSCLE LEGENDS"
     headerTitle.TextColor3 = Color3.new(1,1,1)
     headerTitle.TextScaled = true
     headerTitle.Font = Enum.Font.GothamBold
 
-    -- Minimizar
+    -- Minimize Button
     local minBtn = Instance.new("TextButton", header)
     minBtn.Size = UDim2.new(0,40,0,40)
     minBtn.Position = UDim2.new(1,-50,0.5,-20)
@@ -95,7 +90,7 @@ local function abrirHub()
         local float = Instance.new("TextButton", gui)
         float.Size = UDim2.new(0,50,0,50)
         float.Position = UDim2.new(0,20,0,20)
-        float.BackgroundColor3 = Color3.fromRGB(0,140,255)
+        float.BackgroundColor3 = Color3.fromRGB(178, 34, 34) -- Blood Red
         float.Text = "💪"
         float.TextScaled = true
         Instance.new("UICorner", float).CornerRadius = UDim.new(1,0)
@@ -142,15 +137,15 @@ local function abrirHub()
         local enabled = false
         toggle.MouseButton1Click:Connect(function()
             enabled = not enabled
-            circle.BackgroundColor3 = enabled and Color3.fromRGB(0,170,255) or Color3.fromRGB(60,60,60)
+            circle.BackgroundColor3 = enabled and Color3.fromRGB(178, 34, 34) or Color3.fromRGB(60,60,60) -- Blood Red
             circle.Position = enabled and UDim2.new(0,33,0.5,-16) or UDim2.new(0,15,0.5,-16)
             callback(enabled)
         end)
         y = y + 75
     end
 
-    -- ==================== FUNCIONES ====================
-    createToggle("Auto Farm + Punch (Recomendado)", function(state)
+    -- ==================== FEATURES ====================
+    createToggle("Auto Farm + Punch (Recommended)", function(state)
         if state then
             connections.main = game:GetService("RunService").Heartbeat:Connect(function()
                 pcall(function()
@@ -159,7 +154,7 @@ local function abrirHub()
                     task.wait(0.06)
                     game:GetService("VirtualInputManager"):SendMouseButtonEvent(0,0,0,false,game,1)
 
-                    -- Auto Farm (Pesas cercanas)
+                    -- Auto Farm (Nearby weights)
                     local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
                     if root then
                         for _, v in pairs(workspace:GetDescendants()) do
@@ -211,21 +206,21 @@ local function abrirHub()
         end
     end)
 
-    print("🎉 Angel Hub cargado - Usa 'Auto Farm + Punch' para entrenar más rápido")
+    print("🎉 Invincible Hub loaded successfully - Use 'Auto Farm + Punch' for faster training")
 end
 
--- Verificar Key
+-- Verify Key
 verifyBtn.MouseButton1Click:Connect(function()
     if textbox.Text == KEY_CORRECTA then
-        verifyBtn.Text = "correct!"
-        verifyBtn.BackgroundColor3 = Color3.fromRGB(0,255,100)
+        verifyBtn.Text = "Correct!"
+        verifyBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
         task.wait(0.8)
         abrirHub()
     else
-        verifyBtn.Text = "❌ Key incorrect "
-        verifyBtn.BackgroundColor3 = Color3.fromRGB(255,60,60)
+        verifyBtn.Text = "❌ Invalid Key"
+        verifyBtn.BackgroundColor3 = Color3.fromRGB(178, 34, 34)
         task.wait(2)
-        verifyBtn.Text = "VerifyKey"
-        verifyBtn.BackgroundColor3 = Color3.fromRGB(0,170,255)
+        verifyBtn.Text = "Verify Key"
+        verifyBtn.BackgroundColor3 = Color3.fromRGB(178, 34, 34)
     end
 end)
