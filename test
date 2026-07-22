@@ -416,87 +416,6 @@ titleLabel.TextSize = 18
 titleLabel.Font = Enum.Font.Bangers        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-local LocalPlayer = game.Players.LocalPlayer
-local combinedActive = false
-local platform = nil
-
-Killer:AddButton("Fling People", function()
-    combinedActive = not combinedActive
-   
-    if combinedActive then
-        -- Fling / Big Size
-        local args = {"changeSize", 100}
-        game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("changeSpeedSizeRemote"):InvokeServer(unpack(args))
-       
-        -- Create Platform
-        if platform then platform:Destroy() end
-        
-        platform = Instance.new("Part")
-        platform.Name = "AutoFlingPlatform"
-        platform.Size = Vector3.new(50, 2, 50)
-        platform.Anchored = true
-        platform.CanCollide = true
-        platform.Material = Enum.Material.ForceField
-        platform.BrickColor = BrickColor.new("Bright blue")
-        platform.Transparency = 0.3
-        
-        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if root then
-            -- Platform positioned far below the new high teleport
-            platform.CFrame = CFrame.new(root.Position.X, root.Position.Y - 15, root.Position.Z)
-        else
-            platform.CFrame = CFrame.new(0, 100, 0)
-        end
-        
-        platform.Parent = workspace
-        
-        -- TELEPORT MUCH HIGHER
-        if root then
-            root.CFrame = root.CFrame + Vector3.new(0, 200, 0)  -- Now 200 studs up!
-        end
-        
-        -- Auto Punch ON
-        _G.fastHitActive = true
-       
-        task.spawn(function()
-            while _G.fastHitActive do
-                local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
-                if punch then
-                    punch.Parent = LocalPlayer.Character
-                    local attackTime = punch:FindFirstChild("attackTime")
-                    if attackTime then
-                        attackTime.Value = 0
-                    end
-                end
-                task.wait(0.08)
-            end
-        end)
-       
-        task.spawn(function()
-            while _G.fastHitActive do
-                local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
-                if punch then
-                    punch:Activate()
-                end
-                task.wait(0.08)
-            end
-        end)
-       
-    else
-        -- Turn everything OFF
-        _G.fastHitActive = false
-       
-        local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
-        if punch then
-            punch.Parent = LocalPlayer.Backpack
-        end
-        
-        if platform then
-            platform:Destroy()
-            platform = nil
-        end
-    end
-end)
 
 local AntiKnockbackToggle = Killer:AddSwitch("Anti Knockback", function(state)
     getgenv().AntiKnockback = state
@@ -870,6 +789,118 @@ Killer:AddButton("Goofball Button", function()
         end)
     end
 end)
+
+local LocalPlayer = game.Players.LocalPlayer
+local combinedActive = false
+local platform = nil
+local autoPunchConnection1 = nil
+local autoPunchConnection2 = nil
+
+Killer:AddButton("Auto Punch + Fling + Air Platform", function()
+    combinedActive = not combinedActive
+    
+    if combinedActive then
+        -- === FLING / BIG SIZE ===
+        local args = {"changeSize", 100}
+        local success, err = pcall(function()
+            game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("changeSpeedSizeRemote"):InvokeServer(unpack(args))
+        end)
+        if not success then
+            warn("Failed to change size: " .. tostring(err))
+        end
+        
+        -- === CREATE AIR PLATFORM ===
+        if platform then platform:Destroy() end
+        
+        platform = Instance.new("Part")
+        platform.Name = "AutoFlingPlatform"
+        platform.Size = Vector3.new(50, 2, 50)
+        platform.Anchored = true
+        platform.CanCollide = true
+        platform.Material = Enum.Material.ForceField
+        platform.BrickColor = BrickColor.new("Bright blue")
+        platform.Transparency = 0.3
+        platform.Parent = workspace
+        
+        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            -- Position platform under the player
+            platform.CFrame = CFrame.new(root.Position.X, root.Position.Y - 8, root.Position.Z)
+            
+            -- Teleport high up (on top of platform)
+            root.CFrame = root.CFrame + Vector3.new(0, 200, 0)
+        else
+            platform.CFrame = CFrame.new(0, 100, 0)
+        end
+        
+        -- === AUTO PUNCH ===
+        _G.fastHitActive = true
+        
+        -- Equip + Fast cooldown loop
+        autoPunchConnection1 = task.spawn(function()
+            while _G.fastHitActive do
+                local character = LocalPlayer.Character
+                if character then
+                    local punch = LocalPlayer.Backpack:FindFirstChild("Punch") or character:FindFirstChild("Punch")
+                    if punch and punch.Parent ~= character then
+                        punch.Parent = character
+                    end
+                    
+                    local attackTime = punch and punch:FindFirstChild("attackTime")
+                    if attackTime then
+                        attackTime.Value = 0
+                    end
+                end
+                task.wait(0.08)
+            end
+        end)
+        
+        -- Activate loop
+        autoPunchConnection2 = task.spawn(function()
+            while _G.fastHitActive do
+                local character = LocalPlayer.Character
+                local punch = character and character:FindFirstChild("Punch")
+                if punch then
+                    punch:Activate()
+                end
+                task.wait(0.08)
+            end
+        end)
+        
+        print("Auto Punch + Fling + Platform ENABLED")
+        
+    else
+        -- === TURN OFF ===
+        _G.fastHitActive = false
+        
+        -- Clean up loops
+        if autoPunchConnection1 then
+            task.cancel(autoPunchConnection1)
+            autoPunchConnection1 = nil
+        end
+        if autoPunchConnection2 then
+            task.cancel(autoPunchConnection2)
+            autoPunchConnection2 = nil
+        end
+        
+        -- Return Punch to backpack
+        local character = LocalPlayer.Character
+        local punch = character and character:FindFirstChild("Punch")
+        if punch then
+            punch.Parent = LocalPlayer.Backpack
+        end
+        
+        -- Destroy platform
+        if platform then
+            platform:Destroy()
+            platform = nil
+        end
+        
+        print("Auto Punch + Fling + Platform DISABLED")
+    end
+end)
+
+
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
