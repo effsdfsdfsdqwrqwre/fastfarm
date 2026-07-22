@@ -416,9 +416,36 @@ titleLabel.TextSize = 18
 titleLabel.Font = Enum.Font.Bangers        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-Killer:AddButton("Fling Players", function()
+Killer:AddButton("Auto Punch + Fling", function()
+    -- Fling Players (Set Size)
     local args = {"changeSize", 100}
     game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("changeSpeedSizeRemote"):InvokeServer(unpack(args))
+    
+    -- Enable Auto Punch
+    _G.fastHitActive = true
+    
+    task.spawn(function()
+        while _G.fastHitActive do
+            local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
+            if punch then
+                punch.Parent = LocalPlayer.Character
+                if punch:FindFirstChild("attackTime") then
+                    punch.attackTime.Value = 0
+                end
+            end
+            task.wait(0.1)
+        end
+    end)
+    
+    task.spawn(function()
+        while _G.fastHitActive do
+            local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
+            if punch then
+                punch:Activate()
+            end
+            task.wait(0.1)
+        end
+    end)
 end)
 
 local AntiKnockbackToggle = Killer:AddSwitch("Anti Knockback", function(state)
