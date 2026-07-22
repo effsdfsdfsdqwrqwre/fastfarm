@@ -1,6 +1,6 @@
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/ui%20one"))()
 
-local window = library:AddWindow("kill script", {
+local window = library:AddWindow("invincible", {
     title_bar = {Color3.fromRGB(3, 0, 0), Color3.fromRGB(1, 0, 0), Color3.fromRGB(0, 0, 0)},
     title_bar_transparency = 0.2,
     background = {Color3.fromRGB(0, 0, 0), Color3.fromRGB(5, 0, 0), Color3.fromRGB(1, 0, 0)},
@@ -9,6 +9,8 @@ local window = library:AddWindow("kill script", {
     min_size = Vector2.new(520, 660),
     can_resize = true
 })
+
+
 
 local Killer = window:AddTab("Killer")
 local Players = game:GetService("Players")
@@ -414,41 +416,27 @@ titleLabel.TextSize = 18
 titleLabel.Font = Enum.Font.Bangers        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-
-local godDamageActive = false  
-  
-Killer:AddSwitch("Damage With Godmode", function(state)  
-    godDamageActive = state  
-    if state then  
-        task.spawn(function()  
-            while godDamageActive do  
-                local player = game.Players.LocalPlayer  
-                local groundSlam = player.Backpack:FindFirstChild("Ground Slam") or (player.Character and player.Character:FindFirstChild("Ground Slam"))  
-  
-                if groundSlam then  
-                    -- Equipar  
-                    if groundSlam.Parent == player.Backpack then  
-                        groundSlam.Parent = player.Character  
-                    end  
-  
-                    -- Quitar delay  
-                    if groundSlam:FindFirstChild("attackTime") then  
-                        groundSlam.attackTime.Value = 0  
-                    end  
-  
-                    -- Lanzar evento  
-                    player.muscleEvent:FireServer("slam")  
-  
-                    -- Activar herramienta  
-                    groundSlam:Activate()  
-                end  
-  
-                task.wait(0.1) -- delay pequeÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â±o  
-            end  
-        end)  
-    end  
+Killer:AddSwitch("Set Size 100", function(state)
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+    
+    if state then
+        -- Enable: Set size to 100
+        humanoid.BodyHeightScale.Value = 100
+        humanoid.BodyWidthScale.Value = 100
+        humanoid.BodyDepthScale.Value = 100
+        humanoid.HeadScale.Value = 100
+        print("Size set to 100!")
+    else
+        -- Disable: Reset to normal (scale 1)
+        humanoid.BodyHeightScale.Value = 1
+        humanoid.BodyWidthScale.Value = 1
+        humanoid.BodyDepthScale.Value = 1
+        humanoid.HeadScale.Value = 1
+        print("Size reset to normal.")
+    end
 end)
-
 
 local AntiKnockbackToggle = Killer:AddSwitch("Anti Knockback", function(state)
     getgenv().AntiKnockback = state
@@ -602,6 +590,43 @@ Killer:AddSwitch("God mode (for pussies)", function(State)
         end)
     end
 end)
+
+local godDamageActive = false  
+  
+Killer:AddSwitch("Damage With Godmode", function(state)  
+    godDamageActive = state  
+    if state then  
+        task.spawn(function()  
+            while godDamageActive do  
+                local player = game.Players.LocalPlayer  
+                local groundSlam = player.Backpack:FindFirstChild("Ground Slam") or (player.Character and player.Character:FindFirstChild("Ground Slam"))  
+  
+                if groundSlam then  
+                    -- Equipar  
+                    if groundSlam.Parent == player.Backpack then  
+                        groundSlam.Parent = player.Character  
+                    end  
+  
+                    -- Quitar delay  
+                    if groundSlam:FindFirstChild("attackTime") then  
+                        groundSlam.attackTime.Value = 0  
+                    end  
+  
+                    -- Lanzar evento  
+                    player.muscleEvent:FireServer("slam")  
+  
+                    -- Activar herramienta  
+                    groundSlam:Activate()  
+                end  
+  
+                task.wait(0.1) -- delay pequeÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â±o  
+            end  
+        end)  
+    end  
+end)
+
+
+
 
 -- Auto Follow System
 local following = false
