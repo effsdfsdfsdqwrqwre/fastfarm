@@ -1215,35 +1215,45 @@ titleLabel.TextSize = 23
 titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- ==================== AUTO BOOSTS ====================
-local ProteinEggLabel = fastTab:AddLabel("Protein Eggs: 0")
+
+local ProteinEggLabel = fastTab:AddLabel("Protein Eggs Owned: 0")
 ProteinEggLabel.TextSize = 14
 
 task.spawn(function()
-    while true do
-        local count = 0
-        if PlayerData and PlayerData.Backpack then
-            for _, item in ipairs(PlayerData.Backpack:GetChildren()) do
-                if item.Name == "Protein Egg" then count += 1 end
-            end
-        end
-        ProteinEggLabel.Text = "Protein Eggs: " .. count
-        task.wait(7.5)
-    end
+	while true do
+		local proteinEggCount = 0
+		local tropicalShakeCount = 0
+		if PlayerData.Backpack then
+			for _, item in ipairs(PlayerData.Backpack:GetChildren()) do
+				if item.Name == "Protein Egg" then proteinEggCount = proteinEggCount + 1
+				elseif item.Name == "Tropical Shake" then tropicalShakeCount = tropicalShakeCount + 1 end
+			end
+		end
+		ProteinEggLabel.Text = "Protein Eggs: " .. proteinEggCount
+		task.wait(7.5)
+	end
 end)
 
-local ProteinEggBoostLabel = fastTab:AddLabel("Protein Egg Timer: 00:00")
+local ProteinEggBoostLabel = fastTab:AddLabel("Protein Egg Boost: 00:00")
 ProteinEggBoostLabel.TextSize = 14
 
-local function formatTime(s)
-    return string.format("%02d:%02d", math.floor(s/60), s%60)
+local function formatTime(seconds)
+    local m = math.floor(seconds / 60)
+    local s = seconds % 60
+    return string.format("%02d:%02d", m, s)
 end
 
 task.spawn(function()
     while true do
-        local boost = player:FindFirstChild("boostTimersFolder") and player.boostTimersFolder:FindFirstChild("Protein Egg")
-        if boost and boost:IsA("IntValue") then
-            ProteinEggBoostLabel.Text = "Protein Egg Timer: " .. formatTime(boost.Value)
+        local boostTimersFolder = game.Players.LocalPlayer:FindFirstChild("boostTimersFolder")
+        if boostTimersFolder then
+            local boost = boostTimersFolder:FindFirstChild("Protein Egg")
+            if boost and boost:IsA("IntValue") then
+                local seconds = boost.Value
+                ProteinEggBoostLabel.Text = "Protein Egg Timer: " .. formatTime(seconds)
+            else
+                ProteinEggBoostLabel.Text = "Protein Egg Timer: 00:00"
+            end
         else
             ProteinEggBoostLabel.Text = "Protein Egg Timer: 00:00"
         end
@@ -1251,25 +1261,43 @@ task.spawn(function()
     end
 end)
 
--- Auto Protein Egg
+
+local function useEggs()
+    local boost = game.Players.LocalPlayer.boostTimersFolder:FindFirstChild("Protein Egg")
+    if boost and boost:IsA("IntValue") then
+        local seconds = boost.Value
+        if seconds >= 5 then
+            return
+        end
+    end
+    
+    local tool = player.Character:FindFirstChild("Protein Egg") or player.Backpack:FindFirstChild("Protein Egg")
+    if tool then
+        muscleEvent:FireServer("proteinEgg", tool)
+    end
+end
+
 local running1 = false
-fastTab:AddSwitch("Auto Egg", function(state)
-    running1 = state
-end)
 
 task.spawn(function()
     while true do
         if running1 then
-            local tool = player.Character:FindFirstChild("Protein Egg") or player.Backpack:FindFirstChild("Protein Egg")
-            if tool then
-                muscleEvent:FireServer("proteinEgg", tool)
-            end
+            useEggs()
             task.wait(1800)
         else
             task.wait(1)
         end
     end
 end)
+
+local autoEggSwitch = fastTab:AddSwitch("Auto Egg", function(state)
+    running1 = state
+    if state then
+        useEggs()
+    end
+end)
+
+
 
 -- Auto Tropical Shake
 local running2 = false
