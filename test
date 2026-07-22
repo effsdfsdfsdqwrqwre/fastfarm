@@ -1,3 +1,8 @@
+--[[
+WARNING: This script has not been verified by ScriptBlox. Use at your own risk!
+]]
+print("🚀 Invincible Hub - Muscle Legends")
+
 local player = game.Players.LocalPlayer
 local KEY_CORRECTA = "invincible"
 
@@ -5,217 +10,130 @@ local gui = Instance.new("ScreenGui")
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
-local connections = {}
-
--- ==================== KEY SCREEN ====================
+-- ==================== KEY SCREEN (Styled like screenshot) ====================
 local keyFrame = Instance.new("Frame", gui)
-keyFrame.Size = UDim2.new(0, 340, 0, 230)
-keyFrame.Position = UDim2.new(0.5, -170, 0.5, -115)
-keyFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-Instance.new("UICorner", keyFrame).CornerRadius = UDim.new(0, 16)
+keyFrame.Size = UDim2.new(0, 380, 0, 520)
+keyFrame.Position = UDim2.new(0.5, -190, 0.5, -260)
+keyFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+keyFrame.BackgroundTransparency = 0.1
+Instance.new("UICorner", keyFrame).CornerRadius = UDim.new(0, 20)
 
-local title = Instance.new("TextLabel", keyFrame)
-title.Size = UDim2.new(1,0,0,60)
-title.BackgroundTransparency = 1
-title.Text = "KEY SYSTEM"
-title.TextColor3 = Color3.new(1,1,1)
-title.TextScaled = true
-title.Font = Enum.Font.GothamBold
-local stroke = Instance.new("UIStroke", title)
-stroke.Thickness = 3
-stroke.Color = Color3.fromRGB(178, 34, 34) -- Blood Red
+-- Top bar (like the game UI)
+local topBar = Instance.new("Frame", keyFrame)
+topBar.Size = UDim2.new(1, 0, 0, 60)
+topBar.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 20)
 
-local subtitle = Instance.new("TextLabel", keyFrame)
-subtitle.Size = UDim2.new(1,0,0,25)
-subtitle.Position = UDim2.new(0,0,0,55)
-subtitle.BackgroundTransparency = 1
-subtitle.Text = "Muscle Legends"
-subtitle.TextColor3 = Color3.fromRGB(220, 60, 60)
-subtitle.TextScaled = true
-subtitle.Font = Enum.Font.Gotham
+local statsLabel = Instance.new("TextLabel", topBar)
+statsLabel.Size = UDim2.new(1, -20, 1, 0)
+statsLabel.Position = UDim2.new(0, 10, 0, 0)
+statsLabel.BackgroundTransparency = 1
+statsLabel.Text = "476.88     10.204"
+statsLabel.TextColor3 = Color3.new(1, 1, 1)
+statsLabel.TextScaled = true
+statsLabel.Font = Enum.Font.GothamBold
 
-local textbox = Instance.new("TextBox", keyFrame)
-textbox.Size = UDim2.new(0,290,0,50)
-textbox.Position = UDim2.new(0,25,0,90)
+-- Main "Ge" Panel
+local gePanel = Instance.new("Frame", keyFrame)
+gePanel.Size = UDim2.new(0, 320, 0, 140)
+gePanel.Position = UDim2.new(0.5, -160, 0, 90)
+gePanel.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+gePanel.BackgroundTransparency = 0.4
+Instance.new("UICorner", gePanel).CornerRadius = UDim.new(0, 30)
+
+-- Particle effect around "Ge"
+local particles = Instance.new("ParticleEmitter", gePanel)
+particles.Texture = "rbxassetid://243660364"
+particles.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255))
+particles.Size = NumberSequence.new(0.5)
+particles.Lifetime = NumberRange.new(1, 2)
+particles.Rate = 25
+particles.Speed = NumberRange.new(2, 4)
+particles.SpreadAngle = Vector2.new(360, 360)
+
+local geText = Instance.new("TextLabel", gePanel)
+geText.Size = UDim2.new(1, 0, 1, 0)
+geText.BackgroundTransparency = 1
+geText.Text = "Ge"
+geText.TextColor3 = Color3.new(1, 1, 1)
+geText.TextScaled = true
+geText.Font = Enum.Font.GothamBold
+geText.TextStrokeTransparency = 0.7
+geText.TextStrokeColor3 = Color3.fromRGB(100, 200, 255)
+
+-- Key Input Area
+local inputFrame = Instance.new("Frame", keyFrame)
+inputFrame.Size = UDim2.new(0, 320, 0, 160)
+inputFrame.Position = UDim2.new(0.5, -160, 0, 260)
+inputFrame.BackgroundTransparency = 1
+
+local textbox = Instance.new("TextBox", inputFrame)
+textbox.Size = UDim2.new(1, 0, 0, 55)
+textbox.Position = UDim2.new(0, 0, 0, 0)
 textbox.PlaceholderText = "Paste key here..."
-textbox.TextColor3 = Color3.new(1,1,1)
-textbox.BackgroundColor3 = Color3.fromRGB(30,30,30)
+textbox.TextColor3 = Color3.new(1, 1, 1)
+textbox.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 textbox.TextScaled = true
 textbox.Font = Enum.Font.Gotham
-Instance.new("UICorner", textbox).CornerRadius = UDim.new(0,10)
+Instance.new("UICorner", textbox).CornerRadius = UDim.new(0, 12)
 
-local verifyBtn = Instance.new("TextButton", keyFrame)
-verifyBtn.Size = UDim2.new(0,290,0,50)
-verifyBtn.Position = UDim2.new(0,25,0,150)
+local verifyBtn = Instance.new("TextButton", inputFrame)
+verifyBtn.Size = UDim2.new(1, 0, 0, 55)
+verifyBtn.Position = UDim2.new(0, 0, 0, 70)
 verifyBtn.Text = "Verify Key"
-verifyBtn.BackgroundColor3 = Color3.fromRGB(178, 34, 34) -- Blood Red
-verifyBtn.TextColor3 = Color3.new(1,1,1)
+verifyBtn.BackgroundColor3 = Color3.fromRGB(178, 34, 34)
+verifyBtn.TextColor3 = Color3.new(1, 1, 1)
 verifyBtn.TextScaled = true
 verifyBtn.Font = Enum.Font.GothamBold
-Instance.new("UICorner", verifyBtn).CornerRadius = UDim.new(0,10)
+Instance.new("UICorner", verifyBtn).CornerRadius = UDim.new(0, 12)
 
--- ==================== HUB ====================
-local function abrirHub()
+-- ==================== MAIN HUB ====================
+local function openHub()
     keyFrame:Destroy()
-
+    
     local main = Instance.new("Frame", gui)
     main.Size = UDim2.new(0, 380, 0, 520)
     main.Position = UDim2.new(0.5, -190, 0.5, -260)
     main.BackgroundColor3 = Color3.fromRGB(15,15,15)
-    Instance.new("UICorner", main).CornerRadius = UDim.new(0,16)
+    Instance.new("UICorner", main).CornerRadius = UDim.new(0, 20)
 
     local header = Instance.new("Frame", main)
     header.Size = UDim2.new(1,0,0,70)
-    header.BackgroundColor3 = Color3.fromRGB(178, 34, 34) -- Blood Red
-    Instance.new("UICorner", header).CornerRadius = UDim.new(0,16)
+    header.BackgroundColor3 = Color3.fromRGB(178, 34, 34)
+    Instance.new("UICorner", header).CornerRadius = UDim.new(0, 20)
 
     local headerTitle = Instance.new("TextLabel", header)
-    headerTitle.Size = UDim2.new(1,-70,1,0)
+    headerTitle.Size = UDim2.new(1,0,1,0)
     headerTitle.BackgroundTransparency = 1
-    headerTitle.Text = "💪 INVINCIBLE HUB - MUSCLE LEGENDS"
+    headerTitle.Text = "💪 INVINCIBLE HUB"
     headerTitle.TextColor3 = Color3.new(1,1,1)
     headerTitle.TextScaled = true
     headerTitle.Font = Enum.Font.GothamBold
 
-    -- Minimize Button
-    local minBtn = Instance.new("TextButton", header)
-    minBtn.Size = UDim2.new(0,40,0,40)
-    minBtn.Position = UDim2.new(1,-50,0.5,-20)
-    minBtn.BackgroundTransparency = 1
-    minBtn.Text = "–"
-    minBtn.TextColor3 = Color3.new(1,1,1)
-    minBtn.TextScaled = true
-    minBtn.MouseButton1Click:Connect(function()
-        main.Visible = false
-        local float = Instance.new("TextButton", gui)
-        float.Size = UDim2.new(0,50,0,50)
-        float.Position = UDim2.new(0,20,0,20)
-        float.BackgroundColor3 = Color3.fromRGB(178, 34, 34) -- Blood Red
-        float.Text = "💪"
-        float.TextScaled = true
-        Instance.new("UICorner", float).CornerRadius = UDim.new(1,0)
-        float.MouseButton1Click:Connect(function()
-            main.Visible = true
-            float:Destroy()
-        end)
-    end)
-
+    -- Content
     local content = Instance.new("ScrollingFrame", main)
     content.Size = UDim2.new(1,-20,1,-90)
     content.Position = UDim2.new(0,10,0,80)
     content.BackgroundTransparency = 1
-    content.ScrollBarThickness = 6
-    content.CanvasSize = UDim2.new(0,0,0,900)
+    content.CanvasSize = UDim2.new(0,0,0,400)
 
-    local y = 10
-
-    local function createToggle(name, callback)
-        local toggle = Instance.new("TextButton", content)
-        toggle.Size = UDim2.new(1,-20,0,65)
-        toggle.Position = UDim2.new(0,10,0,y)
-        toggle.BackgroundColor3 = Color3.fromRGB(30,30,30)
-        toggle.Text = ""
-        toggle.AutoButtonColor = false
-        Instance.new("UICorner", toggle).CornerRadius = UDim.new(0,12)
-
-        local circle = Instance.new("Frame", toggle)
-        circle.Size = UDim2.new(0,32,0,32)
-        circle.Position = UDim2.new(0,15,0.5,-16)
-        circle.BackgroundColor3 = Color3.fromRGB(60,60,60)
-        Instance.new("UICorner", circle).CornerRadius = UDim.new(1,0)
-
-        local label = Instance.new("TextLabel", toggle)
-        label.Size = UDim2.new(1,-70,1,0)
-        label.Position = UDim2.new(0,60,0,0)
-        label.BackgroundTransparency = 1
-        label.Text = name
-        label.TextColor3 = Color3.new(1,1,1)
-        label.TextScaled = true
-        label.Font = Enum.Font.GothamSemibold
-        label.TextXAlignment = Enum.TextXAlignment.Left
-
-        local enabled = false
-        toggle.MouseButton1Click:Connect(function()
-            enabled = not enabled
-            circle.BackgroundColor3 = enabled and Color3.fromRGB(178, 34, 34) or Color3.fromRGB(60,60,60) -- Blood Red
-            circle.Position = enabled and UDim2.new(0,33,0.5,-16) or UDim2.new(0,15,0.5,-16)
-            callback(enabled)
-        end)
-        y = y + 75
-    end
-
-    -- ==================== FEATURES ====================
-    createToggle("Auto Farm + Punch (Recommended)", function(state)
-        if state then
-            connections.main = game:GetService("RunService").Heartbeat:Connect(function()
-                pcall(function()
-                    -- Auto Punch
-                    game:GetService("VirtualInputManager"):SendMouseButtonEvent(0,0,0,true,game,1)
-                    task.wait(0.06)
-                    game:GetService("VirtualInputManager"):SendMouseButtonEvent(0,0,0,false,game,1)
-
-                    -- Auto Farm (Nearby weights)
-                    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-                    if root then
-                        for _, v in pairs(workspace:GetDescendants()) do
-                            if v:FindFirstChild("ProximityPrompt") and (v.Position - root.Position).Magnitude < 18 then
-                                fireproximityprompt(v.ProximityPrompt)
-                            end
-                        end
-                    end
-                end)
-            end)
-        else
-            if connections.main then connections.main:Disconnect() end
-        end
-    end)
-
-    createToggle("Anti AFK", function(state)
-        if state then
-            connections.afk = player.Idled:Connect(function()
-                game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-                task.wait(1)
-                game:GetService("VirtualUser"):Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-            end)
-        else
-            if connections.afk then connections.afk:Disconnect() end
-        end
-    end)
-
-    createToggle("Anti Knockback", function(state)
-        if state then
-            connections.knock = game:GetService("RunService").Heartbeat:Connect(function()
-                local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-                if root then
-                    root.Velocity = Vector3.new(root.Velocity.X * 0.1, root.Velocity.Y, root.Velocity.Z * 0.1)
-                end
-            end)
-        else
-            if connections.knock then connections.knock:Disconnect() end
-        end
-    end)
-
-    createToggle("Infinite Jump", function(state)
-        if state then
-            connections.jump = game:GetService("UserInputService").JumpRequest:Connect(function()
-                local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-                if hum then hum:ChangeState("Jumping") end
-            end)
-        else
-            if connections.jump then connections.jump:Disconnect() end
-        end
-    end)
-
-    print("🎉 Invincible Hub loaded successfully - Use 'Auto Farm + Punch' for faster training")
+    local label = Instance.new("TextLabel", content)
+    label.Size = UDim2.new(1,-40,0,100)
+    label.Position = UDim2.new(0,20,0,50)
+    label.BackgroundTransparency = 1
+    label.Text = "✅ Key Verified!\n\nInvincible Hub Loaded\n\n(Features coming soon...)"
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextScaled = true
+    label.Font = Enum.Font.GothamSemibold
 end
 
--- Verify Key
+-- Verify Logic
 verifyBtn.MouseButton1Click:Connect(function()
     if textbox.Text == KEY_CORRECTA then
         verifyBtn.Text = "Correct!"
         verifyBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
         task.wait(0.8)
-        abrirHub()
+        openHub()
     else
         verifyBtn.Text = "❌ Invalid Key"
         verifyBtn.BackgroundColor3 = Color3.fromRGB(178, 34, 34)
@@ -224,3 +142,5 @@ verifyBtn.MouseButton1Click:Connect(function()
         verifyBtn.BackgroundColor3 = Color3.fromRGB(178, 34, 34)
     end
 end)
+
+print("🎉 Key system loaded with new UI!")
