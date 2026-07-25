@@ -419,22 +419,17 @@ titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 Killer:AddButton("Size 30", function(state)
     if state then
-        
-        local args = {"changeSize", 30/30}
+        local args = {"changeSize", 30}
         game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("changeSpeedSizeRemote"):InvokeServer(unpack(args))
     end
 end)
 
 Killer:AddButton("Size 2", function(state)
     if state then
-        
-        local args = {"changeSize", 2/2}
+        local args = {"changeSize", 2}
         game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("changeSpeedSizeRemote"):InvokeServer(unpack(args))
     end
 end)
-
-
-
 
 
 
