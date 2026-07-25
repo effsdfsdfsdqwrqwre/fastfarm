@@ -417,7 +417,7 @@ titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 
-Killer:AddToggle("Size 30", false, function(state)
+Killer:AddButton("Size 30", false, function(state)
     if state then
         while state do
             local args = {"changeSize", 30}
@@ -428,7 +428,7 @@ Killer:AddToggle("Size 30", false, function(state)
     end
 end)
 
-Killer:AddToggle("Size 2", false, function(state)
+Killer:AddButton("Size 2", false, function(state)
     if state then
         while state do
             local args = {"changeSize", 2}
