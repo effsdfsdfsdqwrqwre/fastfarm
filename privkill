@@ -417,8 +417,7 @@ titleLabel.TextSize = 18
 titleLabel.Font = Enum.Font.Bangers        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-
-Killer:AddTextBox("Clan Targeting (Enter Username/Display)", function(text)
+Killer:AddTextBox("Target Player (Enter Username/Display)", function(text)
     if text and text ~= "" then
         local player = findClosestPlayer(text)
         if player then
@@ -435,16 +434,18 @@ end)
 
 local autoKillTargetSwitch = Killer:AddSwitch("Auto Kill Target", function(bool)
     _G.autoKillTarget = bool
-    
-    if bool and _G.targetPlayer ~= "" then
+
+    if bool then
         spawn(function()
-            while _G.autoKillTarget and _G.targetPlayer ~= "" do
-                local targetName = _G.targetPlayer:match("^([^%(]+)")
-                if targetName then
-                    targetName = targetName:gsub("%s+$", "")
-                    local targetPlayer = game.Players:FindFirstChild(targetName)
-                    if targetPlayer then
-                        killPlayer(targetPlayer)
+            while _G.autoKillTarget do
+                if _G.targetPlayer and _G.targetPlayer ~= "" then
+                    local targetName = _G.targetPlayer:match("^([^%(]+)")
+                    if targetName then
+                        targetName = targetName:gsub("%s+$", "")
+                        local targetPlayer = game.Players:FindFirstChild(targetName)
+                        if targetPlayer and targetPlayer.Character then
+                            killPlayer(targetPlayer)
+                        end
                     end
                 end
                 task.wait(0.1)
@@ -452,8 +453,6 @@ local autoKillTargetSwitch = Killer:AddSwitch("Auto Kill Target", function(bool)
         end)
     end
 end)
-
-
 
 
 
