@@ -432,7 +432,7 @@ Killer:AddButton("Size 2", function()
     game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
 end)
 
-Killer:AddSwitch("remove knockback", function(state)
+Killer:AddSwitch("Anti Fling", function(state)
     getgenv().RemoveKnockback = state
 
     if state then
@@ -1177,7 +1177,7 @@ else
     warn("GodmodeTab is nil")
 end
 
-GodmodeTab:AddSwitch("Infinite HP", function(state)
+GodmodeTab:AddSwitch("HP Buff", function(state)
     local Players = game:GetService("Players")
     local LocalPlayer = Players.LocalPlayer
 
