@@ -432,30 +432,67 @@ Killer:AddButton("Size 2", function()
     game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
 end)
 
+-- Put this near the top
+getgenv().AntiFling = false
+local AntiFlingBV = nil
 
-Killer:AddSwitch("Anti Fling", function(Value)
-    getgenv().AntiFling = Value
+-- The switch
+Killer:AddSwitch("Anti Fling", function(state)
+    getgenv().AntiFling = state
+    
+    local char = game.Players.LocalPlayer.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
 
-    task.spawn(function()
-        while getgenv().AntiFling do
-            local character = game.Players.LocalPlayer.Character
-            if character then
-                local hrp = character:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    -- Prevent extreme velocity
-                    if hrp.AssemblyLinearVelocity.Magnitude > 100 then
-                        hrp.AssemblyLinearVelocity = Vector3.zero
-                    end
-
-                    -- Reduce physics interactions
-                    hrp.CanCollide = false
-                end
-            end
-            task.wait()
+    if state then
+        -- Create BodyVelocity that overrides all external forces
+        if AntiFlingBV then AntiFlingBV:Destroy() end
+        
+        AntiFlingBV = Instance.new("BodyVelocity")
+        AntiFlingBV.Name = "AntiFling"
+        AntiFlingBV.MaxForce = Vector3.new(1e9, 1e9, 1e9) -- Extremely high force
+        AntiFlingBV.Velocity = Vector3.zero
+        AntiFlingBV.Parent = hrp
+    else
+        -- Clean up when disabled
+        if AntiFlingBV then
+            AntiFlingBV:Destroy()
+            AntiFlingBV = nil
         end
-    end)
+        if hrp:FindFirstChild("AntiFling") then
+            hrp.AntiFling:Destroy()
+        end
+    end
 end)
 
+-- Keep it working + allow normal movement
+game:GetService("RunService").Heartbeat:Connect(function()
+    if not getgenv().AntiFling then return end
+    
+    local char = game.Players.LocalPlayer.Character
+    if not char then return end
+    
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hrp or not hum then return end
+
+    -- Recreate if it got destroyed
+    if not hrp:FindFirstChild("AntiFling") then
+        AntiFlingBV = Instance.new("BodyVelocity")
+        AntiFlingBV.Name = "AntiFling"
+        AntiFlingBV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+        AntiFlingBV.Parent = hrp
+    end
+
+    -- Allow your own movement, block everything else
+    local moveDir = hum.MoveDirection
+    local speed = hum.WalkSpeed
+    AntiFlingBV.Velocity = moveDir * speed
+
+    -- Also kill rotation
+    hrp.RotVelocity = Vector3.zero
+end)
 
 Killer:AddSwitch("Hide Frames", function(bool)
     local rSto = game:GetService("ReplicatedStorage")
