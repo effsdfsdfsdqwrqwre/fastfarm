@@ -417,54 +417,44 @@ titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 
-local isSize30Active = false
-local isSize2Active = false
-
-Killer:AddButton("Size 30", false, function(state)
-    isSize30Active = state
-    if state then
-        spawn(function()
-            while isSize30Active do
-                local args = {"changeSize", 30}
-                game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("changeSpeedSizeRemote"):InvokeServer(unpack(args))
-                task.wait(0.3)
-            end
-        end)
-    end
+Killer:AddButton("Size 30", function()
+    local args = {
+        [1] = "changeSize",
+        [2] = 30
+    }
+    game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
 end)
 
-Killer:AddButton("Size 2", false, function(state)
-    isSize2Active = state
-    if state then
-        spawn(function()
-            while isSize2Active do
-                local args = {"changeSize", 2}
-                game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("changeSpeedSizeRemote"):InvokeServer(unpack(args))
-                task.wait(0.3)
-            end
-        end)
-    end
+Killer:AddButton("Size 2", function()
+    local args = {
+        [1] = "changeSize",
+        [2] = 2
+    }
+    game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
 end)
 
-
-local AntiFling = false
 
 Killer:AddSwitch("Anti Fling", function(Value)
-    AntiFling = Value
-end)
+    getgenv().AntiFling = Value
 
-game:GetService("RunService").Heartbeat:Connect(function()
-    if not AntiFling then return end
+    task.spawn(function()
+        while getgenv().AntiFling do
+            local character = game.Players.LocalPlayer.Character
+            if character then
+                local hrp = character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    -- Prevent extreme velocity
+                    if hrp.AssemblyLinearVelocity.Magnitude > 100 then
+                        hrp.AssemblyLinearVelocity = Vector3.zero
+                    end
 
-    local Character = game.Players.LocalPlayer.Character
-    if not Character then return end
-
-    local HRP = Character:FindFirstChild("HumanoidRootPart")
-    if not HRP then return end
-
-    -- Reduce the chance of being flung
-    HRP.AssemblyLinearVelocity = Vector3.zero
-    HRP.AssemblyAngularVelocity = Vector3.zero
+                    -- Reduce physics interactions
+                    hrp.CanCollide = false
+                end
+            end
+            task.wait()
+        end
+    end)
 end)
 
 
