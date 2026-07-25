@@ -417,27 +417,34 @@ titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 
+local isSize30Active = false
+local isSize2Active = false
+
 Killer:AddButton("Size 30", false, function(state)
+    isSize30Active = state
     if state then
-        while state do
-            local args = {"changeSize", 30}
-            game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("changeSpeedSizeRemote"):InvokeServer(unpack(args))
-            task.wait(0.3)
-            -- re-check the toggle value if your library supports it
-        end
+        spawn(function()
+            while isSize30Active do
+                local args = {"changeSize", 30}
+                game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("changeSpeedSizeRemote"):InvokeServer(unpack(args))
+                task.wait(0.3)
+            end
+        end)
     end
 end)
 
 Killer:AddButton("Size 2", false, function(state)
+    isSize2Active = state
     if state then
-        while state do
-            local args = {"changeSize", 2}
-            game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("changeSpeedSizeRemote"):InvokeServer(unpack(args))
-            task.wait(0.3)
-        end
+        spawn(function()
+            while isSize2Active do
+                local args = {"changeSize", 2}
+                game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("changeSpeedSizeRemote"):InvokeServer(unpack(args))
+                task.wait(0.3)
+            end
+        end)
     end
 end)
-
 
 
 local AntiFling = false
