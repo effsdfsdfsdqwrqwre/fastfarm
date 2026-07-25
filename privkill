@@ -11,7 +11,6 @@ local window = library:AddWindow("INVINCIBLE PRIVATE KILLING", {
 })
 
 
-
 local Killer = window:AddTab("Killer")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -417,36 +416,46 @@ titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 
-local AntiKnockbackToggle = Killer:AddSwitch("Anti Knockback", function(state)
-    getgenv().AntiKnockback = state
-    
-    if state then
-        print("✅ Anti Knockback ENABLED")
-        
-        spawn(function()
-            while getgenv().AntiKnockback do
-                pcall(function()
-                    local character = game.Players.LocalPlayer.Character
-                    if not character then return end
-                    
-                    local root = character:FindFirstChild("HumanoidRootPart")
-                    if root then
-                        -- Only remove knockback forces, don't touch normal movement
-                        for _, v in pairs(root:GetChildren()) do
-                            if v:IsA("BodyVelocity") or v:IsA("BodyThrust") or v:IsA("BodyForce") or 
-                               v:IsA("LinearVelocity") or v:IsA("VectorForce") then
-                                v:Destroy()
-                            end
-                        end
-                    end
-                end)
-                wait(0.03)  -- Slightly faster detection
-            end
-        end)
-    else
-        print("❌ Anti Knockback DISABLED")
-    end
+Killer:AddButton("Size 30", function()
+    local args = {
+        [1] = "changeSize",
+        [2] = 30
+    }
+    game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
 end)
+
+Killer:AddButton("Size 2", function()
+    local args = {
+        [1] = "changeSize",
+        [2] = 2
+    }
+    game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
+end)
+
+
+Killer:AddSwitch("Anti Fling", function(Value)
+    getgenv().AntiFling = Value
+
+    task.spawn(function()
+        while getgenv().AntiFling do
+            local character = game.Players.LocalPlayer.Character
+            if character then
+                local hrp = character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    -- Prevent extreme velocity
+                    if hrp.AssemblyLinearVelocity.Magnitude > 100 then
+                        hrp.AssemblyLinearVelocity = Vector3.zero
+                    end
+
+                    -- Reduce physics interactions
+                    hrp.CanCollide = false
+                end
+            end
+            task.wait()
+        end
+    end)
+end)
+
 
 Killer:AddSwitch("Hide Frames", function(bool)
     local rSto = game:GetService("ReplicatedStorage")
