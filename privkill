@@ -1,11 +1,11 @@
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/ui%20one"))()
 
 local window = library:AddWindow("INVINCIBLE PRIVATE KILLING", {
-    title_bar = {Color3.fromRGB(3, 0, 0), Color3.fromRGB(1, 0, 0), Color3.fromRGB(0, 0, 0)},
+    title_bar = {Color3.fromRGB(30, 30, 30), Color3.fromRGB(64, 64, 64), Color3.fromRGB(45, 45, 45)},
     title_bar_transparency = 0.2,
-    background = {Color3.fromRGB(0, 0, 0), Color3.fromRGB(5, 0, 0), Color3.fromRGB(1, 0, 0)},
+    background = {Color3.fromRGB(64, 64, 64), Color3.fromRGB(160, 160, 160), Color3.fromRGB(45, 45, 45)},
     background_transparency = 0.1,
-    main_color = Color3.fromRGB(4, 0, 0),
+    main_color = Color3.fromRGB(45, 45, 45),
     min_size = Vector2.new(520, 660),
     can_resize = true
 })
