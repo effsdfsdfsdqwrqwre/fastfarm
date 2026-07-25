@@ -577,6 +577,114 @@ local switch = Killer:AddSwitch("Lock Pos", function(Value)
     end
 end)
 
+
+
+local HealthESP = false
+local HealthBillboards = {}
+
+local function clearHealthESP()
+    for _, bb in pairs(HealthBillboards) do
+        if bb and bb.Parent then
+            bb:Destroy()
+        end
+    end
+    table.clear(HealthBillboards)
+end
+
+local function createHealthBillboard(character)
+    local head = character:FindFirstChild("Head")
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not head or not humanoid then return end
+
+    -- Remove old one if it exists
+    if HealthBillboards[character] then
+        HealthBillboards[character]:Destroy()
+    end
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "HealthESP"
+    billboard.Adornee = head
+    billboard.Size = UDim2.new(0, 100, 0, 40)
+    billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+    billboard.AlwaysOnTop = true
+    billboard.MaxDistance = 300
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
+    label.TextColor3 = Color3.fromRGB(0, 255, 0)
+    label.TextStrokeTransparency = 0.3
+    label.TextScaled = true
+    label.Font = Enum.Font.GothamBold
+    label.Parent = billboard
+
+    billboard.Parent = head
+    HealthBillboards[character] = billboard
+
+    -- Keep the text updated
+    local connection
+    connection = humanoid.HealthChanged:Connect(function(newHealth)
+        if label and label.Parent then
+            label.Text = math.floor(newHealth) .. " / " .. math.floor(humanoid.MaxHealth)
+            -- Color based on health %
+            local percent = newHealth / humanoid.MaxHealth
+            if percent > 0.6 then
+                label.TextColor3 = Color3.fromRGB(0, 255, 0)
+            elseif percent > 0.3 then
+                label.TextColor3 = Color3.fromRGB(255, 255, 0)
+            else
+                label.TextColor3 = Color3.fromRGB(255, 50, 50)
+            end
+        else
+            connection:Disconnect()
+        end
+    end)
+end
+
+local function refreshHealthESP()
+    clearHealthESP()
+    if not HealthESP then return end
+
+    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+        if player ~= game.Players.LocalPlayer and player.Character then
+            createHealthBillboard(player.Character)
+        end
+    end
+end
+
+-- Button
+Killer:AddButton("Display Health", function()
+    HealthESP = not HealthESP
+    if HealthESP then
+        refreshHealthESP()
+        print("Health ESP: ON")
+    else
+        clearHealthESP()
+        print("Health ESP: OFF")
+    end
+end)
+
+-- Keep ESP working when people join / respawn
+game:GetService("Players").PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(char)
+        if HealthESP then
+            task.wait(0.5)
+            createHealthBillboard(char)
+        end
+    end)
+end)
+
+for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+    player.CharacterAdded:Connect(function(char)
+        if HealthESP then
+            task.wait(0.5)
+            createHealthBillboard(char)
+        end
+    end)
+end
+
+
 Killer:AddButton("Rejoin Server", function()
     local TeleportService = game:GetService("TeleportService")
     local Players = game:GetService("Players")
@@ -737,114 +845,6 @@ LocalPlayer.CharacterAdded:Connect(function()
         end
     end
 end)
-
-
--- Put this after: local Killer = window:AddTab("Killer")
-
-local HealthESP = false
-local HealthBillboards = {}
-
-local function clearHealthESP()
-    for _, bb in pairs(HealthBillboards) do
-        if bb and bb.Parent then
-            bb:Destroy()
-        end
-    end
-    table.clear(HealthBillboards)
-end
-
-local function createHealthBillboard(character)
-    local head = character:FindFirstChild("Head")
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if not head or not humanoid then return end
-
-    -- Remove old one if it exists
-    if HealthBillboards[character] then
-        HealthBillboards[character]:Destroy()
-    end
-
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "HealthESP"
-    billboard.Adornee = head
-    billboard.Size = UDim2.new(0, 100, 0, 40)
-    billboard.StudsOffset = Vector3.new(0, 2.5, 0)
-    billboard.AlwaysOnTop = true
-    billboard.MaxDistance = 300
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
-    label.TextColor3 = Color3.fromRGB(0, 255, 0)
-    label.TextStrokeTransparency = 0.3
-    label.TextScaled = true
-    label.Font = Enum.Font.GothamBold
-    label.Parent = billboard
-
-    billboard.Parent = head
-    HealthBillboards[character] = billboard
-
-    -- Keep the text updated
-    local connection
-    connection = humanoid.HealthChanged:Connect(function(newHealth)
-        if label and label.Parent then
-            label.Text = math.floor(newHealth) .. " / " .. math.floor(humanoid.MaxHealth)
-            -- Color based on health %
-            local percent = newHealth / humanoid.MaxHealth
-            if percent > 0.6 then
-                label.TextColor3 = Color3.fromRGB(0, 255, 0)
-            elseif percent > 0.3 then
-                label.TextColor3 = Color3.fromRGB(255, 255, 0)
-            else
-                label.TextColor3 = Color3.fromRGB(255, 50, 50)
-            end
-        else
-            connection:Disconnect()
-        end
-    end)
-end
-
-local function refreshHealthESP()
-    clearHealthESP()
-    if not HealthESP then return end
-
-    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
-        if player ~= game.Players.LocalPlayer and player.Character then
-            createHealthBillboard(player.Character)
-        end
-    end
-end
-
--- Button
-Killer:AddButton("Display Health", function()
-    HealthESP = not HealthESP
-    if HealthESP then
-        refreshHealthESP()
-        print("Health ESP: ON")
-    else
-        clearHealthESP()
-        print("Health ESP: OFF")
-    end
-end)
-
--- Keep ESP working when people join / respawn
-game:GetService("Players").PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(char)
-        if HealthESP then
-            task.wait(0.5)
-            createHealthBillboard(char)
-        end
-    end)
-end)
-
-for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
-    player.CharacterAdded:Connect(function(char)
-        if HealthESP then
-            task.wait(0.5)
-            createHealthBillboard(char)
-        end
-    end)
-end
 
 
 
