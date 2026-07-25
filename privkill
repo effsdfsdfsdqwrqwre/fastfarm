@@ -484,7 +484,27 @@ Killer:AddSwitch("Anti Fling", function(state)
     end
 end)
 
-
+Killer:AddSwitch("spinnn", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    
+    if not hrp then return end
+    
+    -- Remove existing spin if already spinning
+    local existing = hrp:FindFirstChild("SpinVelocity")
+    if existing then
+        existing:Destroy()
+        return
+    end
+    
+    -- Create super fast spin
+    local spin = Instance.new("BodyAngularVelocity")
+    spin.Name = "SpinVelocity"
+    spin.MaxTorque = Vector3.new(0, math.huge, 0)
+    spin.AngularVelocity = Vector3.new(0, 500, 0) -- Really fast (was 50)
+    spin.Parent = hrp
+end)
 
 
 Killer:AddSwitch("Hide Frames", function(bool)
