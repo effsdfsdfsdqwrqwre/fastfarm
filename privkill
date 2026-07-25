@@ -446,16 +446,14 @@ Killer:AddSwitch("Anti Fling", function(state)
     if not hrp then return end
 
     if state then
-        -- Create BodyVelocity that overrides all external forces
         if AntiFlingBV then AntiFlingBV:Destroy() end
         
         AntiFlingBV = Instance.new("BodyVelocity")
         AntiFlingBV.Name = "AntiFling"
-        AntiFlingBV.MaxForce = Vector3.new(1e9, 1e9, 1e9) -- Extremely high force
+        AntiFlingBV.MaxForce = Vector3.new(1e9, 0, 1e9) -- X and Z only (allows jumping)
         AntiFlingBV.Velocity = Vector3.zero
         AntiFlingBV.Parent = hrp
     else
-        -- Clean up when disabled
         if AntiFlingBV then
             AntiFlingBV:Destroy()
             AntiFlingBV = nil
@@ -466,7 +464,7 @@ Killer:AddSwitch("Anti Fling", function(state)
     end
 end)
 
--- Keep it working + allow normal movement
+-- Main loop
 game:GetService("RunService").Heartbeat:Connect(function()
     if not getgenv().AntiFling then return end
     
@@ -477,22 +475,33 @@ game:GetService("RunService").Heartbeat:Connect(function()
     local hum = char:FindFirstChildOfClass("Humanoid")
     if not hrp or not hum then return end
 
-    -- Recreate if it got destroyed
+    -- Recreate if missing
     if not hrp:FindFirstChild("AntiFling") then
         AntiFlingBV = Instance.new("BodyVelocity")
         AntiFlingBV.Name = "AntiFling"
-        AntiFlingBV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+        AntiFlingBV.MaxForce = Vector3.new(1e9, 0, 1e9)
         AntiFlingBV.Parent = hrp
     end
 
-    -- Allow your own movement, block everything else
-    local moveDir = hum.MoveDirection
-    local speed = hum.WalkSpeed
-    AntiFlingBV.Velocity = moveDir * speed
+    local bv = hrp:FindFirstChild("AntiFling")
+    if bv then
+        -- Only control horizontal movement
+        local moveDir = hum.MoveDirection
+        local speed = hum.WalkSpeed
+        bv.Velocity = Vector3.new(moveDir.X * speed, 0, moveDir.Z * speed)
+    end
 
-    -- Also kill rotation
+    -- Kill rotational fling
     hrp.RotVelocity = Vector3.zero
+
+    -- Extra protection against vertical flings (optional but recommended)
+    if math.abs(hrp.Velocity.Y) > 80 then
+        hrp.Velocity = Vector3.new(hrp.Velocity.X, 0, hrp.Velocity.Z)
+    end
 end)
+
+
+
 
 Killer:AddSwitch("Hide Frames", function(bool)
     local rSto = game:GetService("ReplicatedStorage")
