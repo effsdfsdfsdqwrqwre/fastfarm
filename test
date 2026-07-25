@@ -417,36 +417,47 @@ titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 
-local AntiKnockbackToggle = Killer:AddSwitch("Anti Knockback", function(state)
-    getgenv().AntiKnockback = state
-    
+Killer:AddButton("Size 30", function(state)
     if state then
-        print("✅ Anti Knockback ENABLED")
         
-        spawn(function()
-            while getgenv().AntiKnockback do
-                pcall(function()
-                    local character = game.Players.LocalPlayer.Character
-                    if not character then return end
-                    
-                    local root = character:FindFirstChild("HumanoidRootPart")
-                    if root then
-                        -- Only remove knockback forces, don't touch normal movement
-                        for _, v in pairs(root:GetChildren()) do
-                            if v:IsA("BodyVelocity") or v:IsA("BodyThrust") or v:IsA("BodyForce") or 
-                               v:IsA("LinearVelocity") or v:IsA("VectorForce") then
-                                v:Destroy()
-                            end
-                        end
-                    end
-                end)
-                wait(0.03)  -- Slightly faster detection
-            end
-        end)
-    else
-        print("❌ Anti Knockback DISABLED")
+        local args = {"changeSize", 30/30}
+        game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("changeSpeedSizeRemote"):InvokeServer(unpack(args))
     end
 end)
+
+Killer:AddButton("Size 2", function(state)
+    if state then
+        
+        local args = {"changeSize", 2/2}
+        game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("changeSpeedSizeRemote"):InvokeServer(unpack(args))
+    end
+end)
+
+
+
+
+
+
+local AntiFling = false
+
+Killer:AddSwitch("Anti Fling", function(Value)
+    AntiFling = Value
+end)
+
+game:GetService("RunService").Heartbeat:Connect(function()
+    if not AntiFling then return end
+
+    local Character = game.Players.LocalPlayer.Character
+    if not Character then return end
+
+    local HRP = Character:FindFirstChild("HumanoidRootPart")
+    if not HRP then return end
+
+    -- Reduce the chance of being flung
+    HRP.AssemblyLinearVelocity = Vector3.zero
+    HRP.AssemblyAngularVelocity = Vector3.zero
+end)
+
 
 Killer:AddSwitch("Hide Frames", function(bool)
     local rSto = game:GetService("ReplicatedStorage")
