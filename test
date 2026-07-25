@@ -2,7 +2,7 @@ local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsd
 
 local window = library:AddWindow("INVINCIBLE PRIVATE KILLING", {
     title_bar = {Color3.fromRGB(0, 30, 0), Color3.fromRGB(3, 4, 0), Color3.fromRGB(0, 5, 0)},
-    title_bar_transparency = 0.9,
+    title_bar_transparency = 0.1,
     background = {Color3.fromRGB(64, 64, 64), Color3.fromRGB(160, 160, 160), Color3.fromRGB(45, 45, 45)},
     background_transparency = 0.1,
     main_color = Color3.fromRGB(45, 45, 45),
