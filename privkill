@@ -432,71 +432,55 @@ Killer:AddButton("Size 2", function()
     game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
 end)
 
--- Put this near the top
-getgenv().AntiFling = false
-local AntiFlingBV = nil
-
--- The switch
-Killer:AddSwitch("Anti Fling", function(state)
-    getgenv().AntiFling = state
-    
-    local char = game.Players.LocalPlayer.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
+Killer:AddSwitch("remove knockback", function(state)
+    getgenv().RemoveKnockback = state
 
     if state then
-        if AntiFlingBV then AntiFlingBV:Destroy() end
-        
-        AntiFlingBV = Instance.new("BodyVelocity")
-        AntiFlingBV.Name = "AntiFling"
-        AntiFlingBV.MaxForce = Vector3.new(1e9, 0, 1e9) -- X and Z only (allows jumping)
-        AntiFlingBV.Velocity = Vector3.zero
-        AntiFlingBV.Parent = hrp
-    else
-        if AntiFlingBV then
-            AntiFlingBV:Destroy()
-            AntiFlingBV = nil
+        local Players = game:GetService("Players")
+        local RunService = game:GetService("RunService")
+        local LP = Players.LocalPlayer
+
+        local function ApplyAntiKnockback(char)
+            if not char then return end
+            local hrp = char:WaitForChild("HumanoidRootPart", 5)
+            local hum = char:WaitForChild("Humanoid", 5)
+            if not hrp or not hum then return end
+
+            -- Destroy any BodyVelocity / LinearVelocity the game applies for knockback
+            local function CleanForces()
+                for _, v in pairs(hrp:GetChildren()) do
+                    if v:IsA("BodyVelocity") or v:IsA("BodyForce") or v:IsA("LinearVelocity") or v:IsA("VectorForce") then
+                        v:Destroy()
+                    end
+                end
+            end
+
+            -- Main loop – only cancels high horizontal velocity (knockback)
+            local conn
+            conn = RunService.Heartbeat:Connect(function()
+                if not getgenv().RemoveKnockback or not char.Parent or not hrp.Parent then
+                    if conn then conn:Disconnect() end
+                    return
+                end
+
+                CleanForces()
+
+                local vel = hrp.AssemblyLinearVelocity
+                local horizontal = Vector3.new(vel.X, 0, vel.Z)
+                local speed = horizontal.Magnitude
+
+                -- Only cancel if it's clearly knockback (high speed) and player is not intentionally moving fast
+                if speed > 45 and hum.MoveDirection.Magnitude < 0.1 then
+                    hrp.AssemblyLinearVelocity = Vector3.new(0, vel.Y, 0) -- keep vertical (jump/fall)
+                end
+            end)
         end
-        if hrp:FindFirstChild("AntiFling") then
-            hrp.AntiFling:Destroy()
+
+        -- Apply on current character + future respawns
+        if LP.Character then
+            ApplyAntiKnockback(LP.Character)
         end
-    end
-end)
-
--- Main loop
-game:GetService("RunService").Heartbeat:Connect(function()
-    if not getgenv().AntiFling then return end
-    
-    local char = game.Players.LocalPlayer.Character
-    if not char then return end
-    
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if not hrp or not hum then return end
-
-    -- Recreate if missing
-    if not hrp:FindFirstChild("AntiFling") then
-        AntiFlingBV = Instance.new("BodyVelocity")
-        AntiFlingBV.Name = "AntiFling"
-        AntiFlingBV.MaxForce = Vector3.new(1e9, 0, 1e9)
-        AntiFlingBV.Parent = hrp
-    end
-
-    local bv = hrp:FindFirstChild("AntiFling")
-    if bv then
-        -- Only control horizontal movement
-        local moveDir = hum.MoveDirection
-        local speed = hum.WalkSpeed
-        bv.Velocity = Vector3.new(moveDir.X * speed, 0, moveDir.Z * speed)
-    end
-
-    -- Kill rotational fling
-    hrp.RotVelocity = Vector3.zero
-
-    -- Extra protection against vertical flings (optional but recommended)
-    if math.abs(hrp.Velocity.Y) > 80 then
-        hrp.Velocity = Vector3.new(hrp.Velocity.X, 0, hrp.Velocity.Z)
+        LP.CharacterAdded:Connect(ApplyAntiKnockback)
     end
 end)
 
