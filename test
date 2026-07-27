@@ -660,111 +660,84 @@ end)
 
 
 
-
-local HealthESP = false
-local HealthBillboards = {}
-
-local function clearHealthESP()
-    for _, bb in pairs(HealthBillboards) do
-        if bb and bb.Parent then
-            bb:Destroy()
-        end
-    end
-    table.clear(HealthBillboards)
-end
-
-local function createHealthBillboard(character)
-    local head = character:FindFirstChild("Head")
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if not head or not humanoid then return end
-
-    -- Remove old one if it exists
-    if HealthBillboards[character] then
-        HealthBillboards[character]:Destroy()
-    end
-
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "HealthESP"
-    billboard.Adornee = head
-    billboard.Size = UDim2.new(0, 100, 0, 40)
-    billboard.StudsOffset = Vector3.new(0, 2.5, 0)
-    billboard.AlwaysOnTop = true
-    billboard.MaxDistance = 300
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
-    label.TextColor3 = Color3.fromRGB(0, 255, 0)
-    label.TextStrokeTransparency = 0.3
-    label.TextScaled = true
-    label.Font = Enum.Font.GothamBold
-    label.Parent = billboard
-
-    billboard.Parent = head
-    HealthBillboards[character] = billboard
-
-    -- Keep the text updated
-    local connection
-    connection = humanoid.HealthChanged:Connect(function(newHealth)
-        if label and label.Parent then
-            label.Text = math.floor(newHealth) .. " / " .. math.floor(humanoid.MaxHealth)
-            -- Color based on health %
-            local percent = newHealth / humanoid.MaxHealth
-            if percent > 0.6 then
-                label.TextColor3 = Color3.fromRGB(0, 255, 0)
-            elseif percent > 0.3 then
-                label.TextColor3 = Color3.fromRGB(255, 255, 0)
-            else
-                label.TextColor3 = Color3.fromRGB(255, 50, 50)
-            end
-        else
-            connection:Disconnect()
-        end
-    end)
-end
-
-local function refreshHealthESP()
-    clearHealthESP()
-    if not HealthESP then return end
-
-    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
-        if player ~= game.Players.LocalPlayer and player.Character then
-            createHealthBillboard(player.Character)
-        end
-    end
-end
-
--- Button
 Killer:AddButton("Display Health", function()
-    HealthESP = not HealthESP
-    if HealthESP then
-        refreshHealthESP()
-        print("Health ESP: ON")
-    else
-        clearHealthESP()
-        print("Health ESP: OFF")
+
+    local Players = game:GetService("Players")
+
+    local function createTag(player)
+        if player == Players.LocalPlayer then return end
+
+        local character = player.Character or player.CharacterAdded:Wait()
+        local head = character:WaitForChild("Head")
+        local humanoid = character:WaitForChild("Humanoid")
+
+        if head:FindFirstChild("StatsTag") then
+            head.StatsTag:Destroy()
+        end
+
+        local billboard = Instance.new("BillboardGui")
+        billboard.Name = "StatsTag"
+        billboard.Size = UDim2.new(0, 220, 0, 60)
+        billboard.StudsOffset = Vector3.new(0, 3.2, 0)
+        billboard.AlwaysOnTop = true
+        billboard.Parent = head
+
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.GothamBold
+        label.TextScaled = true
+        label.TextStrokeTransparency = 0
+        label.TextStrokeColor3 = Color3.new(0,0,0)
+        label.TextColor3 = Color3.fromRGB(0,255,255)
+        label.Parent = billboard
+
+        local gradient = Instance.new("UIGradient")
+        gradient.Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(0,255,255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255))
+        }
+        gradient.Parent = label
+
+        task.spawn(function()
+            while billboard.Parent and character.Parent do
+                local health = math.floor(humanoid.Health)
+
+                -- Change this path to wherever Muscle Legends stores damage/strength.
+                local damage = "?"
+
+                local leaderstats = player:FindFirstChild("leaderstats")
+                if leaderstats then
+                    local strength = leaderstats:FindFirstChild("Strength")
+                    if strength then
+                        damage = tostring(strength.Value)
+                    end
+                end
+
+                label.Text = string.format(
+                    "%s\n❤️ %d | 💥 %s",
+                    player.Name,
+                    health,
+                    damage
+                )
+
+                task.wait(0.1)
+            end
+        end)
     end
-end)
 
--- Keep ESP working when people join / respawn
-game:GetService("Players").PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(char)
-        if HealthESP then
-            task.wait(0.5)
-            createHealthBillboard(char)
-        end
-    end)
-end)
+    for _,player in ipairs(Players:GetPlayers()) do
+        task.spawn(createTag, player)
+    end
 
-for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
-    player.CharacterAdded:Connect(function(char)
-        if HealthESP then
-            task.wait(0.5)
-            createHealthBillboard(char)
-        end
+    Players.PlayerAdded:Connect(function(player)
+        player.CharacterAdded:Connect(function()
+            task.wait(1)
+            createTag(player)
+        end)
     end)
-end
+
+end)
 
 
 Killer:AddButton("Rejoin Server", function()
