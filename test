@@ -659,12 +659,11 @@ Killer:AddSwitch("Freeze Water", function(bool)
 end)
 
 
-
 Killer:AddButton("Display Health", function()
     local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
 
-    -- Toggle
+    -- Toggle so you can turn it off/on
     if _G.ML_HealthESP then
         _G.ML_HealthESP = false
         for _, v in pairs(workspace:GetDescendants()) do
@@ -683,17 +682,17 @@ Killer:AddButton("Display Health", function()
         local billboard = Instance.new("BillboardGui")
         billboard.Name = "ML_HealthESP"
         billboard.Adornee = player.Character.Head
-        billboard.Size = UDim2.new(0, 180, 0, 78)
-        billboard.StudsOffset = Vector3.new(0, 3.4, 0)
+        billboard.Size = UDim2.new(0, 200, 0, 70)
+        billboard.StudsOffset = Vector3.new(0, 3.2, 0)
         billboard.AlwaysOnTop = true
-        billboard.MaxDistance = 130
+        billboard.MaxDistance = 120
         billboard.Parent = player.Character.Head
 
-        -- Main background
+        -- Background with slight transparency + glow effect
         local bg = Instance.new("Frame")
         bg.Size = UDim2.new(1, 0, 1, 0)
-        bg.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-        bg.BackgroundTransparency = 0.25
+        bg.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+        bg.BackgroundTransparency = 0.35
         bg.BorderSizePixel = 0
         bg.Parent = billboard
 
@@ -702,123 +701,47 @@ Killer:AddButton("Display Health", function()
         corner.Parent = bg
 
         local stroke = Instance.new("UIStroke")
-        stroke.Color = Color3.fromRGB(0, 0, 0)
-        stroke.Thickness = 2
+        stroke.Color = Color3.fromRGB(0, 255, 180)
+        stroke.Thickness = 1.6
+        stroke.Transparency = 0.3
         stroke.Parent = bg
 
         -- Username
         local nameLabel = Instance.new("TextLabel")
-        nameLabel.Size = UDim2.new(1, -10, 0, 18)
-        nameLabel.Position = UDim2.new(0, 5, 0, 3)
+        nameLabel.Size = UDim2.new(1, -8, 0, 22)
+        nameLabel.Position = UDim2.new(0, 4, 0, 4)
         nameLabel.BackgroundTransparency = 1
         nameLabel.Text = player.DisplayName or player.Name
         nameLabel.TextColor3 = Color3.fromRGB(0, 255, 200)
-        nameLabel.TextStrokeTransparency = 0.5
+        nameLabel.TextStrokeTransparency = 0.4
         nameLabel.Font = Enum.Font.GothamBold
-        nameLabel.TextSize = 14
+        nameLabel.TextSize = 15
+        nameLabel.TextScaled = false
         nameLabel.Parent = bg
 
-        -- ========== HEALTH BAR ==========
-        local healthBg = Instance.new("Frame")
-        healthBg.Name = "HealthBg"
-        healthBg.Size = UDim2.new(1, -12, 0, 12)
-        healthBg.Position = UDim2.new(0, 6, 0, 24)
-        healthBg.BackgroundColor3 = Color3.fromRGB(60, 60, 65) -- gray inside
-        healthBg.BorderSizePixel = 0
-        healthBg.Parent = bg
-
-        local healthCorner = Instance.new("UICorner")
-        healthCorner.CornerRadius = UDim.new(0, 4)
-        healthCorner.Parent = healthBg
-
-        local healthStroke = Instance.new("UIStroke")
-        healthStroke.Color = Color3.fromRGB(0, 0, 0) -- black outline
-        healthStroke.Thickness = 1.5
-        healthStroke.Parent = healthBg
-
-        local healthFill = Instance.new("Frame")
-        healthFill.Name = "Fill"
-        healthFill.Size = UDim2.new(1, 0, 1, 0)
-        healthFill.BackgroundColor3 = Color3.fromRGB(0, 220, 80) -- green default
-        healthFill.BorderSizePixel = 0
-        healthFill.Parent = healthBg
-
-        local healthFillCorner = Instance.new("UICorner")
-        healthFillCorner.CornerRadius = UDim.new(0, 4)
-        healthFillCorner.Parent = healthFill
-
-        -- Health text (optional, small)
-        local healthText = Instance.new("TextLabel")
-        healthText.Size = UDim2.new(1, 0, 1, 0)
-        healthText.BackgroundTransparency = 1
-        healthText.TextColor3 = Color3.fromRGB(255, 255, 255)
-        healthText.TextStrokeTransparency = 0.6
-        healthText.Font = Enum.Font.GothamBold
-        healthText.TextSize = 10
-        healthText.Parent = healthBg
-
-        -- ========== DAMAGE BAR ==========
-        local dmgBg = Instance.new("Frame")
-        dmgBg.Name = "DamageBg"
-        dmgBg.Size = UDim2.new(1, -12, 0, 12)
-        dmgBg.Position = UDim2.new(0, 6, 0, 42)
-        dmgBg.BackgroundColor3 = Color3.fromRGB(60, 60, 65) -- gray inside
-        dmgBg.BorderSizePixel = 0
-        dmgBg.Parent = bg
-
-        local dmgCorner = Instance.new("UICorner")
-        dmgCorner.CornerRadius = UDim.new(0, 4)
-        dmgCorner.Parent = dmgBg
-
-        local dmgStroke = Instance.new("UIStroke")
-        dmgStroke.Color = Color3.fromRGB(0, 0, 0) -- black outline
-        dmgStroke.Thickness = 1.5
-        dmgStroke.Parent = dmgBg
-
-        local dmgFill = Instance.new("Frame")
-        dmgFill.Name = "Fill"
-        dmgFill.Size = UDim2.new(0.5, 0, 1, 0) -- default half
-        dmgFill.BackgroundColor3 = Color3.fromRGB(255, 180, 30)
-        dmgFill.BorderSizePixel = 0
-        dmgFill.Parent = dmgBg
-
-        local dmgFillCorner = Instance.new("UICorner")
-        dmgFillCorner.CornerRadius = UDim.new(0, 4)
-        dmgFillCorner.Parent = dmgFill
-
-        local dmgText = Instance.new("TextLabel")
-        dmgText.Size = UDim2.new(1, 0, 1, 0)
-        dmgText.BackgroundTransparency = 1
-        dmgText.TextColor3 = Color3.fromRGB(255, 255, 255)
-        dmgText.TextStrokeTransparency = 0.6
-        dmgText.Font = Enum.Font.GothamBold
-        dmgText.TextSize = 10
-        dmgText.Parent = dmgBg
-
-        -- Labels under the bars
+        -- Health
         local healthLabel = Instance.new("TextLabel")
-        healthLabel.Size = UDim2.new(0.5, -4, 0, 14)
-        healthLabel.Position = UDim2.new(0, 6, 0, 56)
+        healthLabel.Size = UDim2.new(1, -8, 0, 18)
+        healthLabel.Position = UDim2.new(0, 4, 0, 26)
         healthLabel.BackgroundTransparency = 1
-        healthLabel.Text = "Health"
-        healthLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+        healthLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+        healthLabel.TextStrokeTransparency = 0.5
         healthLabel.Font = Enum.Font.Gotham
-        healthLabel.TextSize = 11
-        healthLabel.TextXAlignment = Enum.TextXAlignment.Left
+        healthLabel.TextSize = 13
         healthLabel.Parent = bg
 
-        local dmgLabel = Instance.new("TextLabel")
-        dmgLabel.Size = UDim2.new(0.5, -4, 0, 14)
-        dmgLabel.Position = UDim2.new(0.5, 0, 0, 56)
-        dmgLabel.BackgroundTransparency = 1
-        dmgLabel.Text = "Damage"
-        dmgLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-        dmgLabel.Font = Enum.Font.Gotham
-        dmgLabel.TextSize = 11
-        dmgLabel.TextXAlignment = Enum.TextXAlignment.Right
-        dmgLabel.Parent = bg
+        -- Damage / extra stats
+        local damageLabel = Instance.new("TextLabel")
+        damageLabel.Size = UDim2.new(1, -8, 0, 18)
+        damageLabel.Position = UDim2.new(0, 4, 0, 44)
+        damageLabel.BackgroundTransparency = 1
+        damageLabel.TextColor3 = Color3.fromRGB(255, 200, 50)
+        damageLabel.TextStrokeTransparency = 0.5
+        damageLabel.Font = Enum.Font.Gotham
+        damageLabel.TextSize = 13
+        damageLabel.Parent = bg
 
-        -- Update loop
+        -- Update loop for this player
         local connection
         connection = RunService.Heartbeat:Connect(function()
             if not _G.ML_HealthESP or not player.Character or not player.Character:FindFirstChild("Humanoid") then
@@ -828,50 +751,31 @@ Killer:AddButton("Display Health", function()
             end
 
             local hum = player.Character.Humanoid
-            local hp = hum.Health
-            local maxHp = math.max(hum.MaxHealth, 1)
-            local percent = math.clamp(hp / maxHp, 0, 1)
+            local hp = math.floor(hum.Health)
+            local maxHp = math.floor(hum.MaxHealth)
+            healthLabel.Text = "❤️ " .. hp .. " / " .. maxHp
 
-            -- Health bar size + color
-            healthFill.Size = UDim2.new(percent, 0, 1, 0)
-
-            if percent >= 0.99 then
-                healthFill.BackgroundColor3 = Color3.fromRGB(0, 220, 80)      -- full = green
-            elseif percent >= 0.75 then
-                healthFill.BackgroundColor3 = Color3.fromRGB(255, 140, 0)      -- 3/4 = orange
-            elseif percent >= 0.45 then
-                healthFill.BackgroundColor3 = Color3.fromRGB(255, 220, 0)      -- half = yellow
-            else
-                healthFill.BackgroundColor3 = Color3.fromRGB(60, 60, 65)       -- low / no health = gray (clear)
-            end
-
-            healthText.Text = math.floor(hp) .. " / " .. math.floor(maxHp)
-
-            -- Damage bar (tries to find real damage, otherwise shows a fake relative bar)
-            local dmgValue = 0
+            -- Try to find damage / strength (common locations in Muscle Legends)
+            local dmgText = "⚔️ Damage: ?"
             local stats = player:FindFirstChild("leaderstats")
                 or player:FindFirstChild("Stats")
                 or player:FindFirstChild("PlayerStats")
-                or (player.Character and player.Character:FindFirstChild("Stats"))
+                or player.Character:FindFirstChild("Stats")
 
             if stats then
                 local dmg = stats:FindFirstChild("Damage") or stats:FindFirstChild("damage")
                 local str = stats:FindFirstChild("Strength") or stats:FindFirstChild("strength")
                 if dmg then
-                    dmgValue = tonumber(dmg.Value) or 0
+                    dmgText = "⚔️ Damage: " .. tostring(dmg.Value)
                 elseif str then
-                    dmgValue = tonumber(str.Value) or 0
+                    dmgText = "💪 Strength: " .. tostring(str.Value)
                 end
             end
-
-            -- Simple visual scale for damage (you can change the divisor)
-            local dmgPercent = math.clamp(dmgValue / 1000000, 0, 1) -- adjust this number based on server
-            dmgFill.Size = UDim2.new(dmgPercent, 0, 1, 0)
-            dmgText.Text = dmgValue > 0 and tostring(math.floor(dmgValue)) or "?"
+            damageLabel.Text = dmgText
         end)
     end
 
-    -- Existing players
+    -- Create for existing players
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= Players.LocalPlayer then
             createESP(player)
@@ -894,11 +798,6 @@ Killer:AddButton("Display Health", function()
         end)
     end)
 end)
-
-
-
-
-
 
 
 Killer:AddButton("Rejoin Server", function()
