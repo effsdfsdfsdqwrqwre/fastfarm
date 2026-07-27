@@ -1620,197 +1620,11 @@ task.spawn(function()
 end)
 
 
-_G.whitelistedPlayers = _G.whitelistedPlayers or {}
-_G.targetPlayer = _G.targetPlayer or ""
-
-local function checkCharacter()
-    if not game.Players.LocalPlayer.Character then
-        repeat
-            task.wait()
-        until game.Players.LocalPlayer.Character
-    end
-    return game.Players.LocalPlayer.Character
-end
-
-local function gettool()
-    for i, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
-        if v.Name == "Punch" and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-            game.Players.LocalPlayer.Character.Humanoid:EquipTool(v)
-        end
-    end
-    game:GetService("Players").LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
-    game:GetService("Players").LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
-end
-
-local function killPlayer(target)
-    local character = checkCharacter()
-    if character and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-        if character:FindFirstChild("LeftHand") then
-            firetouchinterest(target.Character.HumanoidRootPart, character.LeftHand, 0)
-            firetouchinterest(target.Character.HumanoidRootPart, character.LeftHand, 1)
-            gettool()
-        end
-    end
-end
-
-local function findClosestPlayer(input)
-    if not input or input == "" then return nil end
-    
-    input = input:lower()
-    local bestMatch = nil
-    local bestScore = 0
-    
-    for _, player in pairs(game.Players:GetPlayers()) do
-        if player ~= game.Players.LocalPlayer then
-            local username = player.Name:lower()
-            local displayName = player.DisplayName:lower()
-            
-            local usernameMatch = username:find(input, 1, true) ~= nil
-            local displayMatch = displayName:find(input, 1, true) ~= nil
-            
-            local usernameScore = 0
-            local displayScore = 0
-            
-            if usernameMatch then
-                usernameScore = (#input / #username) * 100
-                if username:sub(1, #input) == input then
-                    usernameScore = usernameScore + 50
-                end
-            end
-            
-            if displayMatch then
-                displayScore = (#input / #displayName) * 100
-                if displayName:sub(1, #input) == input then
-                    displayScore = displayScore + 50
-                end
-            end
-            
-            local score = math.max(usernameScore, displayScore)
-            
-            if score > bestScore then
-                bestScore = score
-                bestMatch = player
-            end
-        end
-    end
-    
-    if bestScore > 20 then
-        return bestMatch
-    end
-    
-    return nil
-end
 
 
 
-local function updateWhitelistedPlayersLabel()
-    if #_G.whitelistedPlayers == 0 then
-        whitelistedPlayersLabel.Text = "Whitelisted Players: None"
-    else
-        local displayText = "Whitelisted Players: "
-        for i, playerInfo in ipairs(_G.whitelistedPlayers) do
-            if i > 1 then displayText = displayText .. ", " end
-            displayText = displayText .. playerInfo
-        end
-        whitelistedPlayersLabel.Text = displayText
-    end
-end
 
-local function updateTargetPlayerLabel()
-    if _G.targetPlayer == "" then
-        targetPlayerLabel.Text = "Target Player: None"
-    else
-        targetPlayerLabel.Text = "Target Player: " .. _G.targetPlayer
-    end
-end
-
-local autoWhitelistFriendsSwitch = blood:AddSwitch("Auto Whitelist Friends", function(bool)
-    _G.autoWhitelistFriends = bool
-    
-    if bool then
-        for _, player in pairs(game.Players:GetPlayers()) do
-            if player:IsFriendsWith(game.Players.LocalPlayer.UserId) then
-                local playerInfo = player.Name .. " (" .. player.DisplayName .. ")"
-                if not table.find(_G.whitelistedPlayers, playerInfo) then
-                    table.insert(_G.whitelistedPlayers, playerInfo)
-                end
-            end
-        end
-        updateWhitelistedPlayersLabel()
-    end
-end)
-
-game.Players.PlayerAdded:Connect(function(player)
-    if _G.autoWhitelistFriends and player:IsFriendsWith(game.Players.LocalPlayer.UserId) then
-        local playerInfo = player.Name .. " (" .. player.DisplayName .. ")"
-        if not table.find(_G.whitelistedPlayers, playerInfo) then
-            table.insert(_G.whitelistedPlayers, playerInfo)
-            updateWhitelistedPlayersLabel()
-        end
-    end
-end)
-
-blood:AddTextBox("Whitelist Player (Enter Username/Display)", function(text)
-    if text and text ~= "" then
-        local player = findClosestPlayer(text)
-        if player then
-            local playerInfo = player.Name .. " (" .. player.DisplayName .. ")"
-            
-            local alreadyWhitelisted = false
-            for _, info in ipairs(_G.whitelistedPlayers) do
-                if info:find(player.Name, 1, true) then
-                    alreadyWhitelisted = true
-                    break
-                end
-            end
-            
-            if not alreadyWhitelisted then
-                table.insert(_G.whitelistedPlayers, playerInfo)
-                updateWhitelistedPlayersLabel()
-            end
-        end
-    end
-end)
-
-local autoKillAllSwitch = blood:AddSwitch("Auto Kill All (except Whitelist)", function(bool)
-    _G.autoKillAll = bool
-    
-    if bool then
-        spawn(function()
-            while _G.autoKillAll do
-                local players = game:GetService("Players"):GetPlayers()
-                
-                if #players <= 1 then
-                    task.wait(1)
-                    continue
-                end
-                
-                for _, player in ipairs(players) do
-                    if player == game.Players.LocalPlayer or not _G.autoKillAll then
-                        continue
-                    end
-                    
-                    local isWhitelisted = false
-                    for _, whitelistedInfo in ipairs(_G.whitelistedPlayers) do
-                        if whitelistedInfo:find(player.Name, 1, true) then
-                            isWhitelisted = true
-                            break
-                        end
-                    end
-                    
-                    if not isWhitelisted then
-                        killPlayer(player)
-                        task.wait(0.05)
-                    end
-                end
-                
-                task.wait(0.5)
-            end
-        end)
-    end
-end)
-
-blood:AddTextBox("Target Player (Enter Username/Display)", function(text)
+blood:AddTextBox("Target Clan (Enter Clan Name)", function(text)
     if text and text ~= "" then
         local player = findClosestPlayer(text)
         if player then
@@ -1825,7 +1639,7 @@ blood:AddButton("Clear Target", function()
     updateTargetPlayerLabel()
 end)
 
-local autoKillTargetSwitch = blood:AddSwitch("Auto Kill Target", function(bool)
+local autoKillTargetSwitch = blood:AddSwitch("Auto Kill Clan", function(bool)
     _G.autoKillTarget = bool
     
     if bool and _G.targetPlayer ~= "" then
@@ -1844,3 +1658,70 @@ local autoKillTargetSwitch = blood:AddSwitch("Auto Kill Target", function(bool)
         end)
     end
 end)
+
+
+
+local titleLabel = blood:AddLabel("Kill Stronger Players")
+titleLabel.TextSize = 18
+titleLabel.Font = Enum.Font.Bangers        
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+
+
+blood:AddButton("Size 50", function()
+    local args = {
+        [1] = "changeSize",
+        [2] = 50
+    }
+    game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
+end)
+
+
+
+blood:AddButton("Size 30", function()
+    local args = {
+        [1] = "changeSize",
+        [2] = 30
+    }
+    game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
+end)
+
+
+
+blood:AddButton("Size 2", function()
+    local args = {
+        [1] = "changeSize",
+        [2] = 2
+    }
+    game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
+end)
+
+
+
+
+local titleLabel = blood:AddLabel("================")
+titleLabel.TextSize = 18
+titleLabel.Font = Enum.Font.Bangers        
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
