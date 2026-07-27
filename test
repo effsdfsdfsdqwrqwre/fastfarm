@@ -658,7 +658,10 @@ Killer:AddSwitch("Freeze Water", function(bool)
     end
 end)
 
--- // Display Health ESP //
+
+
+
+-- // Display Health ESP (Killer Tab) //
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -685,7 +688,6 @@ local function CreateESP(player)
     billboard.MaxDistance = 400
     billboard.Parent = head
 
-    -- Background frame
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 1, 0)
     frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
@@ -703,7 +705,6 @@ local function CreateESP(player)
     stroke.Transparency = 0.4
     stroke.Parent = frame
 
-    -- Username
     local nameLabel = Instance.new("TextLabel")
     nameLabel.Name = "Username"
     nameLabel.Size = UDim2.new(1, -10, 0, 20)
@@ -717,7 +718,6 @@ local function CreateESP(player)
     nameLabel.TextXAlignment = Enum.TextXAlignment.Left
     nameLabel.Parent = frame
 
-    -- Health
     local healthLabel = Instance.new("TextLabel")
     healthLabel.Name = "Health"
     healthLabel.Size = UDim2.new(1, -10, 0, 18)
@@ -731,7 +731,6 @@ local function CreateESP(player)
     healthLabel.TextXAlignment = Enum.TextXAlignment.Left
     healthLabel.Parent = frame
 
-    -- Damage (Strength)
     local damageLabel = Instance.new("TextLabel")
     damageLabel.Name = "Damage"
     damageLabel.Size = UDim2.new(1, -10, 0, 18)
@@ -773,7 +772,6 @@ local function UpdateESP()
         if humanoid and humanoid.Parent then
             data.HealthLabel.Text = "Health: " .. math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
 
-            -- Color health based on percentage
             local percent = humanoid.Health / humanoid.MaxHealth
             if percent > 0.6 then
                 data.HealthLabel.TextColor3 = Color3.fromRGB(100, 255, 130)
@@ -784,14 +782,11 @@ local function UpdateESP()
             end
         end
 
-        -- Try to get Strength (used as Damage in Muscle Legends)
         local success, strength = pcall(function()
-            -- Most common places Strength is stored in Muscle Legends
             local stats = player:FindFirstChild("leaderstats")
             if stats and stats:FindFirstChild("Strength") then
                 return stats.Strength.Value
             end
-            -- Fallback for some script hubs / private servers
             if player:FindFirstChild("Strength") then
                 return player.Strength.Value
             end
@@ -806,7 +801,6 @@ local function UpdateESP()
     end
 end
 
--- Character added / removed handlers
 local function OnCharacterAdded(player)
     player.CharacterAdded:Connect(function()
         task.wait(0.5)
@@ -835,15 +829,14 @@ Players.PlayerRemoving:Connect(function(player)
     RemoveESP(player)
 end)
 
--- Update loop
 RunService.RenderStepped:Connect(function()
     if ESPEnabled then
         UpdateESP()
     end
 end)
 
--- // Button //
-AddButton("Display Health", function()
+-- Killer tab button
+Killer:AddButton("Display Health", function()
     ESPEnabled = not ESPEnabled
 
     if ESPEnabled then
@@ -860,6 +853,9 @@ AddButton("Display Health", function()
         print("[ESP] Display Health disabled")
     end
 end)
+
+
+
 
 
 Killer:AddButton("Rejoin Server", function()
