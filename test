@@ -12,6 +12,7 @@ local window = library:AddWindow("INVINCIBLE PRIVATE KILLING", {
 
 
 local Killer = window:AddTab("Killer")
+local blood = window:AddTab("Clan Killing")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local playerWhitelist = {}
@@ -1619,13 +1620,6 @@ task.spawn(function()
 end)
 
 
-
-local KillerTab = window:AddTab("Clan Killing")
-
-
-
-killerTab:AddLabel("Killing Features")
-
 _G.whitelistedPlayers = _G.whitelistedPlayers or {}
 _G.targetPlayer = _G.targetPlayer or ""
 
@@ -1707,9 +1701,9 @@ local function findClosestPlayer(input)
     return nil
 end
 
-local whitelistedPlayersLabel = killerTab:AddLabel("Whitelisted Players: None")
+local whitelistedPlayersLabel = blood:AddLabel("Whitelisted Players: None")
 
-local targetPlayerLabel = killerTab:AddLabel("Target Player: None")
+local targetPlayerLabel = blood:AddLabel("Target Player: None")
 
 local function updateWhitelistedPlayersLabel()
     if #_G.whitelistedPlayers == 0 then
@@ -1732,7 +1726,7 @@ local function updateTargetPlayerLabel()
     end
 end
 
-local autoWhitelistFriendsSwitch = killerTab:AddSwitch("Auto Whitelist Friends", function(bool)
+local autoWhitelistFriendsSwitch = blood:AddSwitch("Auto Whitelist Friends", function(bool)
     _G.autoWhitelistFriends = bool
     
     if bool then
@@ -1758,7 +1752,7 @@ game.Players.PlayerAdded:Connect(function(player)
     end
 end)
 
-killerTab:AddTextBox("Whitelist Player (Enter Username/Display)", function(text)
+blood:AddTextBox("Whitelist Player (Enter Username/Display)", function(text)
     if text and text ~= "" then
         local player = findClosestPlayer(text)
         if player then
@@ -1780,7 +1774,7 @@ killerTab:AddTextBox("Whitelist Player (Enter Username/Display)", function(text)
     end
 end)
 
-killerTab:AddTextBox("Unwhitelist Player (Enter Username/Display)", function(text)
+blood:AddTextBox("Unwhitelist Player (Enter Username/Display)", function(text)
     if text and text ~= "" then
         local textLower = text:lower()
         for i, playerInfo in ipairs(_G.whitelistedPlayers) do
@@ -1804,12 +1798,12 @@ killerTab:AddTextBox("Unwhitelist Player (Enter Username/Display)", function(tex
     end
 end)
 
-killerTab:AddButton("Clear All Whitelisted", function()
+blood:AddButton("Clear All Whitelisted", function()
     _G.whitelistedPlayers = {}
     updateWhitelistedPlayersLabel()
 end)
 
-local autoKillAllSwitch = killerTab:AddSwitch("Auto Kill All (except Whitelist)", function(bool)
+local autoKillAllSwitch = blood:AddSwitch("Auto Kill All (except Whitelist)", function(bool)
     _G.autoKillAll = bool
     
     if bool then
@@ -1847,7 +1841,7 @@ local autoKillAllSwitch = killerTab:AddSwitch("Auto Kill All (except Whitelist)"
     end
 end)
 
-killerTab:AddTextBox("Target Player (Enter Username/Display)", function(text)
+blood:AddTextBox("Target Player (Enter Username/Display)", function(text)
     if text and text ~= "" then
         local player = findClosestPlayer(text)
         if player then
@@ -1857,12 +1851,12 @@ killerTab:AddTextBox("Target Player (Enter Username/Display)", function(text)
     end
 end)
 
-killerTab:AddButton("Clear Target", function()
+blood:AddButton("Clear Target", function()
     _G.targetPlayer = ""
     updateTargetPlayerLabel()
 end)
 
-local autoKillTargetSwitch = killerTab:AddSwitch("Auto Kill Target", function(bool)
+local autoKillTargetSwitch = blood:AddSwitch("Auto Kill Target", function(bool)
     _G.autoKillTarget = bool
     
     if bool and _G.targetPlayer ~= "" then
@@ -1882,7 +1876,7 @@ local autoKillTargetSwitch = killerTab:AddSwitch("Auto Kill Target", function(bo
     end
 end)
 
-killerTab:AddButton("Kill All (except Whitelist)", function()
+blood:AddButton("Kill All (except Whitelist)", function()
     for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
         if player ~= game.Players.LocalPlayer then
             local isWhitelisted = false
@@ -1900,7 +1894,7 @@ killerTab:AddButton("Kill All (except Whitelist)", function()
     end
 end)
 
-killerTab:AddButton("Kill Target", function()
+blood:AddButton("Kill Target", function()
     if _G.targetPlayer ~= "" then
         local targetName = _G.targetPlayer:match("^([^%(]+)")
         if targetName then
