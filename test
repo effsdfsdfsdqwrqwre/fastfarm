@@ -1709,6 +1709,85 @@ end)
 
 
 
+
+
+
+_G.targetPlayer = _G.targetPlayer or ""
+local function checkCharacter()
+    if not game.Players.LocalPlayer.Character then
+        repeat
+            task.wait()
+        until game.Players.LocalPlayer.Character
+    end
+    return game.Players.LocalPlayer.Character
+end
+local function gettool()
+    for i, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+        if v.Name == "Punch" and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid:EquipTool(v)
+        end
+    end
+    game:GetService("Players").LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
+    game:GetService("Players").LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
+end
+local function killPlayer(target)
+    local character = checkCharacter()
+    if character and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        if character:FindFirstChild("LeftHand") then
+            firetouchinterest(target.Character.HumanoidRootPart, character.LeftHand, 0)
+            firetouchinterest(target.Character.HumanoidRootPart, character.LeftHand, 1)
+            gettool()
+        end
+    end
+end
+local function findClosestPlayer(input)
+    if not input or input == "" then return nil end
+   
+    input = input:lower()
+    local bestMatch = nil
+    local bestScore = 0
+   
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer then
+            local username = player.Name:lower()
+            local displayName = player.DisplayName:lower()
+           
+            local usernameMatch = username:find(input, 1, true) ~= nil
+            local displayMatch = displayName:find(input, 1, true) ~= nil
+           
+            local usernameScore = 0
+            local displayScore = 0
+           
+            if usernameMatch then
+                usernameScore = (#input / #username) * 100
+                if username:sub(1, #input) == input then
+                    usernameScore = usernameScore + 50
+                end
+            end
+           
+            if displayMatch then
+                displayScore = (#input / #displayName) * 100
+                if displayName:sub(1, #input) == input then
+                    displayScore = displayScore + 50
+                end
+            end
+           
+            local score = math.max(usernameScore, displayScore)
+           
+            if score > bestScore then
+                bestScore = score
+                bestMatch = player
+            end
+        end
+    end
+   
+    if bestScore > 20 then
+        return bestMatch
+    end
+   
+    return nil
+end
+local targetPlayerLabel = blood:AddLabel("Target Player: None")
 local function updateTargetPlayerLabel()
     if _G.targetPlayer == "" then
         targetPlayerLabel.Text = "Target Player: None"
@@ -1716,7 +1795,33 @@ local function updateTargetPlayerLabel()
         targetPlayerLabel.Text = "Target Player: " .. _G.targetPlayer
     end
 end
-
+local autoKillAllSwitch = blood:AddSwitch("Auto Kill All", function(bool)
+    _G.autoKillAll = bool
+   
+    if bool then
+        spawn(function()
+            while _G.autoKillAll do
+                local players = game:GetService("Players"):GetPlayers()
+               
+                if #players <= 1 then
+                    task.wait(1)
+                    continue
+                end
+               
+                for _, player in ipairs(players) do
+                    if player == game.Players.LocalPlayer or not _G.autoKillAll then
+                        continue
+                    end
+                   
+                    killPlayer(player)
+                    task.wait(0.05)
+                end
+               
+                task.wait(0.5)
+            end
+        end)
+    end
+end)
 blood:AddTextBox("Target Player (Enter Username/Display)", function(text)
     if text and text ~= "" then
         local player = findClosestPlayer(text)
@@ -1726,12 +1831,10 @@ blood:AddTextBox("Target Player (Enter Username/Display)", function(text)
         end
     end
 end)
-
 blood:AddButton("Clear Target", function()
     _G.targetPlayer = ""
     updateTargetPlayerLabel()
 end)
-
 local autoKillTargetSwitch = blood:AddSwitch("Auto Kill Target", function(bool)
     _G.autoKillTarget = bool
    
@@ -1751,7 +1854,13 @@ local autoKillTargetSwitch = blood:AddSwitch("Auto Kill Target", function(bool)
         end)
     end
 end)
-
+blood:AddButton("Kill All", function()
+    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+        if player ~= game.Players.LocalPlayer then
+            killPlayer(player)
+        end
+    end
+end)
 blood:AddButton("Kill Target", function()
     if _G.targetPlayer ~= "" then
         local targetName = _G.targetPlayer:match("^([^%(]+)")
@@ -1764,6 +1873,16 @@ blood:AddButton("Kill Target", function()
         end
     end
 end)
+
+
+
+
+
+
+
+
+
+
 
 
 
