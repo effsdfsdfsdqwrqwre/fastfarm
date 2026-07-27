@@ -1630,7 +1630,7 @@ end)
 -- Replace the entire targetDropdown / selectedTarget / targetDropdownItems section with this:
 
 local targetPlayerNames = {} -- keep your existing table if already declared
-local targetTextbox = Killer:AddTextbox("Target (type first 3+ letters)", function(text)
+local targetTextbox = blood:AddTextbox("Target (type first 3+ letters)", function(text)
     text = text:lower():gsub("%s+", "")
     if #text < 3 then return end
 
@@ -1649,12 +1649,12 @@ local targetTextbox = Killer:AddTextbox("Target (type first 3+ letters)", functi
     end
 end)
 
-Killer:AddButton("Clear All Targets", function()
+blood:AddButton("Clear All Targets", function()
     table.clear(targetPlayerNames)
     print("Cleared all targets")
 end)
 
-Killer:AddButton("List Targets", function()
+blood:AddButton("List Targets", function()
     if #targetPlayerNames == 0 then
         print("No targets")
         return
@@ -1677,7 +1677,7 @@ end)
 
 -- The kill loop stays exactly the same
 local kill = false
-Killer:AddSwitch("Start Kill Target", function(state)
+blood:AddSwitch("Start Kill Target", function(state)
     kill = state
     task.spawn(function()
         while kill do
