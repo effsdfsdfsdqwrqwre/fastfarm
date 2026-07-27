@@ -1622,8 +1622,6 @@ end)
 
 
 
-
-
 blood:AddTextBox("Target Clan (Enter Clan Name)", function(text)
     if text and text ~= "" then
         local player = findClosestPlayer(text)
@@ -1639,22 +1637,28 @@ blood:AddButton("Clear Target", function()
     updateTargetPlayerLabel()
 end)
 
+_G.autoKillRunning = false
+
 local autoKillTargetSwitch = blood:AddSwitch("Auto Kill Clan", function(bool)
     _G.autoKillTarget = bool
-    
-    if bool and _G.targetPlayer ~= "" then
-        spawn(function()
-            while _G.autoKillTarget and _G.targetPlayer ~= "" do
-                local targetName = _G.targetPlayer:match("^([^%(]+)")
-                if targetName then
-                    targetName = targetName:gsub("%s+$", "")
-                    local targetPlayer = game.Players:FindFirstChild(targetName)
-                    if targetPlayer then
-                        killPlayer(targetPlayer)
+
+    if bool and not _G.autoKillRunning then
+        _G.autoKillRunning = true
+        task.spawn(function()
+            while _G.autoKillTarget do
+                if _G.targetPlayer ~= "" then
+                    local targetName = _G.targetPlayer:match("^([^%(]+)")
+                    if targetName then
+                        targetName = targetName:gsub("%s+$", "")
+                        local targetPlayer = game.Players:FindFirstChild(targetName)
+                        if targetPlayer then
+                            killPlayer(targetPlayer)
+                        end
                     end
                 end
                 task.wait(0.1)
             end
+            _G.autoKillRunning = false
         end)
     end
 end)
