@@ -1621,13 +1621,35 @@ end)
 
 
 
+blood:AddTextBox("Target (first 3+ letters of DisplayName)", function(text)
+    if text and #text >= 3 then
+        text = text:lower()
+        local found = nil
+        local closestDist = math.huge
+        local localPlayer = game.Players.LocalPlayer
+        local localRoot = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
 
-blood:AddTextBox("Target Clan (Enter Clan Name)", function(text)
-    if text and text ~= "" then
-        local player = findClosestPlayer(text)
-        if player then
-            _G.targetPlayer = player.Name .. " (" .. player.DisplayName .. ")"
+        for _, player in ipairs(game.Players:GetPlayers()) do
+            if player ~= localPlayer and player.DisplayName:lower():sub(1, #text) == text then
+                local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                if root and localRoot then
+                    local dist = (root.Position - localRoot.Position).Magnitude
+                    if dist < closestDist then
+                        closestDist = dist
+                        found = player
+                    end
+                elseif not found then
+                    found = player
+                end
+            end
+        end
+
+        if found then
+            _G.targetPlayer = found.Name .. " (" .. found.DisplayName .. ")"
             updateTargetPlayerLabel()
+            print("[DEBUG] Target set to:", _G.targetPlayer)
+        else
+            print("[DEBUG] No player found matching:", text)
         end
     end
 end)
@@ -1635,30 +1657,38 @@ end)
 blood:AddButton("Clear Target", function()
     _G.targetPlayer = ""
     updateTargetPlayerLabel()
+    print("[DEBUG] Target cleared")
 end)
 
 _G.autoKillRunning = false
+_G.autoKillTarget = false
 
-local autoKillTargetSwitch = blood:AddSwitch("Auto Kill Clan", function(bool)
+local autoKillTargetSwitch = blood:AddSwitch("Auto Kill", function(bool)
     _G.autoKillTarget = bool
+    print("[DEBUG] AutoKill:", bool)
 
     if bool and not _G.autoKillRunning then
         _G.autoKillRunning = true
         task.spawn(function()
+            print("[DEBUG] Loop started")
             while _G.autoKillTarget do
-                if _G.targetPlayer ~= "" then
+                if _G.targetPlayer and _G.targetPlayer ~= "" then
                     local targetName = _G.targetPlayer:match("^([^%(]+)")
                     if targetName then
                         targetName = targetName:gsub("%s+$", "")
                         local targetPlayer = game.Players:FindFirstChild(targetName)
                         if targetPlayer then
+                            print("[DEBUG] Killing:", targetName)
                             killPlayer(targetPlayer)
+                        else
+                            print("[DEBUG] Player left or not found:", targetName)
                         end
                     end
                 end
-                task.wait(0.1)
+                task.wait(0.15)
             end
             _G.autoKillRunning = false
+            print("[DEBUG] Loop stopped")
         end)
     end
 end)
