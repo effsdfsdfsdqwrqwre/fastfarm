@@ -1638,7 +1638,7 @@ blood:AddButton("Clear Target", function()
     updateTargetPlayerLabel()
 end)
 
-local autoKillTargetSwitch = blood:AddSwitch("Auto Kill Target", function(bool)
+local autoKillTargetSwitch = blood:AddButton("Auto Kill Target", function(bool)
     _G.autoKillTarget = bool
     
     if bool and _G.targetPlayer ~= "" then
@@ -1660,7 +1660,7 @@ end)
 
 
 
-blood:AddSlider("Kill Target", function()
+blood:AddButton("Kill Target", function()
     if _G.targetPlayer ~= "" then
         local targetName = _G.targetPlayer:match("^([^%]+)")
         if targetName then
