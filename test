@@ -1621,77 +1621,100 @@ end)
 
 
 
-blood:AddTextBox("Target (first 3+ letters of DisplayName)", function(text)
-    if text and #text >= 3 then
-        text = text:lower()
-        local found = nil
-        local closestDist = math.huge
-        local localPlayer = game.Players.LocalPlayer
-        local localRoot = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
 
-        for _, player in ipairs(game.Players:GetPlayers()) do
-            if player ~= localPlayer and player.DisplayName:lower():sub(1, #text) == text then
-                local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-                if root and localRoot then
-                    local dist = (root.Position - localRoot.Position).Magnitude
-                    if dist < closestDist then
-                        closestDist = dist
-                        found = player
-                    end
-                elseif not found then
-                    found = player
+
+
+
+
+
+-- Replace the entire targetDropdown / selectedTarget / targetDropdownItems section with this:
+
+local targetPlayerNames = {} -- keep your existing table if already declared
+local targetTextbox = Killer:AddTextbox("Target (type first 3+ letters)", function(text)
+    text = text:lower():gsub("%s+", "")
+    if #text < 3 then return end
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local nameLower = player.Name:lower()
+            local displayLower = player.DisplayName:lower()
+
+            if nameLower:sub(1, #text) == text or displayLower:sub(1, #text) == text then
+                if not table.find(targetPlayerNames, player.Name) then
+                    table.insert(targetPlayerNames, player.Name)
+                    print("Targeted:", player.Name, "(" .. player.DisplayName .. ")")
                 end
             end
-        end
-
-        if found then
-            _G.targetPlayer = found.Name .. " (" .. found.DisplayName .. ")"
-            updateTargetPlayerLabel()
-            print("[DEBUG] Target set to:", _G.targetPlayer)
-        else
-            print("[DEBUG] No player found matching:", text)
         end
     end
 end)
 
-blood:AddButton("Clear Target", function()
-    _G.targetPlayer = ""
-    updateTargetPlayerLabel()
-    print("[DEBUG] Target cleared")
+Killer:AddButton("Clear All Targets", function()
+    table.clear(targetPlayerNames)
+    print("Cleared all targets")
 end)
 
-_G.autoKillRunning = false
-_G.autoKillTarget = false
+Killer:AddButton("List Targets", function()
+    if #targetPlayerNames == 0 then
+        print("No targets")
+        return
+    end
+    print("Current targets:")
+    for _, name in ipairs(targetPlayerNames) do
+        local p = Players:FindFirstChild(name)
+        print(" -", name, p and ("(" .. p.DisplayName .. ")") or "(left)")
+    end
+end)
 
-local autoKillTargetSwitch = blood:AddSwitch("Auto Kill", function(bool)
-    _G.autoKillTarget = bool
-    print("[DEBUG] AutoKill:", bool)
+-- Player leaves cleanup (keep this)
+Players.PlayerRemoving:Connect(function(player)
+    for i = #targetPlayerNames, 1, -1 do
+        if targetPlayerNames[i] == player.Name then
+            table.remove(targetPlayerNames, i)
+        end
+    end
+end)
 
-    if bool and not _G.autoKillRunning then
-        _G.autoKillRunning = true
-        task.spawn(function()
-            print("[DEBUG] Loop started")
-            while _G.autoKillTarget do
-                if _G.targetPlayer and _G.targetPlayer ~= "" then
-                    local targetName = _G.targetPlayer:match("^([^%(]+)")
-                    if targetName then
-                        targetName = targetName:gsub("%s+$", "")
-                        local targetPlayer = game.Players:FindFirstChild(targetName)
-                        if targetPlayer then
-                            print("[DEBUG] Killing:", targetName)
-                            killPlayer(targetPlayer)
-                        else
-                            print("[DEBUG] Player left or not found:", targetName)
+-- The kill loop stays exactly the same
+local kill = false
+Killer:AddSwitch("Start Kill Target", function(state)
+    kill = state
+    task.spawn(function()
+        while kill do
+            local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+            local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
+            if punch and not character:FindFirstChild("Punch") then
+                punch.Parent = character
+            end
+            local rightHand = character:FindFirstChild("RightHand")
+            local leftHand = character:FindFirstChild("LeftHand")
+            if rightHand and leftHand then
+                for _, name in ipairs(targetPlayerNames) do
+                    local target = Players:FindFirstChild(name)
+                    if target and target ~= LocalPlayer and target.Character then
+                        local rootPart = target.Character:FindFirstChild("HumanoidRootPart")
+                        local humanoid = target.Character:FindFirstChild("Humanoid")
+                        if rootPart and humanoid and humanoid.Health > 0 then
+                            pcall(function()
+                                firetouchinterest(rightHand, rootPart, 1)
+                                firetouchinterest(leftHand, rootPart, 1)
+                                firetouchinterest(rightHand, rootPart, 0)
+                                firetouchinterest(leftHand, rootPart, 0)
+                            end)
                         end
                     end
                 end
-                task.wait(0.15)
             end
-            _G.autoKillRunning = false
-            print("[DEBUG] Loop stopped")
-        end)
-    end
+            task.wait(0.05)
+        end
+    end)
 end)
+
+
+
+
+
+
 
 
 
