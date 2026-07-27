@@ -1795,33 +1795,6 @@ local function updateTargetPlayerLabel()
         targetPlayerLabel.Text = "Target Player: " .. _G.targetPlayer
     end
 end
-local autoKillAllSwitch = blood:AddSwitch("Auto Kill All", function(bool)
-    _G.autoKillAll = bool
-   
-    if bool then
-        spawn(function()
-            while _G.autoKillAll do
-                local players = game:GetService("Players"):GetPlayers()
-               
-                if #players <= 1 then
-                    task.wait(1)
-                    continue
-                end
-               
-                for _, player in ipairs(players) do
-                    if player == game.Players.LocalPlayer or not _G.autoKillAll then
-                        continue
-                    end
-                   
-                    killPlayer(player)
-                    task.wait(0.05)
-                end
-               
-                task.wait(0.5)
-            end
-        end)
-    end
-end)
 blood:AddTextBox("Target Player (Enter Username/Display)", function(text)
     if text and text ~= "" then
         local player = findClosestPlayer(text)
@@ -1852,25 +1825,6 @@ local autoKillTargetSwitch = blood:AddSwitch("Auto Kill Target", function(bool)
                 task.wait(0.1)
             end
         end)
-    end
-end)
-blood:AddButton("Kill All", function()
-    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
-        if player ~= game.Players.LocalPlayer then
-            killPlayer(player)
-        end
-    end
-end)
-blood:AddButton("Kill Target", function()
-    if _G.targetPlayer ~= "" then
-        local targetName = _G.targetPlayer:match("^([^%(]+)")
-        if targetName then
-            targetName = targetName:gsub("%s+$", "")
-            local targetPlayer = game.Players:FindFirstChild(targetName)
-            if targetPlayer then
-                killPlayer(targetPlayer)
-            end
-        end
     end
 end)
 
