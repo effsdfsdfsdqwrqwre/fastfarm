@@ -1623,7 +1623,147 @@ end)
 
 
 
-blood:AddTextBox("Target Player (Enter Clan Name)", function(text)
+
+
+
+
+local function updateWhitelistedPlayersLabel()
+    if #_G.whitelistedPlayers == 0 then
+        whitelistedPlayersLabel.Text = "Whitelisted Players: None"
+    else
+        local displayText = "Whitelisted Players: "
+        for i, playerInfo in ipairs(_G.whitelistedPlayers) do
+            if i > 1 then displayText = displayText .. ", " end
+            displayText = displayText .. playerInfo
+        end
+        whitelistedPlayersLabel.Text = displayText
+    end
+end
+
+local function updateTargetPlayerLabel()
+    if _G.targetPlayer == "" then
+        targetPlayerLabel.Text = "Target Player: None"
+    else
+        targetPlayerLabel.Text = "Target Player: " .. _G.targetPlayer
+    end
+end
+
+local autoWhitelistFriendsSwitch = killerTab:AddSwitch("Auto Whitelist Friends", function(bool)
+    _G.autoWhitelistFriends = bool
+    
+    if bool then
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player:IsFriendsWith(game.Players.LocalPlayer.UserId) then
+                local playerInfo = player.Name .. " (" .. player.DisplayName .. ")"
+                if not table.find(_G.whitelistedPlayers, playerInfo) then
+                    table.insert(_G.whitelistedPlayers, playerInfo)
+                end
+            end
+        end
+        updateWhitelistedPlayersLabel()
+    end
+end)
+
+game.Players.PlayerAdded:Connect(function(player)
+    if _G.autoWhitelistFriends and player:IsFriendsWith(game.Players.LocalPlayer.UserId) then
+        local playerInfo = player.Name .. " (" .. player.DisplayName .. ")"
+        if not table.find(_G.whitelistedPlayers, playerInfo) then
+            table.insert(_G.whitelistedPlayers, playerInfo)
+            updateWhitelistedPlayersLabel()
+        end
+    end
+end)
+
+killerTab:AddTextBox("Whitelist Player (Enter Username/Display)", function(text)
+    if text and text ~= "" then
+        local player = findClosestPlayer(text)
+        if player then
+            local playerInfo = player.Name .. " (" .. player.DisplayName .. ")"
+            
+            local alreadyWhitelisted = false
+            for _, info in ipairs(_G.whitelistedPlayers) do
+                if info:find(player.Name, 1, true) then
+                    alreadyWhitelisted = true
+                    break
+                end
+            end
+            
+            if not alreadyWhitelisted then
+                table.insert(_G.whitelistedPlayers, playerInfo)
+                updateWhitelistedPlayersLabel()
+            end
+        end
+    end
+end)
+
+killerTab:AddTextBox("Unwhitelist Player (Enter Username/Display)", function(text)
+    if text and text ~= "" then
+        local textLower = text:lower()
+        for i, playerInfo in ipairs(_G.whitelistedPlayers) do
+            if playerInfo:lower():find(textLower, 1, true) then
+                table.remove(_G.whitelistedPlayers, i)
+                updateWhitelistedPlayersLabel()
+                return
+            end
+        end
+        
+        local player = findClosestPlayer(text)
+        if player then
+            for i, playerInfo in ipairs(_G.whitelistedPlayers) do
+                if playerInfo:find(player.Name, 1, true) then
+                    table.remove(_G.whitelistedPlayers, i)
+                    updateWhitelistedPlayersLabel()
+                    break
+                end
+            end
+        end
+    end
+end)
+
+killerTab:AddButton("Clear All Whitelisted", function()
+    _G.whitelistedPlayers = {}
+    updateWhitelistedPlayersLabel()
+end)
+
+local autoKillAllSwitch = killerTab:AddSwitch("Auto Kill All (except Whitelist)", function(bool)
+    _G.autoKillAll = bool
+    
+    if bool then
+        spawn(function()
+            while _G.autoKillAll do
+                local players = game:GetService("Players"):GetPlayers()
+                
+                if #players <= 1 then
+                    task.wait(1)
+                    continue
+                end
+                
+                for _, player in ipairs(players) do
+                    if player == game.Players.LocalPlayer or not _G.autoKillAll then
+                        continue
+                    end
+                    
+                    local isWhitelisted = false
+                    for _, whitelistedInfo in ipairs(_G.whitelistedPlayers) do
+                        if whitelistedInfo:find(player.Name, 1, true) then
+                            isWhitelisted = true
+                            break
+                        end
+                    end
+                    
+                    if not isWhitelisted then
+                        killPlayer(player)
+                        task.wait(0.05)
+                    end
+                end
+                
+                task.wait(0.5)
+            end
+        end)
+    end
+end)
+
+killerTab:AddTextBox("Target Player (Enter Username/Display)", function(text)
     if text and text ~= "" then
         local player = findClosestPlayer(text)
         if player then
@@ -1633,12 +1773,12 @@ blood:AddTextBox("Target Player (Enter Clan Name)", function(text)
     end
 end)
 
-blood:AddButton("Clear Target", function()
+killerTab:AddButton("Clear Target", function()
     _G.targetPlayer = ""
     updateTargetPlayerLabel()
 end)
 
-local autoKillTargetSwitch = blood:AddButton("Auto Kill Target", function(bool)
+local autoKillTargetSwitch = killerTab:AddSwitch("Auto Kill Target", function(bool)
     _G.autoKillTarget = bool
     
     if bool and _G.targetPlayer ~= "" then
@@ -1658,9 +1798,25 @@ local autoKillTargetSwitch = blood:AddButton("Auto Kill Target", function(bool)
     end
 end)
 
+killerTab:AddButton("Kill All (except Whitelist)", function()
+    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+        if player ~= game.Players.LocalPlayer then
+            local isWhitelisted = false
+            for _, whitelistedInfo in ipairs(_G.whitelistedPlayers) do
+                if whitelistedInfo:find(player.Name, 1, true) then
+                    isWhitelisted = true
+                    break
+                end
+            end
+            
+            if not isWhitelisted then
+                killPlayer(player)
+            end
+        end
+    end
+end)
 
-
-blood:AddButton("Kill Target", function()
+killerTab:AddButton("Kill Target", function()
     if _G.targetPlayer ~= "" then
         local targetName = _G.targetPlayer:match("^([^%]+)")
         if targetName then
@@ -1676,6 +1832,8 @@ end)
 
 
 
+
+
 local titleLabel = blood:AddLabel("Kill Stronger Players")
 titleLabel.TextSize = 18
 titleLabel.Font = Enum.Font.Bangers        
@@ -1683,13 +1841,28 @@ titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 
 
-blood:AddButton("Size 50", function()
-    local args = {
-        [1] = "changeSize",
-        [2] = 50
-    }
-    game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
+blood:AddButton("Size Spam", function()
+    spawn(function()
+        while true do
+            -- Size 100
+            local args = {
+                [1] = "changeSize",
+                [2] = 100
+            }
+            game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
+            wait(0.05)
+
+            -- Size 2
+            local args2 = {
+                [1] = "changeSize",
+                [2] = 2
+            }
+            game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args2))
+            wait(0.05)
+        end
+    end)
 end)
+
 
 
 
