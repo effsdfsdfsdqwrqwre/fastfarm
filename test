@@ -1701,9 +1701,7 @@ local function findClosestPlayer(input)
     return nil
 end
 
-local whitelistedPlayersLabel = blood:AddLabel("Whitelisted Players: None")
 
-local targetPlayerLabel = blood:AddLabel("Target Player: None")
 
 local function updateWhitelistedPlayersLabel()
     if #_G.whitelistedPlayers == 0 then
@@ -1772,35 +1770,6 @@ blood:AddTextBox("Whitelist Player (Enter Username/Display)", function(text)
             end
         end
     end
-end)
-
-blood:AddTextBox("Unwhitelist Player (Enter Username/Display)", function(text)
-    if text and text ~= "" then
-        local textLower = text:lower()
-        for i, playerInfo in ipairs(_G.whitelistedPlayers) do
-            if playerInfo:lower():find(textLower, 1, true) then
-                table.remove(_G.whitelistedPlayers, i)
-                updateWhitelistedPlayersLabel()
-                return
-            end
-        end
-        
-        local player = findClosestPlayer(text)
-        if player then
-            for i, playerInfo in ipairs(_G.whitelistedPlayers) do
-                if playerInfo:find(player.Name, 1, true) then
-                    table.remove(_G.whitelistedPlayers, i)
-                    updateWhitelistedPlayersLabel()
-                    break
-                end
-            end
-        end
-    end
-end)
-
-blood:AddButton("Clear All Whitelisted", function()
-    _G.whitelistedPlayers = {}
-    updateWhitelistedPlayersLabel()
 end)
 
 local autoKillAllSwitch = blood:AddSwitch("Auto Kill All (except Whitelist)", function(bool)
@@ -1873,36 +1842,5 @@ local autoKillTargetSwitch = blood:AddSwitch("Auto Kill Target", function(bool)
                 task.wait(0.1)
             end
         end)
-    end
-end)
-
-blood:AddButton("Kill All (except Whitelist)", function()
-    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
-        if player ~= game.Players.LocalPlayer then
-            local isWhitelisted = false
-            for _, whitelistedInfo in ipairs(_G.whitelistedPlayers) do
-                if whitelistedInfo:find(player.Name, 1, true) then
-                    isWhitelisted = true
-                    break
-                end
-            end
-            
-            if not isWhitelisted then
-                killPlayer(player)
-            end
-        end
-    end
-end)
-
-blood:AddButton("Kill Target", function()
-    if _G.targetPlayer ~= "" then
-        local targetName = _G.targetPlayer:match("^([^%(]+)")
-        if targetName then
-            targetName = targetName:gsub("%s+$", "")
-            local targetPlayer = game.Players:FindFirstChild(targetName)
-            if targetPlayer then
-                killPlayer(targetPlayer)
-            end
-        end
     end
 end)
