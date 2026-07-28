@@ -1492,7 +1492,23 @@ end)
 
 
 
-
+clanTab:AddSwitch("Slow Spin", function(Value)
+    if Value then
+        getgenv().slowSpin = true
+        task.spawn(function()
+            while getgenv().slowSpin do
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local hrp = char.HumanoidRootPart
+                    hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(1.5), 0) -- 1.5 degrees per tick
+                end
+                task.wait(0.03) -- lower = faster spin
+            end
+        end)
+    else
+        getgenv().slowSpin = false
+    end
+end)
 
 
 
