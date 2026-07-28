@@ -2038,9 +2038,14 @@ end)
 
 
 
+
+
+
+
 local antiStatueEnabled = false
 local lockedPosition = nil
 local lockConnection = nil
+local charAddedConn = nil
 
 local function startLock(player)
     local char = player.Character
@@ -2049,10 +2054,9 @@ local function startLock(player)
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-  
     hrp.CFrame = lockedPosition
 
-    -- Cancel any previous loop
+    -- Cancel any previous lock loop
     if lockConnection then
         task.cancel(lockConnection)
         lockConnection = nil
@@ -2071,6 +2075,7 @@ local function startLock(player)
                 currentHRP.CFrame = lockedPosition
             end
 
+            -- Keep tools equipped
             local punch = player.Backpack:FindFirstChild("Punch")
             if punch then
                 punch.Parent = currentChar
@@ -2106,20 +2111,27 @@ blood:AddSwitch("Anti Statue", function(Value)
 
         startLock(player)
 
-        if not player:FindFirstChild("AntiStatueCharConn") then
-            local conn = player.CharacterAdded:Connect(function()
+        -- Only connect once
+        if not charAddedConn then
+            charAddedConn = player.CharacterAdded:Connect(function()
                 if antiStatueEnabled then
-                    task.wait(0.1) -- small delay so character fully loads
+                    task.wait(0.15) -- give character time to fully load
                     startLock(player)
                 end
             end)
-            conn.Name = "AntiStatueCharConn"
         end
     else
+        -- Disable everything
         lockedPosition = nil
+
         if lockConnection then
             task.cancel(lockConnection)
             lockConnection = nil
+        end
+
+        if charAddedConn then
+            charAddedConn:Disconnect()
+            charAddedConn = nil
         end
     end
 end)
