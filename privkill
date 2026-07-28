@@ -1,4 +1,4 @@
-	local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/ui%20one"))()
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/ui%20one"))()
 
 local window = library:AddWindow("INVINCIBLE PRIVATE KILLING", {
     title_bar = {Color3.fromRGB(30, 30, 30), Color3.fromRGB(64, 64, 64), Color3.fromRGB(45, 45, 45)},
@@ -12,7 +12,6 @@ local window = library:AddWindow("INVINCIBLE PRIVATE KILLING", {
 
 
 local Killer = window:AddTab("Killer")
-local blood = window:AddTab("Clan Killing")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local playerWhitelist = {}
@@ -1184,6 +1183,339 @@ Killer:AddButton("Goofball Button", function()
     end
 end)
 
+
+
+-- ========== THIS WAS MISSING ==========
+local clanTab = window:AddTab("War")
+-- ======================================
+
+-- ====================== VARIABLES ======================
+local blacklistWords = {}
+local active = {}
+local autoPunchActive = false
+local characterLoaded = false
+local attackDelay = 0.05
+local spamming = false
+
+-- ====================== HELPER FUNCTIONS ======================
+local function trim(str)
+    return str:match("^%s*(.-)%s*$")
+end
+
+local function parseList(str)
+    blacklistWords = {}
+    for w in string.gmatch(str or "", "[^,]+") do
+        local t = trim(w):lower()
+        if t ~= "" then
+            table.insert(blacklistWords, t)
+        end
+    end
+end
+
+local function saveList()
+    -- Optional: writefile("blacklist.txt", table.concat(blacklistWords, ","))
+end
+
+local function isAnyActive()
+    return next(active) ~= nil
+end
+
+local function refreshActive()
+    table.clear(active)
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            local name = (plr.DisplayName or plr.Name):lower()
+            for _, word in ipairs(blacklistWords) do
+                if name:find(word, 1, true) then
+                    active[plr] = true
+                    break
+                end
+            end
+        end
+    end
+end
+
+local function waitForCharacter()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    char:WaitForChild("HumanoidRootPart")
+    char:WaitForChild("Humanoid")
+    characterLoaded = true
+end
+
+local function getHands(char)
+    local right = char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm")
+    local left  = char:FindFirstChild("LeftHand")  or char:FindFirstChild("Left Arm")
+    return right, left
+end
+
+local function ensurePunchEquipped()
+    local char = LocalPlayer.Character
+    if not char then return nil end
+
+    local punch = LocalPlayer.Backpack:FindFirstChild("Punch") or char:FindFirstChild("Punch")
+    if punch and punch.Parent ~= char then
+        punch.Parent = char
+    end
+    return punch
+end
+
+-- ====================== BLACKLIST UI ======================
+local blacklistLabel = clanTab:AddLabel("")
+blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
+
+local blacklistBox = clanTab:AddTextBox("Add to Blacklist", function(txt)
+    parseList((table.concat(blacklistWords, ",")..","..txt))
+    saveList()
+    blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
+    refreshActive()
+    if not isAnyActive() then autoPunchActive = false end
+end, {["placeholder"] = "Ej: MVX, Sigma, Juan"})
+
+local removeBox = clanTab:AddTextBox("Remove from Blacklist", function(txt)
+    local toRemove = {}
+    for w in string.gmatch(txt, "[^,]+") do
+        local t = trim(w):lower()
+        if t ~= "" then table.insert(toRemove, t) end
+    end
+
+    for _, word in ipairs(toRemove) do
+        for i = #blacklistWords, 1, -1 do
+            if blacklistWords[i] == word then
+                table.remove(blacklistWords, i)
+            end
+        end
+    end
+
+    saveList()
+    blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
+    refreshActive()
+    if not isAnyActive() then autoPunchActive = false end
+end)
+
+-- ====================== AUTO PUNCH LOOP ======================
+RunService.Heartbeat:Connect(function()
+    refreshActive()
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(attackDelay)
+
+        if not isAnyActive() then
+            continue
+        end
+
+        if not LocalPlayer.Character then continue end
+        if not characterLoaded then continue end
+
+        local punch = ensurePunchEquipped()
+        if not punch then continue end
+
+        local char = LocalPlayer.Character
+        local rightHand, leftHand = getHands(char)
+
+        for plr in pairs(active) do
+            if plr and plr.Character then
+                local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                local hum = plr.Character:FindFirstChild("Humanoid")
+
+                if hrp and hum and hum.Health > 0 then
+                    pcall(function()
+                        LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
+                        LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
+                    end)
+
+                    pcall(function()
+                        firetouchinterest(rightHand, hrp, 1)
+                        firetouchinterest(leftHand, hrp, 1)
+                        firetouchinterest(rightHand, hrp, 0)
+                        firetouchinterest(leftHand, hrp, 0)
+                    end)
+                end
+            end
+        end
+    end
+end)
+
+Players.PlayerAdded:Connect(function(plr)
+    plr:GetPropertyChangedSignal("DisplayName"):Connect(function()
+        refreshActive()
+    end)
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+    characterLoaded = false
+    task.wait(0.2)
+    waitForCharacter()
+    refreshActive()
+
+    if isAnyActive() then
+        task.defer(function()
+            for i = 1, 50 do
+                if not isAnyActive() then break end
+                ensurePunchEquipped()
+                task.wait(0.15)
+            end
+        end)
+    end
+end)
+
+waitForCharacter()
+refreshActive()
+
+-- ====================== SIZE SPAM ======================
+clanTab:AddButton("Spam Size", function()
+    spamming = not spamming
+
+    if spamming then
+        task.spawn(function()
+            local sizes = {100, 2, 40, 50, 60, 72}
+            local i = 1
+
+            while spamming do
+                local args = {
+                    [1] = "changeSize",
+                    [2] = sizes[i]
+                }
+                game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
+
+                i = i + 1
+                if i > #sizes then
+                    i = 1
+                end
+
+                task.wait(0.04)
+            end
+        end)
+    end
+end)
+
+clanTab:AddButton("Normal Size", function()
+    local args = {
+        [1] = "changeSize",
+        [2] = 2
+    }
+    game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
+end)
+
+-- ====================== KILL WHILE DEAD / ANTI STATUE ======================
+local titleLabel = clanTab:AddLabel("Kill While Dead etc")
+titleLabel.TextSize = 18
+titleLabel.Font = Enum.Font.Bangers
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+clanTab:AddSwitch("Anti Statue", function(Value)
+    if Value then
+        -- Set Size 1
+        local args = {
+            [1] = "changeSize",
+            [2] = 1
+        }
+        game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
+
+        local targetCFrame = CFrame.new(
+            -9.0580864, -118.967911, -334.924042,
+            0.391505003, 0.000186817284, 0.92017597,
+            -0.000211292776, 1, -0.000113125207,
+            -0.92017597, -0.00015013745, 0.391505033
+        )
+
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            character.HumanoidRootPart.CFrame = targetCFrame
+        end
+
+        -- Lock position
+        getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
+            local character = LocalPlayer.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                character.HumanoidRootPart.CFrame = targetCFrame
+            end
+        end)
+
+        -- Auto Punch + Force Equip
+        getgenv().antiStatuePunch = true
+        task.spawn(function()
+            while getgenv().antiStatuePunch do
+                local character = LocalPlayer.Character
+                if character then
+                    -- Force Equip Protein Egg
+                    local egg = LocalPlayer.Backpack:FindFirstChild("Protein Egg")
+                        or character:FindFirstChild("Protein Egg")
+                    if egg and egg.Parent ~= character then
+                        egg.Parent = character
+                    end
+
+                    -- Force Equip Punch
+                    local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
+                        or character:FindFirstChild("Punch")
+                    if punch then
+                        if punch.Parent ~= character then
+                            punch.Parent = character
+                        end
+
+                        if not punch:GetAttribute("AntiUnequip") then
+                            punch:SetAttribute("AntiUnequip", true)
+                            punch.Unequipped:Connect(function()
+                                if getgenv().antiStatuePunch and punch then
+                                    task.defer(function()
+                                        punch.Parent = character
+                                    end)
+                                end
+                            end)
+                        end
+                    end
+
+                    -- Punch both hands
+                    if punch then
+                        LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
+                        LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
+                    end
+                end
+                task.wait(0.01)
+            end
+        end)
+    else
+        -- Unlock position
+        if getgenv().posLock then
+            getgenv().posLock:Disconnect()
+            getgenv().posLock = nil
+        end
+        getgenv().antiStatuePunch = false
+    end
+end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 local LocalPlayer = game.Players.LocalPlayer
 local combinedActive = false
 local platform = nil
@@ -1864,273 +2196,3 @@ task.spawn(function()
 end)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-_G.targetPlayers = {} -- list of target players
-
-local function checkCharacter()
-    if not game.Players.LocalPlayer.Character then
-        repeat
-            task.wait()
-        until game.Players.LocalPlayer.Character
-    end
-    return game.Players.LocalPlayer.Character
-end
-
-local function gettool()
-    for i, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
-        if v.Name == "Punch" and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-            game.Players.LocalPlayer.Character.Humanoid:EquipTool(v)
-        end
-    end
-    game:GetService("Players").LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
-    game:GetService("Players").LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
-end
-
-local function killPlayer(target)
-    local character = checkCharacter()
-    if character and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-        if character:FindFirstChild("LeftHand") then
-            firetouchinterest(target.Character.HumanoidRootPart, character.LeftHand, 0)
-            firetouchinterest(target.Character.HumanoidRootPart, character.LeftHand, 1)
-            gettool()
-        end
-    end
-end
-
-local function findPlayersBySubstring(substring)
-    local matchedPlayers = {}
-    substring = substring:lower()
-
-    for _, player in pairs(game.Players:GetPlayers()) do
-        if player ~= game.Players.LocalPlayer then
-            local username = player.Name:lower()
-            local displayName = player.DisplayName:lower()
-
-            if username:find(substring, 1, true) or displayName:find(substring, 1, true) then
-                table.insert(matchedPlayers, player)
-            end
-        end
-    end
-
-    return matchedPlayers
-end
-
-local targetPlayerLabel = blood:AddLabel("Target Players: None")
-local function updateTargetPlayersLabel()
-    if #_G.targetPlayers == 0 then
-        targetPlayerLabel.Text = "Target Players: None"
-    else
-        local names = {}
-        for _, p in ipairs(_G.targetPlayers) do
-            table.insert(names, p.Name)
-        end
-        targetPlayerLabel.Text = "Target Players: " .. table.concat(names, ", ")
-    end
-end
-
--- Enforce 3-letter input
-blood:AddTextBox("Clan Target", function(text)
-    if text and text ~= "" then
-        if #text ~= 3 then
-            -- Notify user or ignore input
-            -- Here, we'll just ignore if not 3 characters
-            _G.targetPlayers = {}
-            updateTargetPlayersLabel()
-            return
-        end
-        local matchedPlayers = findPlayersBySubstring(text)
-        if #matchedPlayers > 0 then
-            _G.targetPlayers = matchedPlayers
-            updateTargetPlayersLabel()
-        else
-            _G.targetPlayers = {}
-            updateTargetPlayersLabel()
-        end
-    end
-end)
-
-blood:AddButton("Clear Targets", function()
-    _G.targetPlayers = {}
-    updateTargetPlayersLabel()
-end)
-
-local autoKillTargetSwitch = blood:AddSwitch("Auto Kill Targets", function(bool)
-    _G.autoKillTarget = bool
-
-    if bool and #_G.targetPlayers > 0 then
-        spawn(function()
-            while _G.autoKillTarget do
-                for _, target in ipairs(_G.targetPlayers) do
-                    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-                        killPlayer(target)
-                    end
-                end
-                task.wait(0.1)
-            end
-        end)
-    end
-end)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-local spamming = false
-
-blood:AddButton("Spam Size", function()
-    spamming = not spamming
-
-    if spamming then
-        spawn(function()
-            local sizes = {100, 2, 40, 50, 60, 72}
-            local i = 1
-
-            while spamming do
-                local args = {
-                    [1] = "changeSize",
-                    [2] = sizes[i]
-                }
-                game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
-
-                i = i + 1
-                if i > #sizes then
-                    i = 1
-                end
-
-                wait(0.05)
-            end
-        end)
-    end
-end)
-
-
-
-
-
-blood:AddButton("Normal Size", function()
-    local args = {
-        [1] = "changeSize",
-        [2] = 2
-    }
-    game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
-end)
-
-
-
-
-
-
-
-local titleLabel = blood:AddLabel("Kill While Dead ect")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-
-
-
-
-
-blood:AddSwitch("Anti Statue", function(Value)
-    if Value then
-        -- Set Size 1
-        local args = {
-            [1] = "changeSize",
-            [2] = 1
-        }
-        game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
-
-        local targetCFrame = CFrame.new(
-            -9.0580864, -118.967911, -334.924042,
-            0.391505003, 0.000186817284, 0.92017597,
-            -0.000211292776, 1, -0.000113125207,
-            -0.92017597, -0.00015013745, 0.391505033
-        )
-
-        local character = LocalPlayer.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            character.HumanoidRootPart.CFrame = targetCFrame
-        end
-
-        -- Lock position
-        getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
-            local character = LocalPlayer.Character
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                character.HumanoidRootPart.CFrame = targetCFrame
-            end
-        end)
-
-        -- Auto Punch + Force Equip (Punch can't unequip)
-        getgenv().antiStatuePunch = true
-        task.spawn(function()
-            while getgenv().antiStatuePunch do
-                local character = LocalPlayer.Character
-                if character then
-                    -- Force Equip Protein Egg
-                    local egg = LocalPlayer.Backpack:FindFirstChild("Protein Egg")
-                        or character:FindFirstChild("Protein Egg")
-                    if egg and egg.Parent ~= character then
-                        egg.Parent = character
-                    end
-
-                    -- Force Equip Punch (prevent unequip)
-                    local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
-                        or character:FindFirstChild("Punch")
-                    if punch then
-                        if punch.Parent ~= character then
-                            punch.Parent = character
-                        end
-
-                        -- Instantly re-equip if it ever gets unequipped
-                        if not punch:GetAttribute("AntiUnequip") then
-                            punch:SetAttribute("AntiUnequip", true)
-                            punch.Unequipped:Connect(function()
-                                if getgenv().antiStatuePunch and punch then
-                                    task.defer(function()
-                                        punch.Parent = character
-                                    end)
-                                end
-                            end)
-                        end
-                    end
-
-                    -- Punch both hands
-                    if punch then
-                        LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
-                        LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
-                    end
-                end
-                task.wait(0.01)
-            end
-        end)
-    else
-        -- Unlock position
-        if getgenv().posLock then
-            getgenv().posLock:Disconnect()
-            getgenv().posLock = nil
-        end
-        -- Stop auto punch
-        getgenv().antiStatuePunch = false
-    end
-end)
