@@ -698,7 +698,6 @@ local function GetStat(player, name)
         if player:FindFirstChild(name) then
             return player[name].Value
         end
-        -- Some older/private folders
         local private = player:FindFirstChild("PrivateStats")
         if private and private:FindFirstChild(name) then
             return private[name].Value
@@ -708,10 +707,35 @@ local function GetStat(player, name)
     return success and value or nil
 end
 
+-- Tries to get total Damage from pets/auras (common locations)
+local function GetPetDamage(player)
+    local total = 0
+    local success = pcall(function()
+        -- Common places the game stores equipped pet/aura Damage
+        local folders = {
+            player:FindFirstChild("Pets"),
+            player:FindFirstChild("EquippedPets"),
+            player:FindFirstChild("Items"),
+            player:FindFirstChild("Inventory"),
+            player:FindFirstChild("PrivateStats"),
+            player:FindFirstChild("Data"),
+        }
+        for _, folder in ipairs(folders) do
+            if folder then
+                for _, obj in ipairs(folder:GetDescendants()) do
+                    if obj.Name == "Damage" and (obj:IsA("NumberValue") or obj:IsA("IntValue")) then
+                        total = total + (tonumber(obj.Value) or 0)
+                    end
+                end
+            end
+        end
+    end)
+    return success and total or 0
+end
+
 local function CreateESP(player)
     if player == LocalPlayer then return end
     if ESPObjects[player] then return end
-
     local char = player.Character
     if not char then return end
     local head = char:FindFirstChild("Head")
@@ -796,28 +820,27 @@ local function UpdateESP()
         -- === REAL HEALTH (Durability is the actual HP pool) ===
         local durability = GetStat(player, "Durability")
         local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-
         if durability then
             local maxHP = durability
-            local currentHP = maxHP -- default full
-
-            -- Try to get real remaining HP from Humanoid if it makes sense
+            local currentHP = maxHP
             if humanoid and humanoid.MaxHealth > 0 then
                 local ratio = humanoid.Health / humanoid.MaxHealth
-                if ratio >= 0 and ratio <= 1.05 then -- sane value
+                if ratio >= 0 and ratio <= 1.05 then
                     currentHP = math.floor(maxHP * ratio)
                 end
             end
-
             data.HealthLabel.Text = "HP: " .. FormatNumber(currentHP) .. " / " .. FormatNumber(maxHP)
         else
             data.HealthLabel.Text = "HP: N/A"
         end
 
-        -- === DAMAGE (Strength) ===
+        -- === ACTUAL DAMAGE (Strength / 15 + pet/aura Damage) ===
         local strength = GetStat(player, "Strength")
         if strength then
-            data.DamageLabel.Text = "Damage: " .. FormatNumber(strength)
+            local baseDamage = strength / 15
+            local petDamage = GetPetDamage(player)
+            local totalDamage = baseDamage + petDamage
+            data.DamageLabel.Text = "Damage: " .. FormatNumber(totalDamage)
         else
             data.DamageLabel.Text = "Damage: N/A"
         end
@@ -867,7 +890,7 @@ Killer:AddButton("Display Health", function()
                 CreateESP(player)
             end
         end
-        print("[ESP] Display Health enabled (using Durability as real HP)")
+        print("[ESP] Display Health enabled (real damage = Strength/15 + pets)")
     else
         for player, _ in pairs(ESPObjects) do
             RemoveESP(player)
