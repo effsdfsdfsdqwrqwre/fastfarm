@@ -2040,9 +2040,11 @@ end)
 local lockedPosition
 local antiStatueEnabled = false
 
+local antiStatueEnabled = false
+local lockedPosition = nil
+
 blood:AddSwitch("Anti Statue", function(Value)
     local player = game.Players.LocalPlayer
-
     antiStatueEnabled = Value
 
     if antiStatueEnabled then
@@ -2053,21 +2055,28 @@ blood:AddSwitch("Anti Statue", function(Value)
         end
 
         local targetCFrame = CFrame.new(
-            -7610.19629, 116.924843, 1795.85132,
-            -0.707134247, 0, 0.707079291,
-            0, 1, 0,
-            -0.707079291, 0, -0.707134247
+            -9.0580864, -118.967911, -334.924042,
+            0.391505003, 0.000186817284, 0.92017597,
+            -0.000211292776, 1, -0.000113125207,
+            -0.92017597, -0.00015013745, 0.391505033
         )
 
-        -- Teleport there
+        -- Teleport + lock
         hrp.CFrame = targetCFrame
-
-        -- Lock position after teleport
         lockedPosition = targetCFrame
 
+        -- Lock loop + Auto Equip Punch
         task.spawn(function()
-            while antiStatueEnabled and hrp.Parent do
+            while antiStatueEnabled and hrp and hrp.Parent do
+                -- keep position locked
                 hrp.CFrame = lockedPosition
+
+                -- auto equip Punch
+                local punch = player.Backpack:FindFirstChild("Punch")
+                if punch then
+                    punch.Parent = player.Character
+                end
+
                 task.wait()
             end
         end)
