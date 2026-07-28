@@ -661,6 +661,10 @@ end)
 
 
 
+
+
+
+
 -- // Display Health ESP (Killer Tab) //
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -668,6 +672,26 @@ local RunService = game:GetService("RunService")
 
 local ESPEnabled = false
 local ESPObjects = {}
+
+-- Format big numbers (1k, 1m, 1b, 1t, 1qa, 1qi, etc)
+local function FormatNumber(n)
+    n = tonumber(n) or 0
+    if n < 1000 then
+        return tostring(math.floor(n))
+    elseif n < 1000000 then -- Thousand
+        return string.format("%.1fk", n / 1000):gsub("%.0k", "k")
+    elseif n < 1000000000 then -- Million
+        return string.format("%.1fm", n / 1000000):gsub("%.0m", "m")
+    elseif n < 1000000000000 then -- Billion
+        return string.format("%.1fb", n / 1000000000):gsub("%.0b", "b")
+    elseif n < 1000000000000000 then -- Trillion
+        return string.format("%.1ft", n / 1000000000000):gsub("%.0t", "t")
+    elseif n < 1000000000000000000 then -- Quadrillion
+        return string.format("%.1fqa", n / 1000000000000000):gsub("%.0qa", "qa")
+    else -- Quintillion+
+        return string.format("%.1fqi", n / 1000000000000000000):gsub("%.0qi", "qi")
+    end
+end
 
 local function CreateESP(player)
     if player == LocalPlayer then return end
@@ -709,7 +733,7 @@ local function CreateESP(player)
     healthLabel.Size = UDim2.new(1, 0, 0, 20)
     healthLabel.Position = UDim2.new(0, 0, 0, 24)
     healthLabel.BackgroundTransparency = 1
-    healthLabel.Text = "Health: " .. math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
+    healthLabel.Text = "Health: " .. FormatNumber(humanoid.Health) .. " / " .. FormatNumber(humanoid.MaxHealth)
     healthLabel.TextColor3 = Color3.fromRGB(100, 255, 130)
     healthLabel.TextStrokeTransparency = 0.5
     healthLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
@@ -725,7 +749,7 @@ local function CreateESP(player)
     damageLabel.Position = UDim2.new(0, 0, 0, 46)
     damageLabel.BackgroundTransparency = 1
     damageLabel.Text = "Damage: ?"
-    damageLabel.TextColor3 = Color3.fromRGB(255, 60, 60) -- Red
+    damageLabel.TextColor3 = Color3.fromRGB(255, 60, 60)
     damageLabel.TextStrokeTransparency = 0.5
     damageLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
     damageLabel.Font = Enum.Font.Bangers
@@ -759,7 +783,7 @@ local function UpdateESP()
 
         local humanoid = data.Humanoid
         if humanoid and humanoid.Parent then
-            data.HealthLabel.Text = "Health: " .. math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
+            data.HealthLabel.Text = "Health: " .. FormatNumber(humanoid.Health) .. " / " .. FormatNumber(humanoid.MaxHealth)
 
             local percent = humanoid.Health / humanoid.MaxHealth
             if percent > 0.6 then
@@ -783,7 +807,7 @@ local function UpdateESP()
         end)
 
         if success and strength then
-            data.DamageLabel.Text = "Damage: " .. tostring(strength)
+            data.DamageLabel.Text = "Damage: " .. FormatNumber(strength)
         else
             data.DamageLabel.Text = "Damage: N/A"
         end
@@ -842,6 +866,18 @@ Killer:AddButton("Display Health", function()
         print("[ESP] Display Health disabled")
     end
 end)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1952,6 +1988,13 @@ end)
 
 
 
+blood:AddButton("Normal Size", function()
+    local args = {
+        [1] = "changeSize",
+        [2] = 2
+    }
+    game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
+end)
 
 
 
