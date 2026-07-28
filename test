@@ -2042,120 +2042,36 @@ end)
 
 
 
-
-
-
+-- Globals (put these near the top of your script if they aren't already)
 local antiStatueEnabled = false
-local lockedPosition = nil
-local lockConnection = nil
 local charAddedConn = nil
 local blockWaterConn = nil
+getgenv().posLock = nil
 
-local function startLock(player)
-    local char = player.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    
-    hrp.CFrame = lockedPosition
-    
-    -- Cancel any previous lock loop
-    if lockConnection then
-        task.cancel(lockConnection)
-        lockConnection = nil
-    end
-    
-    lockConnection = task.spawn(function()
-        while antiStatueEnabled do
-            local currentChar = player.Character
-            if not currentChar then
-                task.wait()
-                continue
-            end
-            
-            local currentHRP = currentChar:FindFirstChild("HumanoidRootPart")
-            if currentHRP then
-                currentHRP.CFrame = lockedPosition
-            end
-            
-            -- Keep tools equipped
-            local punch = player.Backpack:FindFirstChild("Punch")
-            if punch then
-                punch.Parent = currentChar
-            end
-            local egg = player.Backpack:FindFirstChild("Protein Egg")
-            if egg then
-                egg.Parent = currentChar
-            end
-            
-            task.wait()
-        end
-    end)
-end
-
-local function startBlockWater(player)
-    local RunService = game:GetService("RunService")
-    
-    if blockWaterConn then
-        blockWaterConn:Disconnect()
-        blockWaterConn = nil
-    end
-    
-    blockWaterConn = RunService.Heartbeat:Connect(function()
-        local char = player.Character
-        if not char then return end
-        
-        local humanoid = char:FindFirstChildOfClass("Humanoid")
-        if not humanoid then return end
-        
-        -- Keep health from dropping while in water / prevent drowning-style death
-        local state = humanoid:GetState()
-        if state == Enum.HumanoidStateType.Swimming or state == Enum.HumanoidStateType.Freefall then
-            if humanoid.Health < humanoid.MaxHealth then
-                humanoid.Health = humanoid.MaxHealth
-            end
-        end
-        
-        -- Extra safety: force health if it tries to go to 0
-        if humanoid.Health <= 0 then
-            humanoid.Health = humanoid.MaxHealth
-        end
-    end)
-end
-
+-- Your original Anti Statue (unchanged logic)
 blood:AddSwitch("Anti Statue", function(Value)
     local player = game.Players.LocalPlayer
     antiStatueEnabled = Value
-   
     if antiStatueEnabled then
         local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
         if not hrp then
             antiStatueEnabled = false
             return
         end
-       
-        -- Capture current position and lock to it
         local currentPos = hrp.CFrame
-        if getgenv().posLock then
-            getgenv().posLock:Disconnect()
-            getgenv().posLock = nil
-        end
         getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
             if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                 player.Character.HumanoidRootPart.CFrame = currentPos
             end
         end)
-       
         startBlockWater(player)
-       
-        -- Only connect once
         if not charAddedConn then
             charAddedConn = player.CharacterAdded:Connect(function(newChar)
                 if antiStatueEnabled then
                     local hrp = newChar:WaitForChild("HumanoidRootPart", 5)
                     if hrp and antiStatueEnabled then
                         task.wait(0.1)
-                        -- Re-lock to the original position on respawn
+                        currentPos = hrp.CFrame
                         if getgenv().posLock then
                             getgenv().posLock:Disconnect()
                         end
@@ -2169,8 +2085,6 @@ blood:AddSwitch("Anti Statue", function(Value)
                 end
             end)
         end
-       
-        -- Handle death so it re-locks + re-enables water block on respawn
         local function connectDied(char)
             local humanoid = char:FindFirstChildOfClass("Humanoid")
             if humanoid then
@@ -2178,15 +2092,18 @@ blood:AddSwitch("Anti Statue", function(Value)
                     if antiStatueEnabled then
                         task.defer(function()
                             if player.Character and antiStatueEnabled then
-                                -- Re-lock after death
-                                if getgenv().posLock then
-                                    getgenv().posLock:Disconnect()
-                                end
-                                getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
-                                    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                                        player.Character.HumanoidRootPart.CFrame = currentPos
+                                local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+                                if hrp then
+                                    currentPos = hrp.CFrame
+                                    if getgenv().posLock then
+                                        getgenv().posLock:Disconnect()
                                     end
-                                end)
+                                    getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
+                                        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                                            player.Character.HumanoidRootPart.CFrame = currentPos
+                                        end
+                                    end)
+                                end
                                 startBlockWater(player)
                             end
                         end)
@@ -2194,11 +2111,9 @@ blood:AddSwitch("Anti Statue", function(Value)
                 end)
             end
         end
-       
         if player.Character then
             connectDied(player.Character)
         end
-       
         if not player:GetAttribute("AntiStatueDiedConnected") then
             player:SetAttribute("AntiStatueDiedConnected", true)
             player.CharacterAdded:Connect(function(char)
@@ -2207,22 +2122,75 @@ blood:AddSwitch("Anti Statue", function(Value)
                 end
             end)
         end
-       
     else
-        -- Disable everything
         if getgenv().posLock then
             getgenv().posLock:Disconnect()
             getgenv().posLock = nil
         end
-       
         if blockWaterConn then
             blockWaterConn:Disconnect()
             blockWaterConn = nil
         end
-       
         if charAddedConn then
             charAddedConn:Disconnect()
             charAddedConn = nil
+        end
+    end
+end)
+
+-- Fast Punch (auto equip + spam activate + zero attackTime)
+blood:AddSwitch("Fast Punch", function(state)
+    _G.autoPunchActive = state
+    if state then
+        -- Equip + set attackTime to 0
+        task.spawn(function()
+            while _G.autoPunchActive do
+                local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
+                if punch then
+                    punch.Parent = LocalPlayer.Character
+                    if punch:FindFirstChild("attackTime") then
+                        punch.attackTime.Value = 0
+                    end
+                end
+                task.wait()
+            end
+        end)
+        -- Continuously activate
+        task.spawn(function()
+            while _G.autoPunchActive do
+                local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
+                if punch then
+                    punch:Activate()
+                end
+                task.wait()
+            end
+        end)
+    else
+        local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
+        if punch then
+            punch.Parent = LocalPlayer.Backpack
+        end
+    end
+end)
+
+-- Auto Equip Protein Egg
+blood:AddSwitch("Auto Protein Egg", function(state)
+    _G.autoProteinEgg = state
+    if state then
+        task.spawn(function()
+            while _G.autoProteinEgg do
+                local egg = LocalPlayer.Backpack:FindFirstChild("Protein Egg")
+                    or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Protein Egg"))
+                if egg and egg.Parent ~= LocalPlayer.Character then
+                    egg.Parent = LocalPlayer.Character
+                end
+                task.wait(0.1) -- slight delay so it doesn't spam the backpack too hard
+            end
+        end)
+    else
+        local egg = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Protein Egg")
+        if egg then
+            egg.Parent = LocalPlayer.Backpack
         end
     end
 end)
