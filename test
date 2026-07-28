@@ -1658,6 +1658,9 @@ local function formatWithCommas(n)
 end
 
 
+
+
+
 local function updateStatLabels(targetPlayer)
     if not targetPlayer then return end
 
@@ -1872,7 +1875,8 @@ end)
 
 
 
-_G.targetPlayer = _G.targetPlayer or ""
+_G.targetPlayers = {} -- list of target players
+
 local function checkCharacter()
     if not game.Players.LocalPlayer.Character then
         repeat
@@ -1881,6 +1885,7 @@ local function checkCharacter()
     end
     return game.Players.LocalPlayer.Character
 end
+
 local function gettool()
     for i, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
         if v.Name == "Punch" and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
@@ -1890,6 +1895,7 @@ local function gettool()
     game:GetService("Players").LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
     game:GetService("Players").LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
 end
+
 local function killPlayer(target)
     local character = checkCharacter()
     if character and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
@@ -1900,86 +1906,73 @@ local function killPlayer(target)
         end
     end
 end
-local function findClosestPlayer(input)
-    if not input or input == "" then return nil end
-   
-    input = input:lower()
-    local bestMatch = nil
-    local bestScore = 0
-   
+
+local function findPlayersBySubstring(substring)
+    local matchedPlayers = {}
+    substring = substring:lower()
+
     for _, player in pairs(game.Players:GetPlayers()) do
         if player ~= game.Players.LocalPlayer then
             local username = player.Name:lower()
             local displayName = player.DisplayName:lower()
-           
-            local usernameMatch = username:find(input, 1, true) ~= nil
-            local displayMatch = displayName:find(input, 1, true) ~= nil
-           
-            local usernameScore = 0
-            local displayScore = 0
-           
-            if usernameMatch then
-                usernameScore = (#input / #username) * 100
-                if username:sub(1, #input) == input then
-                    usernameScore = usernameScore + 50
-                end
-            end
-           
-            if displayMatch then
-                displayScore = (#input / #displayName) * 100
-                if displayName:sub(1, #input) == input then
-                    displayScore = displayScore + 50
-                end
-            end
-           
-            local score = math.max(usernameScore, displayScore)
-           
-            if score > bestScore then
-                bestScore = score
-                bestMatch = player
+
+            if username:find(substring, 1, true) or displayName:find(substring, 1, true) then
+                table.insert(matchedPlayers, player)
             end
         end
     end
-   
-    if bestScore > 20 then
-        return bestMatch
-    end
-   
-    return nil
+
+    return matchedPlayers
 end
-local targetPlayerLabel = blood:AddLabel("Target Player: None")
-local function updateTargetPlayerLabel()
-    if _G.targetPlayer == "" then
-        targetPlayerLabel.Text = "Target Player: None"
+
+local targetPlayerLabel = blood:AddLabel("Target Players: None")
+local function updateTargetPlayersLabel()
+    if #_G.targetPlayers == 0 then
+        targetPlayerLabel.Text = "Target Players: None"
     else
-        targetPlayerLabel.Text = "Target Player: " .. _G.targetPlayer
+        local names = {}
+        for _, p in ipairs(_G.targetPlayers) do
+            table.insert(names, p.Name)
+        end
+        targetPlayerLabel.Text = "Target Players: " .. table.concat(names, ", ")
     end
 end
-blood:AddTextBox("Target Player (Enter Username/Display)", function(text)
+
+-- Enforce 3-letter input
+blood:AddTextBox("Target Players (Enter 3-letter substring)", function(text)
     if text and text ~= "" then
-        local player = findClosestPlayer(text)
-        if player then
-            _G.targetPlayer = player.Name .. " (" .. player.DisplayName .. ")"
-            updateTargetPlayerLabel()
+        if #text ~= 3 then
+            -- Notify user or ignore input
+            -- Here, we'll just ignore if not 3 characters
+            _G.targetPlayers = {}
+            updateTargetPlayersLabel()
+            return
+        end
+        local matchedPlayers = findPlayersBySubstring(text)
+        if #matchedPlayers > 0 then
+            _G.targetPlayers = matchedPlayers
+            updateTargetPlayersLabel()
+        else
+            _G.targetPlayers = {}
+            updateTargetPlayersLabel()
         end
     end
 end)
-blood:AddButton("Clear Target", function()
-    _G.targetPlayer = ""
-    updateTargetPlayerLabel()
+
+blood:AddButton("Clear Targets", function()
+    _G.targetPlayers = {}
+    updateTargetPlayersLabel()
 end)
-local autoKillTargetSwitch = blood:AddSwitch("Auto Kill Target", function(bool)
+
+local autoKillTargetSwitch = blood:AddSwitch("Auto Kill Targets", function(bool)
     _G.autoKillTarget = bool
-   
-    if bool and _G.targetPlayer ~= "" then
+
+    if bool and #_G.targetPlayers > 0 then
         spawn(function()
-            while _G.autoKillTarget and _G.targetPlayer ~= "" do
-                local targetName = _G.targetPlayer:match("^([^%(]+)")
-                if targetName then
-                    targetName = targetName:gsub("%s+$", "")
-                    local targetPlayer = game.Players:FindFirstChild(targetName)
-                    if targetPlayer then
-                        killPlayer(targetPlayer)
+            while _G.autoKillTarget do
+                for _, target in ipairs(_G.targetPlayers) do
+                    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                        killPlayer(target)
                     end
                 end
                 task.wait(0.1)
