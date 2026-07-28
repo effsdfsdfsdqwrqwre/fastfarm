@@ -2047,9 +2047,17 @@ blood:AddSwitch("Anti Statue", function(Value)
     local LocalPlayer = player
     antiStatueEnabled = Value
 
+    -- Fixed lock position
+    local lockCFrame = CFrame.new(
+        -9.0580864, -118.967911, -334.924042,
+        0.391505003, 0.000186817284, 0.92017597,
+        -0.000211292776, 1, -0.000113125207,
+        -0.92017597, -0.00015013745, 0.391505033
+    )
+
     if antiStatueEnabled then
         -------------------------------------------------
-        -- 1. Position Lock (Anti Statue)
+        -- 1. Force teleport + Position Lock
         -------------------------------------------------
         local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
         if not hrp then
@@ -2057,29 +2065,31 @@ blood:AddSwitch("Anti Statue", function(Value)
             return
         end
 
-        local currentPos = hrp.CFrame
+        -- Teleport immediately
+        hrp.CFrame = lockCFrame
+
         getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
             if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                player.Character.HumanoidRootPart.CFrame = currentPos
+                player.Character.HumanoidRootPart.CFrame = lockCFrame
             end
         end)
 
         startBlockWater(player)
 
-        -- CharacterAdded for re-locking
+        -- CharacterAdded (re-teleport on respawn)
         if not charAddedConn then
             charAddedConn = player.CharacterAdded:Connect(function(newChar)
                 if antiStatueEnabled then
                     local hrp = newChar:WaitForChild("HumanoidRootPart", 5)
                     if hrp and antiStatueEnabled then
                         task.wait(0.1)
-                        currentPos = hrp.CFrame
+                        hrp.CFrame = lockCFrame
                         if getgenv().posLock then
                             getgenv().posLock:Disconnect()
                         end
                         getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
                             if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                                player.Character.HumanoidRootPart.CFrame = currentPos
+                                player.Character.HumanoidRootPart.CFrame = lockCFrame
                             end
                         end)
                         startBlockWater(player)
@@ -2098,13 +2108,13 @@ blood:AddSwitch("Anti Statue", function(Value)
                             if player.Character and antiStatueEnabled then
                                 local hrp = player.Character:FindFirstChild("HumanoidRootPart")
                                 if hrp then
-                                    currentPos = hrp.CFrame
+                                    hrp.CFrame = lockCFrame
                                     if getgenv().posLock then
                                         getgenv().posLock:Disconnect()
                                     end
                                     getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
                                         if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                                            player.Character.HumanoidRootPart.CFrame = currentPos
+                                            player.Character.HumanoidRootPart.CFrame = lockCFrame
                                         end
                                     end)
                                 end
@@ -2130,7 +2140,7 @@ blood:AddSwitch("Anti Statue", function(Value)
         end
 
         -------------------------------------------------
-        -- 2. Fast Punch (auto equip + spam + attackTime = 0)
+        -- 2. Fast Punch
         -------------------------------------------------
         task.spawn(function()
             while antiStatueEnabled do
@@ -2186,7 +2196,7 @@ blood:AddSwitch("Anti Statue", function(Value)
             charAddedConn = nil
         end
 
-        -- Unequip tools when turning off
+        -- Unequip tools
         local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
         if punch then
             punch.Parent = LocalPlayer.Backpack
