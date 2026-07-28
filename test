@@ -663,40 +663,50 @@ end)
 
 
 
-
-
 -- // Display Health ESP (Killer Tab) //
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
-
 local ESPEnabled = false
 local ESPObjects = {}
 
--- Format big numbers (1k, 1m, 1b, 1t, 1qa, 1qi, etc)
+-- Format big numbers (1k, 1m, 1b, 1t, 1qa, 1qi)
 local function FormatNumber(n)
     n = tonumber(n) or 0
     if n < 1000 then
         return tostring(math.floor(n))
-    elseif n < 1000000 then -- Thousand
+    elseif n < 1000000 then
         return string.format("%.1fk", n / 1000):gsub("%.0k", "k")
-    elseif n < 1000000000 then -- Million
+    elseif n < 1000000000 then
         return string.format("%.1fm", n / 1000000):gsub("%.0m", "m")
-    elseif n < 1000000000000 then -- Billion
+    elseif n < 1000000000000 then
         return string.format("%.1fb", n / 1000000000):gsub("%.0b", "b")
-    elseif n < 1000000000000000 then -- Trillion
+    elseif n < 1000000000000000 then
         return string.format("%.1ft", n / 1000000000000):gsub("%.0t", "t")
-    elseif n < 1000000000000000000 then -- Quadrillion
+    elseif n < 1000000000000000000 then
         return string.format("%.1fqa", n / 1000000000000000):gsub("%.0qa", "qa")
-    else -- Quintillion+
+    else
         return string.format("%.1fqi", n / 1000000000000000000):gsub("%.0qi", "qi")
     end
+end
+
+local function GetStat(player, name)
+    local success, value = pcall(function()
+        local stats = player:FindFirstChild("leaderstats")
+        if stats and stats:FindFirstChild(name) then
+            return stats[name].Value
+        end
+        if player:FindFirstChild(name) then
+            return player[name].Value
+        end
+        return nil
+    end)
+    return success and value or nil
 end
 
 local function CreateESP(player)
     if player == LocalPlayer then return end
     if ESPObjects[player] then return end
-
     local char = player.Character
     if not char then return end
     local head = char:FindFirstChild("Head")
@@ -727,13 +737,13 @@ local function CreateESP(player)
     nameLabel.TextXAlignment = Enum.TextXAlignment.Center
     nameLabel.Parent = billboard
 
-    -- Health
+    -- Actual HP (from Humanoid)
     local healthLabel = Instance.new("TextLabel")
     healthLabel.Name = "Health"
     healthLabel.Size = UDim2.new(1, 0, 0, 20)
     healthLabel.Position = UDim2.new(0, 0, 0, 24)
     healthLabel.BackgroundTransparency = 1
-    healthLabel.Text = "Health: " .. FormatNumber(humanoid.Health) .. " / " .. FormatNumber(humanoid.MaxHealth)
+    healthLabel.Text = "HP: ?"
     healthLabel.TextColor3 = Color3.fromRGB(100, 255, 130)
     healthLabel.TextStrokeTransparency = 0.5
     healthLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
@@ -742,7 +752,7 @@ local function CreateESP(player)
     healthLabel.TextXAlignment = Enum.TextXAlignment.Center
     healthLabel.Parent = billboard
 
-    -- Damage
+    -- Damage (Strength)
     local damageLabel = Instance.new("TextLabel")
     damageLabel.Name = "Damage"
     damageLabel.Size = UDim2.new(1, 0, 0, 20)
@@ -781,32 +791,20 @@ local function UpdateESP()
             continue
         end
 
-        local humanoid = data.Humanoid
-        if humanoid and humanoid.Parent then
-            data.HealthLabel.Text = "Health: " .. FormatNumber(humanoid.Health) .. " / " .. FormatNumber(humanoid.MaxHealth)
-
-            local percent = humanoid.Health / humanoid.MaxHealth
-            if percent > 0.6 then
-                data.HealthLabel.TextColor3 = Color3.fromRGB(100, 255, 130)
-            elseif percent > 0.3 then
-                data.HealthLabel.TextColor3 = Color3.fromRGB(255, 220, 80)
-            else
-                data.HealthLabel.TextColor3 = Color3.fromRGB(255, 90, 90)
-            end
+        -- Refresh humanoid reference if needed
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            data.Humanoid = humanoid
+            local currentHP = math.floor(humanoid.Health)
+            local maxHP = math.floor(humanoid.MaxHealth)
+            data.HealthLabel.Text = "HP: " .. FormatNumber(currentHP) .. " / " .. FormatNumber(maxHP)
+        else
+            data.HealthLabel.Text = "HP: N/A"
         end
 
-        local success, strength = pcall(function()
-            local stats = player:FindFirstChild("leaderstats")
-            if stats and stats:FindFirstChild("Strength") then
-                return stats.Strength.Value
-            end
-            if player:FindFirstChild("Strength") then
-                return player.Strength.Value
-            end
-            return nil
-        end)
-
-        if success and strength then
+        -- Damage = Strength
+        local strength = GetStat(player, "Strength")
+        if strength then
             data.DamageLabel.Text = "Damage: " .. FormatNumber(strength)
         else
             data.DamageLabel.Text = "Damage: N/A"
@@ -851,7 +849,6 @@ end)
 -- Killer tab button
 Killer:AddButton("Display Health", function()
     ESPEnabled = not ESPEnabled
-
     if ESPEnabled then
         for _, player in ipairs(Players:GetPlayers()) do
             if player.Character then
@@ -866,7 +863,6 @@ Killer:AddButton("Display Health", function()
         print("[ESP] Display Health disabled")
     end
 end)
-
 
 
 
