@@ -1892,6 +1892,12 @@ end
 
 
 
+
+
+
+
+local blacklistLabel
+
 local function updateBlacklistLabel()
     if #blacklistWords == 0 then
         blacklistLabel.Text = "Blacklist: (empty)"
@@ -1900,15 +1906,16 @@ local function updateBlacklistLabel()
     end
 end
 
-
 -- Blacklist display
 blacklistLabel = blood:AddLabel("Blacklist: (empty)")
-
 
 blood:AddTextBox("Add to Blacklist", function(txt)
 
     if txt and txt ~= "" then
-        parseList(table.concat(blacklistWords,",") .. "," .. txt)
+        for word in string.gmatch(txt, "([^,]+)") do
+            table.insert(blacklistWords, word)
+        end
+
         saveList()
         updateBlacklistLabel()
     end
@@ -1917,21 +1924,15 @@ end,{
     placeholder = "Example: PlayerName, FriendName"
 })
 
-
-
-
 blood:AddButton("Clear Blacklist", function()
 
     blacklistWords = {}
+    saveList()
     updateBlacklistLabel()
 
 end)
 
-
-
-
-
-
+updateBlacklistLabel()
 
 
 
