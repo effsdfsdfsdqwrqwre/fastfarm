@@ -228,30 +228,44 @@ end)
 
 Killer:AddSwitch("Fast punch", function(state)
     _G.autoPunchActive = state
+
     if state then
         task.spawn(function()
             while _G.autoPunchActive do
-                local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
-                if punch then
-                    punch.Parent = LocalPlayer.Character
-                    if punch:FindFirstChild("attackTime") then
-                        punch.attackTime.Value = 0
+                local character = LocalPlayer.Character
+                local backpack = LocalPlayer.Backpack
+                local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+
+                if character and backpack and humanoid then
+                    local punch = backpack:FindFirstChild("Punch") or character:FindFirstChild("Punch")
+                    if punch and punch:IsA("Tool") then
+                        -- Force equip every frame
+                        humanoid:EquipTool(punch)
+
+                        -- Instant attack speed
+                        local attackTime = punch:FindFirstChild("attackTime")
+                        if attackTime and attackTime:IsA("NumberValue") then
+                            attackTime.Value = 0
+                        end
                     end
                 end
                 task.wait()
             end
         end)
+
         task.spawn(function()
             while _G.autoPunchActive do
-                local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
-                if punch then
+                local character = LocalPlayer.Character
+                local punch = character and character:FindFirstChild("Punch")
+                if punch and punch:IsA("Tool") then
                     punch:Activate()
                 end
                 task.wait()
             end
         end)
     else
-        local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
+        local character = LocalPlayer.Character
+        local punch = character and character:FindFirstChild("Punch")
         if punch then
             punch.Parent = LocalPlayer.Backpack
         end
@@ -2027,75 +2041,52 @@ blood:AddButton("Normal Size", function()
     game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
 end)
 
--- Anti Statue (teleport + lock)
-blood:AddSwitch("Anti Statue", function(state)
-    local ped = PlayerPedId() -- keep this if you're in a hybrid/FiveM context
-    -- If pure Roblox, replace with LocalPlayer.Character
-    if state then
-        SetEntityCoordsNoOffset(ped, -7610.19629, 116.924843, 1795.85132, false, false, false)
-        SetEntityMatrix(ped,
-            -0.707134247, 0.0, 0.707079291,
-             0.0,         1.0, 0.0,
-            -0.707079291, 0.0,-0.707134247,
-            -7610.19629, 116.924843, 1795.85132
-        )
-        FreezeEntityPosition(ped, true)
-        SetEntityCollision(ped, false, false)
-        SetEntityInvincible(ped, true)
-    else
-        FreezeEntityPosition(ped, false)
-        SetEntityCollision(ped, true, true)
-        SetEntityInvincible(ped, false)
-    end
-end)
 
--- Fast Punch (auto-equip + spam)
-blood:AddSwitch("Fast punch", function(state)
-    _G.autoPunchActive = state
 
-    if state then
-        -- Loop 1: constantly equip + force attackTime = 0
-        task.spawn(function()
-            while _G.autoPunchActive do
-                local character = LocalPlayer.Character
-                local backpack = LocalPlayer.Backpack
-                local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 
-                if character and backpack and humanoid then
-                    local punch = backpack:FindFirstChild("Punch") or character:FindFirstChild("Punch")
-                    if punch and punch:IsA("Tool") then
-                        -- Force equip every frame
-                        humanoid:EquipTool(punch)
 
-                        -- Instant attack speed
-                        local attackTime = punch:FindFirstChild("attackTime")
-                        if attackTime and attackTime:IsA("NumberValue") then
-                            attackTime.Value = 0
-                        end
-                    end
-                end
-                task.wait()
-            end
-        end)
 
-        -- Loop 2: spam Activate
-        task.spawn(function()
-            while _G.autoPunchActive do
-                local character = LocalPlayer.Character
-                local punch = character and character:FindFirstChild("Punch")
-                if punch and punch:IsA("Tool") then
-                    punch:Activate()
-                end
-                task.wait()
-            end
-        end)
-    else
-        -- Unequip when turned off
-        local character = LocalPlayer.Character
-        local punch = character and character:FindFirstChild("Punch")
-        if punch then
-            punch.Parent = LocalPlayer.Backpack
+
+
+local lockedPosition = nil
+local lockConnection = nil
+
+local targetCFrame = CFrame.new(
+    -7610.19629, 116.924843, 1795.85132,
+    -0.707134247, 0, 0.707079291,
+    0, 1, 0,
+    -0.707079291, 0, -0.707134247
+)
+
+AddSwitch("Anti Statue", false, function(Value)
+    local character = game.Players.LocalPlayer.Character
+    if not character then return end
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    if Value then
+        -- Teleport + lock
+        hrp.CFrame = targetCFrame
+        lockedPosition = targetCFrame
+
+        if lockConnection then
+            lockConnection:Disconnect()
         end
+
+        lockConnection = game:GetService("RunService").Heartbeat:Connect(function()
+            if character and character.Parent and hrp and hrp.Parent then
+                hrp.CFrame = lockedPosition
+                hrp.AssemblyLinearVelocity = Vector3.zero
+                hrp.AssemblyAngularVelocity = Vector3.zero
+            end
+        end)
+    else
+        -- Unlock
+        if lockConnection then
+            lockConnection:Disconnect()
+            lockConnection = nil
+        end
+        lockedPosition = nil
     end
 end)
 
