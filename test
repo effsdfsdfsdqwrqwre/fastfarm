@@ -1867,9 +1867,6 @@ end)
 
 
 
-
-
-
 --// Clan Killing Tab Fix (UI Loading Only)
 
 local blacklistWords = {}
@@ -1901,6 +1898,13 @@ local function updateBlacklistLabel()
         blacklistLabel.Text = "Blacklist: " .. table.concat(blacklistWords, ", ")
     end
 end
+
+
+-- Title
+local clanTitle = blood:AddLabel("")
+clanTitle.TextSize = 18
+clanTitle.Font = Enum.Font.Bangers
+clanTitle.TextColor3 = Color3.fromRGB(255,255,255)
 
 
 -- Blacklist display
@@ -1951,13 +1955,21 @@ end,{
 })
 
 
--- Test buttons so tab has content
 blood:AddButton("Clear Blacklist", function()
 
     blacklistWords = {}
     updateBlacklistLabel()
 
 end)
+
+
+
+
+
+local clanInfo = blood:AddLabel("")
+clanInfo.TextSize = 16
+clanInfo.Font = Enum.Font.Bangers
+clanInfo.TextColor3 = Color3.fromRGB(255,255,255)
 
 
 
