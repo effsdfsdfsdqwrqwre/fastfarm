@@ -2053,138 +2053,32 @@ titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 
 blood:AddSwitch("Anti Statue", function(Value)
-    local player = game.Players.LocalPlayer
-    local LocalPlayer = player
-    antiStatueEnabled = Value
+    if Value then
+        -- Target Position
+        local targetCFrame = CFrame.new(
+            -9.0580864, -118.967911, -334.924042,
+            0.391505003, 0.000186817284, 0.92017597,
+            -0.000211292776, 1, -0.000113125207,
+            -0.92017597, -0.00015013745, 0.391505033
+        )
 
-    local lockCFrame = CFrame.new(
-        -9.0580864, -118.967911, -334.924042,
-        0.391505003, 0.000186817284, 0.92017597,
-        -0.000211292776, 1, -0.000113125207,
-        -0.92017597, -0.00015013745, 0.391505033
-    )
-
-    -- Clean up old stuff first
-    if getgenv().posLock then
-        getgenv().posLock:Disconnect()
-        getgenv().posLock = nil
-    end
-    if charAddedConn then
-        charAddedConn:Disconnect()
-        charAddedConn = nil
-    end
-    if blockWaterConn then
-        blockWaterConn:Disconnect()
-        blockWaterConn = nil
-    end
-
-    if antiStatueEnabled then
-        -------------------------------------------------
-        -- Function that does the actual lock + equip
-        -------------------------------------------------
-        local function setupCharacter(char)
-            if not antiStatueEnabled then return end
-
-            local hrp = char:WaitForChild("HumanoidRootPart", 8)
-            local humanoid = char:WaitForChild("Humanoid", 8)
-            if not hrp or not humanoid then return end
-
-            -- Teleport + lock
-            hrp.CFrame = lockCFrame
-            if getgenv().posLock then
-                getgenv().posLock:Disconnect()
-            end
-            getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
-                if antiStatueEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    player.Character.HumanoidRootPart.CFrame = lockCFrame
-                end
-            end)
-
-            startBlockWater(player)
-
-            -- Force equip tools after a short delay
-            task.delay(0.3, function()
-                if not antiStatueEnabled then return end
-
-                -- Punch
-                local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
-                if punch and humanoid then
-                    humanoid:EquipTool(punch)
-                    if punch:FindFirstChild("attackTime") then
-                        punch.attackTime.Value = 0
-                    end
-                end
-
-                -- Protein Egg
-                local egg = LocalPlayer.Backpack:FindFirstChild("Protein Egg")
-                if egg and humanoid then
-                    humanoid:EquipTool(egg)
-                end
-            end)
+        local character = game.Players.LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            character.HumanoidRootPart.CFrame = targetCFrame
         end
 
-        -- Setup current character
-        if player.Character then
-            setupCharacter(player.Character)
-        end
-
-        -- Setup on every respawn
-        charAddedConn = player.CharacterAdded:Connect(function(char)
-            if antiStatueEnabled then
-                setupCharacter(char)
+        -- Lock Position
+        getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
+            local character = game.Players.LocalPlayer.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                character.HumanoidRootPart.CFrame = targetCFrame
             end
         end)
-
-        -------------------------------------------------
-        -- Continuous Fast Punch loop
-        -------------------------------------------------
-        task.spawn(function()
-            while antiStatueEnabled do
-                local char = LocalPlayer.Character
-                local humanoid = char and char:FindFirstChildOfClass("Humanoid")
-                local punch = LocalPlayer.Backpack:FindFirstChild("Punch") or (char and char:FindFirstChild("Punch"))
-
-                if punch and humanoid then
-                    if punch.Parent ~= char then
-                        humanoid:EquipTool(punch)
-                    end
-                    if punch:FindFirstChild("attackTime") then
-                        punch.attackTime.Value = 0
-                    end
-                    punch:Activate()
-                end
-                task.wait()
-            end
-        end)
-
-        -------------------------------------------------
-        -- Continuous Protein Egg loop
-        -------------------------------------------------
-        task.spawn(function()
-            while antiStatueEnabled do
-                local char = LocalPlayer.Character
-                local humanoid = char and char:FindFirstChildOfClass("Humanoid")
-                local egg = LocalPlayer.Backpack:FindFirstChild("Protein Egg") or (char and char:FindFirstChild("Protein Egg"))
-
-                if egg and humanoid and egg.Parent ~= char then
-                    humanoid:EquipTool(egg)
-                end
-                task.wait(0.15)
-            end
-        end)
-
     else
-        -- Turned OFF → unequip tools
-        local char = LocalPlayer.Character
-        if char then
-            local punch = char:FindFirstChild("Punch")
-            if punch then
-                punch.Parent = LocalPlayer.Backpack
-            end
-            local egg = char:FindFirstChild("Protein Egg")
-            if egg then
-                egg.Parent = LocalPlayer.Backpack
-            end
+        -- Unlock Position
+        if getgenv().posLock then
+            getgenv().posLock:Disconnect()
+            getgenv().posLock = nil
         end
     end
 end)
