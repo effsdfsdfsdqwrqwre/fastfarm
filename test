@@ -2138,56 +2138,6 @@ end)
 
 
 
-local targetDropdownItems = {}
-local targetPlayerNames = {}
-local selectedTarget = nil
-local autoKill = false
-blood:AddSwitch("Kill KTA", function(bool)
-    autoKill = bool
-    task.spawn(function()
-        while autoKill do
-            local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-            local rightHand = character:FindFirstChild("RightHand")
-            local leftHand = character:FindFirstChild("LeftHand")
-            local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
-            if punch and not character:FindFirstChild("Punch") then
-                punch.Parent = character
-            end
-            if rightHand and leftHand then
-                for _, target in ipairs(Players:GetPlayers()) do
-                    if target ~= LocalPlayer and not playerWhitelist[target.Name] then
-                        -- Check if the target's name contains "KTA"
-                        if string.find(target.Name, "KTA") then
-                            local targetChar = target.Character
-                            local rootPart = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
-                            if rootPart then
-                                pcall(function()
-                                    firetouchinterest(rightHand, rootPart, 1)
-                                    firetouchinterest(leftHand, rootPart, 1)
-                                    firetouchinterest(rightHand, rootPart, 0)
-                                    firetouchinterest(leftHand, rootPart, 0)
-                                end)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait(0.05)
-        end
-    end)
-end)
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
