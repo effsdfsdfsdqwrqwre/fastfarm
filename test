@@ -2058,7 +2058,7 @@ local targetCFrame = CFrame.new(
     -0.707079291, 0, -0.707134247
 )
 
-AddSwitch("Anti Statue", false, function(Value)
+blood:AddSwitch("Anti Statue", false, function(Value)
     local character = game.Players.LocalPlayer.Character
     if not character then return end
     local hrp = character:FindFirstChild("HumanoidRootPart")
