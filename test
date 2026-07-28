@@ -1903,12 +1903,6 @@ local function updateBlacklistLabel()
 end
 
 
--- Title
-local clanTitle = blood:AddLabel("Clan Killing")
-clanTitle.TextSize = 18
-clanTitle.Font = Enum.Font.Bangers
-clanTitle.TextColor3 = Color3.fromRGB(255,255,255)
-
 
 -- Blacklist display
 blacklistLabel = blood:AddLabel("Blacklist: (empty)")
@@ -1928,8 +1922,7 @@ end,{
 })
 
 
--- Remove blacklist
-blood:AddTextBox("Remove from Blacklist", function(txt)
+
 
     local remove = {}
 
@@ -1967,17 +1960,8 @@ blood:AddButton("Clear Blacklist", function()
 end)
 
 
-blood:AddButton("Refresh Tab", function()
-
-    updateBlacklistLabel()
-
-end)
 
 
-local clanInfo = blood:AddLabel("Clan Killing Loaded")
-clanInfo.TextSize = 16
-clanInfo.Font = Enum.Font.Bangers
-clanInfo.TextColor3 = Color3.fromRGB(255,255,255)
 
 
 
