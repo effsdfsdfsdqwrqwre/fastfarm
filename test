@@ -1877,147 +1877,112 @@ end)
 
 
 
---// BLACKLIST SYSTEM FIX
 
-blacklistWords = blacklistWords or {}
+blacklistLabel = Killer:AddLabel("")
+blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
-local function trim(str)
-	return str:match("^%s*(.-)%s*$")
-end
-
-local function parseList(str)
-	blacklistWords = {}
-
-	for word in string.gmatch(str, "[^,]+") do
-		word = trim(word):lower()
-
-		if word ~= "" then
-			table.insert(blacklistWords, word)
-		end
-	end
-end
-
-local function isBlacklisted(plr)
-	if not plr then
-		return false
-	end
-
-	local username = plr.Name:lower()
-	local display = plr.DisplayName:lower()
-
-	for _, word in ipairs(blacklistWords) do
-		word = word:lower()
-
-		if username == word or display == word then
-			return true
-		end
-	end
-
-	return false
-end
-
-
-function refreshActive()
-	active = {}
-
-	for _, plr in ipairs(Players:GetPlayers()) do
-		if plr ~= LocalPlayer then
-
-			if not isBlacklisted(plr) then
-				active[plr] = true
-			end
-
-		end
-	end
-end
-
-
--- ADD BLACKLIST
-blacklistLabel = blood:AddLabel("")
-
-local function updateBlacklistLabel()
-	if #blacklistWords == 0 then
-		blacklistLabel.Text = "Blacklist: (empty)"
-	else
-		blacklistLabel.Text = "Blacklist: "..table.concat(blacklistWords,", ")
-	end
-end
-
-
-local blacklistBox = blood:AddTextBox("Add to Blacklist", function(txt)
-
-	parseList(table.concat(blacklistWords,",")..","..txt)
-
-	updateBlacklistLabel()
+local blacklistBox = Killer:AddTextBox("Add to Blacklist", function(txt)
+	parseList((table.concat(blacklistWords, ",")..","..txt))
+	saveList()
+	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
 	refreshActive()
+	if not isAnyActive() then autoPunchActive = false end
+end, {["placeholder"] = "Ej: KTA, KTS, K1LL, H3LL, VAL, invincible"})
 
-	if not isAnyActive() then
-		autoPunchActive = false
+local removeBox = Killer:AddTextBox("Remove from Blacklist", function(txt)
+	local toRemove = {}
+	for w in string.gmatch(txt, "[^,]+") do
+		local t = trim(w):lower()
+		if t ~= "" then table.insert(toRemove, t) end
 	end
 
-end, {
-	placeholder = "Ej: MVX, Sigma, Juan"
-})
-
-
--- REMOVE BLACKLIST
-local removeBox = blood:AddTextBox("Remove from Blacklist", function(txt)
-
-	local remove = {}
-
-	for word in string.gmatch(txt,"[^,]+") do
-		word = trim(word):lower()
-
-		if word ~= "" then
-			table.insert(remove,word)
-		end
-	end
-
-
-	for _,word in ipairs(remove) do
-		for i = #blacklistWords,1,-1 do
-
+	for _, word in ipairs(toRemove) do
+		for i = #blacklistWords, 1, -1 do
 			if blacklistWords[i] == word then
-				table.remove(blacklistWords,i)
+				table.remove(blacklistWords, i)
 			end
-
 		end
 	end
 
-
-	updateBlacklistLabel()
+	saveList()
+	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
 	refreshActive()
 
-	if not isAnyActive() then
-		autoPunchActive = false
-	end
-
+	if not isAnyActive() then autoPunchActive = false end
 end)
 
+RunService.Heartbeat:Connect(function()
+	refreshActive()
+end)
 
-updateBlacklistLabel()
+task.spawn(function()
+	while true do
+		task.wait(attackDelay)
 
+		if not isAnyActive() then
+			continue
+		end
+
+		if not LocalPlayer.Character then continue end
+		if not characterLoaded then continue end
+
+		local punch = ensurePunchEquipped()
+		if not punch then continue end
+
+		local char = LocalPlayer.Character
+		local rightHand, leftHand = getHands(char)
+
+		for plr in pairs(active) do
+			if plr and plr.Character then
+				local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+				local hum = plr.Character:FindFirstChild("Humanoid")
+
+				if hrp and hum and hum.Health > 0 then
+					pcall(function()
+						LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
+						LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
+					end)
+
+					pcall(function()
+						firetouchinterest(rightHand, hrp, 1)
+						firetouchinterest(leftHand, hrp, 1)
+						firetouchinterest(rightHand, hrp, 0)
+						firetouchinterest(leftHand, hrp, 0)
+					end)
+				end
+			end
+		end
+	end
+end)
 
 Players.PlayerAdded:Connect(function(plr)
-
 	plr:GetPropertyChangedSignal("DisplayName"):Connect(function()
 		refreshActive()
 	end)
-
-	task.wait(1)
-	refreshActive()
-
 end)
 
+LocalPlayer.CharacterAdded:Connect(function()
+	characterLoaded = false
+	task.wait(0.2)
 
-Players.PlayerRemoving:Connect(function()
+	waitForCharacter()
 	refreshActive()
+
+	if isAnyActive() then
+		task.defer(function()
+			for i = 1, 50 do
+				if not isAnyActive() then break end
+				ensurePunchEquipped()
+				task.wait(0.15)
+			end
+		end)
+	end
 end)
 
-
-
+waitForCharacter()
+refreshActive()
 
 
 
