@@ -1876,16 +1876,14 @@ end)
 
 
 
-
-
---// Clan Killing Tab Fix (UI Loading Only)
-
 local blacklistWords = {}
 
 local function trim(str)
     return str:match("^%s*(.-)%s*$")
 end
 
+
+-- Load blacklist text
 local function parseList(text)
     blacklistWords = {}
 
@@ -1898,34 +1896,66 @@ local function parseList(text)
     end
 end
 
+
+-- Save function (add your executor save here)
 local function saveList()
-    -- Add datastore/file saving here if your executor supports it
+    -- writefile/readfile support can go here
 end
 
+
+-- Check if player is blacklisted
+local function isBlacklisted(playerName)
+
+    if not playerName then
+        return false
+    end
+
+    playerName = playerName:lower()
+
+    for _, blockedName in ipairs(blacklistWords) do
+        if playerName == blockedName then
+            return true
+        end
+    end
+
+    return false
+end
+
+
+-- UI label
+local blacklistLabel = blood:AddLabel("Blacklist: (empty)")
+
+
 local function updateBlacklistLabel()
+
     if #blacklistWords == 0 then
         blacklistLabel.Text = "Blacklist: (empty)"
     else
         blacklistLabel.Text = "Blacklist: " .. table.concat(blacklistWords, ", ")
     end
+
 end
 
 
 
-
-
-
--- Blacklist display
-blacklistLabel = blood:AddLabel("Blacklist: (empty)")
-
-
--- Add blacklist
+-- Add blacklist names
 blood:AddTextBox("Add to Blacklist", function(txt)
 
     if txt and txt ~= "" then
-        parseList(table.concat(blacklistWords,",") .. "," .. txt)
+
+        for word in string.gmatch(txt, "[^,]+") do
+
+            word = trim(word):lower()
+
+            if word ~= "" then
+                table.insert(blacklistWords, word)
+            end
+
+        end
+
         saveList()
         updateBlacklistLabel()
+
     end
 
 end,{
@@ -1933,27 +1963,30 @@ end,{
 })
 
 
--- Remove blacklist
+
+-- Remove blacklist names
 blood:AddTextBox("Remove from Blacklist", function(txt)
 
-    local remove = {}
+    if not txt then
+        return
+    end
 
-    for word in string.gmatch(txt,"[^,]+") do
+
+    for word in string.gmatch(txt, "[^,]+") do
+
         word = trim(word):lower()
 
-        if word ~= "" then
-            table.insert(remove,word)
-        end
-    end
 
-
-    for _,removeWord in ipairs(remove) do
         for i = #blacklistWords,1,-1 do
-            if blacklistWords[i] == removeWord then
+
+            if blacklistWords[i] == word then
                 table.remove(blacklistWords,i)
             end
+
         end
+
     end
+
 
     saveList()
     updateBlacklistLabel()
@@ -1963,23 +1996,33 @@ end,{
 })
 
 
--- Test buttons so tab has content
+
+-- Clear blacklist
 blood:AddButton("Clear Blacklist", function()
 
     blacklistWords = {}
+
     updateBlacklistLabel()
+
+    saveList()
 
 end)
 
 
 
+--==================================================
+-- PUT THIS INTO YOUR CLAN KILL TARGET LOOP
+--==================================================
 
+-- Example:
 
+-- if isBlacklisted(target.Name) then
+--     return
+-- end
 
+-- killPlayer(target)
 
-
-
-
+--==================================================
 
 
 
