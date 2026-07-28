@@ -663,30 +663,29 @@ end)
 
 
 
--- // Display Health ESP (Killer Tab) //
+-- // Display Health ESP (Killer Tab) - Muscle Legends Fixed //
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local ESPEnabled = false
 local ESPObjects = {}
 
--- Format big numbers (1k, 1m, 1b, 1t, 1qa, 1qi)
 local function FormatNumber(n)
     n = tonumber(n) or 0
     if n < 1000 then
         return tostring(math.floor(n))
-    elseif n < 1000000 then
-        return string.format("%.1fk", n / 1000):gsub("%.0k", "k")
-    elseif n < 1000000000 then
-        return string.format("%.1fm", n / 1000000):gsub("%.0m", "m")
-    elseif n < 1000000000000 then
-        return string.format("%.1fb", n / 1000000000):gsub("%.0b", "b")
-    elseif n < 1000000000000000 then
-        return string.format("%.1ft", n / 1000000000000):gsub("%.0t", "t")
-    elseif n < 1000000000000000000 then
-        return string.format("%.1fqa", n / 1000000000000000):gsub("%.0qa", "qa")
+    elseif n < 1e6 then
+        return string.format("%.1fk", n / 1e3):gsub("%.0k", "k")
+    elseif n < 1e9 then
+        return string.format("%.1fm", n / 1e6):gsub("%.0m", "m")
+    elseif n < 1e12 then
+        return string.format("%.1fb", n / 1e9):gsub("%.0b", "b")
+    elseif n < 1e15 then
+        return string.format("%.1ft", n / 1e12):gsub("%.0t", "t")
+    elseif n < 1e18 then
+        return string.format("%.1fqa", n / 1e15):gsub("%.0qa", "qa")
     else
-        return string.format("%.1fqi", n / 1000000000000000000):gsub("%.0qi", "qi")
+        return string.format("%.1fqi", n / 1e18):gsub("%.0qi", "qi")
     end
 end
 
@@ -699,6 +698,11 @@ local function GetStat(player, name)
         if player:FindFirstChild(name) then
             return player[name].Value
         end
+        -- Some older/private folders
+        local private = player:FindFirstChild("PrivateStats")
+        if private and private:FindFirstChild(name) then
+            return private[name].Value
+        end
         return nil
     end)
     return success and value or nil
@@ -707,22 +711,22 @@ end
 local function CreateESP(player)
     if player == LocalPlayer then return end
     if ESPObjects[player] then return end
+
     local char = player.Character
     if not char then return end
     local head = char:FindFirstChild("Head")
     local humanoid = char:FindFirstChildOfClass("Humanoid")
-    if not head or not humanoid then return end
+    if not head then return end
 
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "HealthESP"
     billboard.Adornee = head
-    billboard.Size = UDim2.new(0, 220, 0, 70)
-    billboard.StudsOffset = Vector3.new(0, 3.2, 0)
+    billboard.Size = UDim2.new(0, 240, 0, 75)
+    billboard.StudsOffset = Vector3.new(0, 3.5, 0)
     billboard.AlwaysOnTop = true
-    billboard.MaxDistance = 400
+    billboard.MaxDistance = 500
     billboard.Parent = head
 
-    -- Username
     local nameLabel = Instance.new("TextLabel")
     nameLabel.Name = "Username"
     nameLabel.Size = UDim2.new(1, 0, 0, 22)
@@ -730,14 +734,13 @@ local function CreateESP(player)
     nameLabel.BackgroundTransparency = 1
     nameLabel.Text = player.DisplayName
     nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    nameLabel.TextStrokeTransparency = 0.5
+    nameLabel.TextStrokeTransparency = 0.4
     nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
     nameLabel.Font = Enum.Font.Bangers
     nameLabel.TextSize = 18
     nameLabel.TextXAlignment = Enum.TextXAlignment.Center
     nameLabel.Parent = billboard
 
-    -- Actual HP (from Humanoid)
     local healthLabel = Instance.new("TextLabel")
     healthLabel.Name = "Health"
     healthLabel.Size = UDim2.new(1, 0, 0, 20)
@@ -745,14 +748,13 @@ local function CreateESP(player)
     healthLabel.BackgroundTransparency = 1
     healthLabel.Text = "HP: ?"
     healthLabel.TextColor3 = Color3.fromRGB(100, 255, 130)
-    healthLabel.TextStrokeTransparency = 0.5
+    healthLabel.TextStrokeTransparency = 0.4
     healthLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
     healthLabel.Font = Enum.Font.Bangers
     healthLabel.TextSize = 16
     healthLabel.TextXAlignment = Enum.TextXAlignment.Center
     healthLabel.Parent = billboard
 
-    -- Damage (Strength)
     local damageLabel = Instance.new("TextLabel")
     damageLabel.Name = "Damage"
     damageLabel.Size = UDim2.new(1, 0, 0, 20)
@@ -760,7 +762,7 @@ local function CreateESP(player)
     damageLabel.BackgroundTransparency = 1
     damageLabel.Text = "Damage: ?"
     damageLabel.TextColor3 = Color3.fromRGB(255, 60, 60)
-    damageLabel.TextStrokeTransparency = 0.5
+    damageLabel.TextStrokeTransparency = 0.4
     damageLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
     damageLabel.Font = Enum.Font.Bangers
     damageLabel.TextSize = 16
@@ -791,18 +793,28 @@ local function UpdateESP()
             continue
         end
 
-        -- Refresh humanoid reference if needed
+        -- === REAL HEALTH (Durability is the actual HP pool) ===
+        local durability = GetStat(player, "Durability")
         local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            data.Humanoid = humanoid
-            local currentHP = math.floor(humanoid.Health)
-            local maxHP = math.floor(humanoid.MaxHealth)
+
+        if durability then
+            local maxHP = durability
+            local currentHP = maxHP -- default full
+
+            -- Try to get real remaining HP from Humanoid if it makes sense
+            if humanoid and humanoid.MaxHealth > 0 then
+                local ratio = humanoid.Health / humanoid.MaxHealth
+                if ratio >= 0 and ratio <= 1.05 then -- sane value
+                    currentHP = math.floor(maxHP * ratio)
+                end
+            end
+
             data.HealthLabel.Text = "HP: " .. FormatNumber(currentHP) .. " / " .. FormatNumber(maxHP)
         else
             data.HealthLabel.Text = "HP: N/A"
         end
 
-        -- Damage = Strength
+        -- === DAMAGE (Strength) ===
         local strength = GetStat(player, "Strength")
         if strength then
             data.DamageLabel.Text = "Damage: " .. FormatNumber(strength)
@@ -814,7 +826,7 @@ end
 
 local function OnCharacterAdded(player)
     player.CharacterAdded:Connect(function()
-        task.wait(0.5)
+        task.wait(0.6)
         if ESPEnabled then
             CreateESP(player)
         end
@@ -831,7 +843,7 @@ end
 Players.PlayerAdded:Connect(function(player)
     OnCharacterAdded(player)
     if ESPEnabled and player.Character then
-        task.wait(0.5)
+        task.wait(0.6)
         CreateESP(player)
     end
 end)
@@ -855,7 +867,7 @@ Killer:AddButton("Display Health", function()
                 CreateESP(player)
             end
         end
-        print("[ESP] Display Health enabled")
+        print("[ESP] Display Health enabled (using Durability as real HP)")
     else
         for player, _ in pairs(ESPObjects) do
             RemoveESP(player)
