@@ -1873,210 +1873,109 @@ end)
 
 
 
+blacklistLabel = blood:AddLabel("")
+blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
+local blacklistBox = blood:AddTextBox("Add to Blacklist", function(txt)
+	parseList((table.concat(blacklistWords, ",")..","..txt))
+	saveList()
+	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
+	refreshActive()
+	if not isAnyActive() then autoPunchActive = false end
+end, {["placeholder"] = "Ej: MVX, Sigma, Juan"})
 
+local removeBox = blood:AddTextBox("Remove from Blacklist", function(txt)
+	local toRemove = {}
+	for w in string.gmatch(txt, "[^,]+") do
+		local t = trim(w):lower()
+		if t ~= "" then table.insert(toRemove, t) end
+	end
 
-local blacklistWords = {}
-local active = {}
-local autoPunchActive = false
-local characterLoaded = false
-local attackDelay = 0.1
+	for _, word in ipairs(toRemove) do
+		for i = #blacklistWords, 1, -1 do
+			if blacklistWords[i] == word then
+				table.remove(blacklistWords, i)
+			end
+		end
+	end
 
-local function trim(s)
-    return (s:gsub("^%s*(.-)%s*$", "%1"))
-end
+	saveList()
+	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
-local function parseList(str)
-    blacklistWords = {}
-    for w in string.gmatch(str or "", "[^,]+") do
-        local t = trim(w)
-        if t ~= "" then
-            table.insert(blacklistWords, t)
-        end
-    end
-end
+	refreshActive()
 
-local function saveList()
-    -- no persistence implemented
-end
-
-local function refreshActive()
-    -- targeting logic was never provided
-    active = {}
-end
-
-local function isAnyActive()
-    return next(active) ~= nil
-end
-
-local function ensurePunchEquipped()
-    return nil -- stub
-end
-
-local function getHands()
-    return nil, nil -- stub
-end
-
-local function waitForCharacter()
-    characterLoaded = true
-end
-
--- =========================
--- Blacklist UI (safe version)
--- =========================
-local blacklistLabel = blood:AddLabel("")
-local function updateBlacklistLabel()
-    blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: " .. table.concat(blacklistWords, ", "))
-end
-updateBlacklistLabel()
-
-blood:AddTextBox("Add to Blacklist", function(txt)
-    if not txt or txt == "" then return end
-    local current = table.concat(blacklistWords, ",")
-    if current == "" then
-        parseList(txt)
-    else
-        parseList(current .. "," .. txt)
-    end
-    saveList()
-    updateBlacklistLabel()
-    refreshActive()
-end, {
-    placeholder = "Ej: KTS, ZTX, KTA"
-})
-
-blood:AddTextBox("Remove from Blacklist", function(txt)
-    if not txt or txt == "" then return end
-    local toRemove = {}
-    for w in string.gmatch(txt, "[^,]+") do
-        local t = trim(w):lower()
-        if t ~= "" then
-            table.insert(toRemove, t)
-        end
-    end
-    for _, word in ipairs(toRemove) do
-        for i = #blacklistWords, 1, -1 do
-            if blacklistWords[i]:lower() == word then
-                table.remove(blacklistWords, i)
-            end
-        end
-    end
-    saveList()
-    updateBlacklistLabel()
-    refreshActive()
-end, {
-    placeholder = "Ej: KTS, ZTX"
-})
-
--- =========================
--- Size buttons
--- =========================
-local spamming = false
-
-blood:AddButton("Spam Size", function()
-    spamming = not spamming
-    if spamming then
-        task.spawn(function()
-            local sizes = {100, 2, 40, 50, 60, 72}
-            local i = 1
-            while spamming do
-                pcall(function()
-                    game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer("changeSize", sizes[i])
-                end)
-                i = i + 1
-                if i > #sizes then i = 1 end
-                task.wait(0.05)
-            end
-        end)
-    end
+	if not isAnyActive() then autoPunchActive = false end
 end)
 
-blood:AddButton("Normal Size", function()
-    pcall(function()
-        game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer("changeSize", 2)
-    end)
+RunService.Heartbeat:Connect(function()
+	refreshActive()
 end)
 
--- =========================
--- Title + Anti Statue
--- =========================
-local titleLabel = blood:AddLabel("Kill While Dead ect")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+task.spawn(function()
+	while true do
+		task.wait(attackDelay)
 
-blood:AddSwitch("Anti Statue", function(Value)
-    if Value then
-        pcall(function()
-            game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer("changeSize", 1)
-        end)
+		if not isAnyActive() then
+			continue
+		end
 
-        local targetCFrame = CFrame.new(
-            -9.0580864, -118.967911, -334.924042,
-            0.391505003, 0.000186817284, 0.92017597,
-            -0.000211292776, 1, -0.000113125207,
-            -0.92017597, -0.00015013745, 0.391505033
-        )
+		if not LocalPlayer.Character then continue end
+		if not characterLoaded then continue end
 
-        local character = game.Players.LocalPlayer.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            character.HumanoidRootPart.CFrame = targetCFrame
-        end
+		local punch = ensurePunchEquipped()
+		if not punch then continue end
 
-        getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
-            local char = game.Players.LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                char.HumanoidRootPart.CFrame = targetCFrame
-            end
-        end)
+		local char = LocalPlayer.Character
+		local rightHand, leftHand = getHands(char)
 
-        getgenv().antiStatuePunch = true
-        task.spawn(function()
-            while getgenv().antiStatuePunch do
-                local char = game.Players.LocalPlayer.Character
-                if char then
-                    local egg = game.Players.LocalPlayer.Backpack:FindFirstChild("Protein Egg")
-                        or char:FindFirstChild("Protein Egg")
-                    if egg and egg.Parent ~= char then
-                        egg.Parent = char
-                    end
+		for plr in pairs(active) do
+			if plr and plr.Character then
+				local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+				local hum = plr.Character:FindFirstChild("Humanoid")
 
-                    local punch = game.Players.LocalPlayer.Backpack:FindFirstChild("Punch")
-                        or char:FindFirstChild("Punch")
-                    if punch then
-                        if punch.Parent ~= char then
-                            punch.Parent = char
-                        end
-                        if not punch:GetAttribute("AntiUnequip") then
-                            punch:SetAttribute("AntiUnequip", true)
-                            punch.Unequipped:Connect(function()
-                                if getgenv().antiStatuePunch and punch then
-                                    task.defer(function()
-                                        punch.Parent = char
-                                    end)
-                                end
-                            end)
-                        end
-                        pcall(function()
-                            game.Players.LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
-                            game.Players.LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
-                        end)
-                    end
-                end
-                task.wait(0.01)
-            end
-        end)
-    else
-        if getgenv().posLock then
-            getgenv().posLock:Disconnect()
-            getgenv().posLock = nil
-        end
-        getgenv().antiStatuePunch = false
-    end
+				if hrp and hum and hum.Health > 0 then
+					pcall(function()
+						LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
+						LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
+					end)
+
+					pcall(function()
+						firetouchinterest(rightHand, hrp, 1)
+						firetouchinterest(leftHand, hrp, 1)
+						firetouchinterest(rightHand, hrp, 0)
+						firetouchinterest(leftHand, hrp, 0)
+					end)
+				end
+			end
+		end
+	end
 end)
 
--- Initial setup (stubs only)
+Players.PlayerAdded:Connect(function(plr)
+	plr:GetPropertyChangedSignal("DisplayName"):Connect(function()
+		refreshActive()
+	end)
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+	characterLoaded = false
+	task.wait(0.2)
+
+	waitForCharacter()
+	refreshActive()
+
+	if isAnyActive() then
+		task.defer(function()
+			for i = 1, 50 do
+				if not isAnyActive() then break end
+				ensurePunchEquipped()
+				task.wait(0.15)
+			end
+		end)
+	end
+end)
+
 waitForCharacter()
 refreshActive()
 
