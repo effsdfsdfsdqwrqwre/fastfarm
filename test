@@ -1992,240 +1992,118 @@ end
 
 
 
-------------------------------------------------
--- UI
-------------------------------------------------
 
 
-local blacklistLabel = blood:AddLabel("")
 
-local function updateBlacklistLabel()
 
-	if #blacklistWords == 0 then
-		blacklistLabel.Text = "Blacklist: (empty)"
-	else
-		blacklistLabel.Text =
-			"Blacklist: "..table.concat(blacklistWords,", ")
+
+
+
+
+
+
+blacklistLabel = blood:AddLabel("")
+blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
+
+local blacklistBox = blood:AddTextBox("Add to Blacklist", function(txt)
+	parseList((table.concat(blacklistWords, ",")..","..txt))
+	saveList()
+	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
+
+	refreshActive()
+	if not isAnyActive() then autoPunchActive = false end
+end, {["placeholder"] = "Ej: MVX, Sigma, Juan"})
+
+local removeBox = blood:AddTextBox("Remove from Blacklist", function(txt)
+	local toRemove = {}
+	for w in string.gmatch(txt, "[^,]+") do
+		local t = trim(w):lower()
+		if t ~= "" then table.insert(toRemove, t) end
 	end
 
-end
-
-
-updateBlacklistLabel()
-
-
-
-blood:AddTextBox(
-	"Add to Blacklist",
-	function(txt)
-
-		parseList(
-			table.concat(blacklistWords,",")..
-			","..
-			txt
-		)
-
-		saveList()
-		updateBlacklistLabel()
-		refreshActive()
-
-	end,
-	{
-		placeholder = "MVX, Sigma, Juan"
-	}
-)
-
-
-
-blood:AddTextBox(
-	"Remove from Blacklist",
-	function(txt)
-
-		for word in string.gmatch(txt,"[^,]+") do
-
-			word = trim(word):lower()
-
-			for i=#blacklistWords,1,-1 do
-
-				if blacklistWords[i] == word then
-					table.remove(
-						blacklistWords,
-						i
-					)
-				end
-
+	for _, word in ipairs(toRemove) do
+		for i = #blacklistWords, 1, -1 do
+			if blacklistWords[i] == word then
+				table.remove(blacklistWords, i)
 			end
-
 		end
-
-
-		saveList()
-		updateBlacklistLabel()
-		refreshActive()
-
 	end
-)
 
+	saveList()
+	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
+	refreshActive()
 
-blood:AddSwitch(
-	"Clan Kill",
-	function(state)
+	if not isAnyActive() then autoPunchActive = false end
+end)
 
-		autoPunchActive = state
-
-	end
-)
-
-
-
-------------------------------------------------
--- ATTACK LOOP
-------------------------------------------------
-
+RunService.Heartbeat:Connect(function()
+	refreshActive()
+end)
 
 task.spawn(function()
-
 	while true do
-
 		task.wait(attackDelay)
 
-
-		if not autoPunchActive then
+		if not isAnyActive() then
 			continue
 		end
 
-
-		if not characterLoaded then
-			continue
-		end
-
-
-		local char = LocalPlayer.Character
-
-		if not char then
-			continue
-		end
-
+		if not LocalPlayer.Character then continue end
+		if not characterLoaded then continue end
 
 		local punch = ensurePunchEquipped()
+		if not punch then continue end
 
-		if not punch then
-			continue
-		end
+		local char = LocalPlayer.Character
+		local rightHand, leftHand = getHands(char)
 
+		for plr in pairs(active) do
+			if plr and plr.Character then
+				local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+				local hum = plr.Character:FindFirstChild("Humanoid")
 
-		local right,left = getHands(char)
-
-
-		for player in pairs(active) do
-
-
-			if player.Character then
-
-
-				local root =
-					player.Character:FindFirstChild(
-						"HumanoidRootPart"
-					)
-
-
-				local hum =
-					player.Character:FindFirstChildOfClass(
-						"Humanoid"
-					)
-
-
-
-				if root and hum and hum.Health > 0 then
-
-
+				if hrp and hum and hum.Health > 0 then
 					pcall(function()
-
-						LocalPlayer.muscleEvent:FireServer(
-							"punch",
-							"rightHand"
-						)
-
-						LocalPlayer.muscleEvent:FireServer(
-							"punch",
-							"leftHand"
-						)
-
+						LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
+						LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
 					end)
 
-
-
 					pcall(function()
-
-						if right then
-							firetouchinterest(
-								right,
-								root,
-								1
-							)
-
-							firetouchinterest(
-								right,
-								root,
-								0
-							)
-						end
-
-
-						if left then
-							firetouchinterest(
-								left,
-								root,
-								1
-							)
-
-							firetouchinterest(
-								left,
-								root,
-								0
-							)
-						end
-
-
+						firetouchinterest(rightHand, hrp, 1)
+						firetouchinterest(leftHand, hrp, 1)
+						firetouchinterest(rightHand, hrp, 0)
+						firetouchinterest(leftHand, hrp, 0)
 					end)
-
 				end
-
 			end
-
 		end
-
 	end
-
 end)
 
-
-
-Players.PlayerAdded:Connect(function()
-	refreshActive()
+Players.PlayerAdded:Connect(function(plr)
+	plr:GetPropertyChangedSignal("DisplayName"):Connect(function()
+		refreshActive()
+	end)
 end)
-
-
-Players.PlayerRemoving:Connect(function()
-	refreshActive()
-end)
-
-
 
 LocalPlayer.CharacterAdded:Connect(function()
-
 	characterLoaded = false
-
-	task.wait(0.5)
+	task.wait(0.2)
 
 	waitForCharacter()
-
 	refreshActive()
 
+	if isAnyActive() then
+		task.defer(function()
+			for i = 1, 50 do
+				if not isAnyActive() then break end
+				ensurePunchEquipped()
+				task.wait(0.15)
+			end
+		end)
+	end
 end)
-
-
 
 waitForCharacter()
 refreshActive()
