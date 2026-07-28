@@ -2042,29 +2042,31 @@ end)
 
 
 
--- Globals (put these near the top of your script if they aren't already)
-local antiStatueEnabled = false
-local charAddedConn = nil
-local blockWaterConn = nil
-getgenv().posLock = nil
-
--- Your original Anti Statue (unchanged logic)
 blood:AddSwitch("Anti Statue", function(Value)
     local player = game.Players.LocalPlayer
+    local LocalPlayer = player
     antiStatueEnabled = Value
+
     if antiStatueEnabled then
+        -------------------------------------------------
+        -- 1. Position Lock (Anti Statue)
+        -------------------------------------------------
         local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
         if not hrp then
             antiStatueEnabled = false
             return
         end
+
         local currentPos = hrp.CFrame
         getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
             if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                 player.Character.HumanoidRootPart.CFrame = currentPos
             end
         end)
+
         startBlockWater(player)
+
+        -- CharacterAdded for re-locking
         if not charAddedConn then
             charAddedConn = player.CharacterAdded:Connect(function(newChar)
                 if antiStatueEnabled then
@@ -2085,6 +2087,8 @@ blood:AddSwitch("Anti Statue", function(Value)
                 end
             end)
         end
+
+        -- Died handler
         local function connectDied(char)
             local humanoid = char:FindFirstChildOfClass("Humanoid")
             if humanoid then
@@ -2111,9 +2115,11 @@ blood:AddSwitch("Anti Statue", function(Value)
                 end)
             end
         end
+
         if player.Character then
             connectDied(player.Character)
         end
+
         if not player:GetAttribute("AntiStatueDiedConnected") then
             player:SetAttribute("AntiStatueDiedConnected", true)
             player.CharacterAdded:Connect(function(char)
@@ -2122,7 +2128,51 @@ blood:AddSwitch("Anti Statue", function(Value)
                 end
             end)
         end
+
+        -------------------------------------------------
+        -- 2. Fast Punch (auto equip + spam + attackTime = 0)
+        -------------------------------------------------
+        task.spawn(function()
+            while antiStatueEnabled do
+                local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
+                if punch then
+                    punch.Parent = LocalPlayer.Character
+                    if punch:FindFirstChild("attackTime") then
+                        punch.attackTime.Value = 0
+                    end
+                end
+                task.wait()
+            end
+        end)
+
+        task.spawn(function()
+            while antiStatueEnabled do
+                local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
+                if punch then
+                    punch:Activate()
+                end
+                task.wait()
+            end
+        end)
+
+        -------------------------------------------------
+        -- 3. Auto Equip Protein Egg
+        -------------------------------------------------
+        task.spawn(function()
+            while antiStatueEnabled do
+                local egg = LocalPlayer.Backpack:FindFirstChild("Protein Egg")
+                    or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Protein Egg"))
+                if egg and egg.Parent ~= LocalPlayer.Character then
+                    egg.Parent = LocalPlayer.Character
+                end
+                task.wait(0.1)
+            end
+        end)
+
     else
+        -------------------------------------------------
+        -- Disable everything
+        -------------------------------------------------
         if getgenv().posLock then
             getgenv().posLock:Disconnect()
             getgenv().posLock = nil
@@ -2135,59 +2185,12 @@ blood:AddSwitch("Anti Statue", function(Value)
             charAddedConn:Disconnect()
             charAddedConn = nil
         end
-    end
-end)
 
--- Fast Punch (auto equip + spam activate + zero attackTime)
-blood:AddSwitch("Fast Punch", function(state)
-    _G.autoPunchActive = state
-    if state then
-        -- Equip + set attackTime to 0
-        task.spawn(function()
-            while _G.autoPunchActive do
-                local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
-                if punch then
-                    punch.Parent = LocalPlayer.Character
-                    if punch:FindFirstChild("attackTime") then
-                        punch.attackTime.Value = 0
-                    end
-                end
-                task.wait()
-            end
-        end)
-        -- Continuously activate
-        task.spawn(function()
-            while _G.autoPunchActive do
-                local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
-                if punch then
-                    punch:Activate()
-                end
-                task.wait()
-            end
-        end)
-    else
+        -- Unequip tools when turning off
         local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
         if punch then
             punch.Parent = LocalPlayer.Backpack
         end
-    end
-end)
-
--- Auto Equip Protein Egg
-blood:AddSwitch("Auto Protein Egg", function(state)
-    _G.autoProteinEgg = state
-    if state then
-        task.spawn(function()
-            while _G.autoProteinEgg do
-                local egg = LocalPlayer.Backpack:FindFirstChild("Protein Egg")
-                    or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Protein Egg"))
-                if egg and egg.Parent ~= LocalPlayer.Character then
-                    egg.Parent = LocalPlayer.Character
-                end
-                task.wait(0.1) -- slight delay so it doesn't spam the backpack too hard
-            end
-        end)
-    else
         local egg = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Protein Egg")
         if egg then
             egg.Parent = LocalPlayer.Backpack
