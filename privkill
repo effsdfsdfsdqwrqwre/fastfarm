@@ -1,4 +1,4 @@
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/ui%20one"))()
+	local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/ui%20one"))()
 
 local window = library:AddWindow("INVINCIBLE PRIVATE KILLING", {
     title_bar = {Color3.fromRGB(30, 30, 30), Color3.fromRGB(64, 64, 64), Color3.fromRGB(45, 45, 45)},
@@ -12,6 +12,7 @@ local window = library:AddWindow("INVINCIBLE PRIVATE KILLING", {
 
 
 local Killer = window:AddTab("Killer")
+local blood = window:AddTab("Clan Killing")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local playerWhitelist = {}
@@ -227,30 +228,44 @@ end)
 
 Killer:AddSwitch("Fast punch", function(state)
     _G.autoPunchActive = state
+
     if state then
         task.spawn(function()
             while _G.autoPunchActive do
-                local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
-                if punch then
-                    punch.Parent = LocalPlayer.Character
-                    if punch:FindFirstChild("attackTime") then
-                        punch.attackTime.Value = 0
+                local character = LocalPlayer.Character
+                local backpack = LocalPlayer.Backpack
+                local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+
+                if character and backpack and humanoid then
+                    local punch = backpack:FindFirstChild("Punch") or character:FindFirstChild("Punch")
+                    if punch and punch:IsA("Tool") then
+                        -- Force equip every frame
+                        humanoid:EquipTool(punch)
+
+                        -- Instant attack speed
+                        local attackTime = punch:FindFirstChild("attackTime")
+                        if attackTime and attackTime:IsA("NumberValue") then
+                            attackTime.Value = 0
+                        end
                     end
                 end
                 task.wait()
             end
         end)
+
         task.spawn(function()
             while _G.autoPunchActive do
-                local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
-                if punch then
+                local character = LocalPlayer.Character
+                local punch = character and character:FindFirstChild("Punch")
+                if punch and punch:IsA("Tool") then
                     punch:Activate()
                 end
                 task.wait()
             end
         end)
     else
-        local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
+        local character = LocalPlayer.Character
+        local punch = character and character:FindFirstChild("Punch")
         if punch then
             punch.Parent = LocalPlayer.Backpack
         end
@@ -581,111 +596,338 @@ local switch = Killer:AddSwitch("Lock Pos", function(Value)
 end)
 
 
+local parts = {}
+local partSize = 2048
+local totalDistance = 50000
+local startPosition = Vector3.new(-2, -9.5, -2)
+local numberOfParts = math.ceil(totalDistance / partSize)
 
-local HealthESP = false
-local HealthBillboards = {}
-
-local function clearHealthESP()
-    for _, bb in pairs(HealthBillboards) do
-        if bb and bb.Parent then
-            bb:Destroy()
+local function createParts()
+    for x = 0, numberOfParts - 1 do
+        for z = 0, numberOfParts - 1 do
+            local newPartSide = Instance.new("Part")
+            newPartSide.Size = Vector3.new(partSize, 1, partSize)
+            newPartSide.Position = startPosition + Vector3.new(x * partSize, 0, z * partSize)
+            newPartSide.Anchored = true
+            newPartSide.Transparency = 1
+            newPartSide.CanCollide = true
+            newPartSide.Name = "Part_Side_" .. x .. "_" .. z
+            newPartSide.Parent = workspace
+            table.insert(parts, newPartSide)
+           
+            local newPartLeftRight = Instance.new("Part")
+            newPartLeftRight.Size = Vector3.new(partSize, 1, partSize)
+            newPartLeftRight.Position = startPosition + Vector3.new(-x * partSize, 0, z * partSize)
+            newPartLeftRight.Anchored = true
+            newPartLeftRight.Transparency = 1
+            newPartLeftRight.CanCollide = true
+            newPartLeftRight.Name = "Part_LeftRight_" .. x .. "_" .. z
+            newPartLeftRight.Parent = workspace
+            table.insert(parts, newPartLeftRight)
+           
+            local newPartUpLeft = Instance.new("Part")
+            newPartUpLeft.Size = Vector3.new(partSize, 1, partSize)
+            newPartUpLeft.Position = startPosition + Vector3.new(-x * partSize, 0, -z * partSize)
+            newPartUpLeft.Anchored = true
+            newPartUpLeft.Transparency = 1
+            newPartUpLeft.CanCollide = true
+            newPartUpLeft.Name = "Part_UpLeft_" .. x .. "_" .. z
+            newPartUpLeft.Parent = workspace
+            table.insert(parts, newPartUpLeft)
+           
+            local newPartUpRight = Instance.new("Part")
+            newPartUpRight.Size = Vector3.new(partSize, 1, partSize)
+            newPartUpRight.Position = startPosition + Vector3.new(x * partSize, 0, -z * partSize)
+            newPartUpRight.Anchored = true
+            newPartUpRight.Transparency = 1
+            newPartUpRight.CanCollide = true
+            newPartUpRight.Name = "Part_UpRight_" .. x .. "_" .. z
+            newPartUpRight.Parent = workspace
+            table.insert(parts, newPartUpRight)
         end
     end
-    table.clear(HealthBillboards)
 end
 
-local function createHealthBillboard(character)
-    local head = character:FindFirstChild("Head")
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if not head or not humanoid then return end
-
-    -- Remove old one if it exists
-    if HealthBillboards[character] then
-        HealthBillboards[character]:Destroy()
+local function makePartsWalkthrough()
+    for _, part in ipairs(parts) do
+        if part and part.Parent then
+            part.CanCollide = false
+        end
     end
+end
+
+local function makePartsSolid()
+    for _, part in ipairs(parts) do
+        if part and part.Parent then
+            part.CanCollide = true
+        end
+    end
+end
+
+local freezeSwitch = Killer:AddSwitch("Freeze Water", function(bool)
+    if bool then
+        createParts()
+    else
+        makePartsWalkthrough()
+    end
+end)
+
+-- Auto turn the switch on
+freezeSwitch:Set(true)
+
+
+
+
+
+
+-- // Display Health ESP (Killer Tab) - Muscle Legends Fixed //
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local ESPEnabled = false
+local ESPObjects = {}
+
+local function FormatNumber(n)
+    n = tonumber(n) or 0
+    if n < 1000 then
+        return tostring(math.floor(n))
+    elseif n < 1e6 then
+        return string.format("%.1fk", n / 1e3):gsub("%.0k", "k")
+    elseif n < 1e9 then
+        return string.format("%.1fm", n / 1e6):gsub("%.0m", "m")
+    elseif n < 1e12 then
+        return string.format("%.1fb", n / 1e9):gsub("%.0b", "b")
+    elseif n < 1e15 then
+        return string.format("%.1ft", n / 1e12):gsub("%.0t", "t")
+    elseif n < 1e18 then
+        return string.format("%.1fqa", n / 1e15):gsub("%.0qa", "qa")
+    else
+        return string.format("%.1fqi", n / 1e18):gsub("%.0qi", "qi")
+    end
+end
+
+local function GetStat(player, name)
+    local success, value = pcall(function()
+        local stats = player:FindFirstChild("leaderstats")
+        if stats and stats:FindFirstChild(name) then
+            return stats[name].Value
+        end
+        if player:FindFirstChild(name) then
+            return player[name].Value
+        end
+        local private = player:FindFirstChild("PrivateStats")
+        if private and private:FindFirstChild(name) then
+            return private[name].Value
+        end
+        return nil
+    end)
+    return success and value or nil
+end
+
+-- Tries to get total Damage from pets/auras (common locations)
+local function GetPetDamage(player)
+    local total = 0
+    local success = pcall(function()
+        -- Common places the game stores equipped pet/aura Damage
+        local folders = {
+            player:FindFirstChild("Pets"),
+            player:FindFirstChild("EquippedPets"),
+            player:FindFirstChild("Items"),
+            player:FindFirstChild("Inventory"),
+            player:FindFirstChild("PrivateStats"),
+            player:FindFirstChild("Data"),
+        }
+        for _, folder in ipairs(folders) do
+            if folder then
+                for _, obj in ipairs(folder:GetDescendants()) do
+                    if obj.Name == "Damage" and (obj:IsA("NumberValue") or obj:IsA("IntValue")) then
+                        total = total + (tonumber(obj.Value) or 0)
+                    end
+                end
+            end
+        end
+    end)
+    return success and total or 0
+end
+
+local function CreateESP(player)
+    if player == LocalPlayer then return end
+    if ESPObjects[player] then return end
+    local char = player.Character
+    if not char then return end
+    local head = char:FindFirstChild("Head")
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if not head then return end
 
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "HealthESP"
     billboard.Adornee = head
-    billboard.Size = UDim2.new(0, 100, 0, 40)
-    billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+    billboard.Size = UDim2.new(0, 240, 0, 75)
+    billboard.StudsOffset = Vector3.new(0, 3.5, 0)
     billboard.AlwaysOnTop = true
-    billboard.MaxDistance = 300
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
-    label.TextColor3 = Color3.fromRGB(0, 255, 0)
-    label.TextStrokeTransparency = 0.3
-    label.TextScaled = true
-    label.Font = Enum.Font.GothamBold
-    label.Parent = billboard
-
+    billboard.MaxDistance = 500
     billboard.Parent = head
-    HealthBillboards[character] = billboard
 
-    -- Keep the text updated
-    local connection
-    connection = humanoid.HealthChanged:Connect(function(newHealth)
-        if label and label.Parent then
-            label.Text = math.floor(newHealth) .. " / " .. math.floor(humanoid.MaxHealth)
-            -- Color based on health %
-            local percent = newHealth / humanoid.MaxHealth
-            if percent > 0.6 then
-                label.TextColor3 = Color3.fromRGB(0, 255, 0)
-            elseif percent > 0.3 then
-                label.TextColor3 = Color3.fromRGB(255, 255, 0)
-            else
-                label.TextColor3 = Color3.fromRGB(255, 50, 50)
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Name = "Username"
+    nameLabel.Size = UDim2.new(1, 0, 0, 22)
+    nameLabel.Position = UDim2.new(0, 0, 0, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = player.DisplayName
+    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLabel.TextStrokeTransparency = 0.4
+    nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    nameLabel.Font = Enum.Font.Bangers
+    nameLabel.TextSize = 18
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Center
+    nameLabel.Parent = billboard
+
+    local healthLabel = Instance.new("TextLabel")
+    healthLabel.Name = "Health"
+    healthLabel.Size = UDim2.new(1, 0, 0, 20)
+    healthLabel.Position = UDim2.new(0, 0, 0, 24)
+    healthLabel.BackgroundTransparency = 1
+    healthLabel.Text = "HP: ?"
+    healthLabel.TextColor3 = Color3.fromRGB(100, 255, 130)
+    healthLabel.TextStrokeTransparency = 0.4
+    healthLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    healthLabel.Font = Enum.Font.Bangers
+    healthLabel.TextSize = 16
+    healthLabel.TextXAlignment = Enum.TextXAlignment.Center
+    healthLabel.Parent = billboard
+
+    local damageLabel = Instance.new("TextLabel")
+    damageLabel.Name = "Damage"
+    damageLabel.Size = UDim2.new(1, 0, 0, 20)
+    damageLabel.Position = UDim2.new(0, 0, 0, 46)
+    damageLabel.BackgroundTransparency = 1
+    damageLabel.Text = "Damage: ?"
+    damageLabel.TextColor3 = Color3.fromRGB(255, 60, 60)
+    damageLabel.TextStrokeTransparency = 0.4
+    damageLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    damageLabel.Font = Enum.Font.Bangers
+    damageLabel.TextSize = 16
+    damageLabel.TextXAlignment = Enum.TextXAlignment.Center
+    damageLabel.Parent = billboard
+
+    ESPObjects[player] = {
+        Billboard = billboard,
+        HealthLabel = healthLabel,
+        DamageLabel = damageLabel,
+        Humanoid = humanoid
+    }
+end
+
+local function RemoveESP(player)
+    if ESPObjects[player] then
+        if ESPObjects[player].Billboard then
+            ESPObjects[player].Billboard:Destroy()
+        end
+        ESPObjects[player] = nil
+    end
+end
+
+local function UpdateESP()
+    for player, data in pairs(ESPObjects) do
+        if not player or not player.Parent or not player.Character then
+            RemoveESP(player)
+            continue
+        end
+
+        -- === REAL HEALTH (Durability is the actual HP pool) ===
+        local durability = GetStat(player, "Durability")
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if durability then
+            local maxHP = durability
+            local currentHP = maxHP
+            if humanoid and humanoid.MaxHealth > 0 then
+                local ratio = humanoid.Health / humanoid.MaxHealth
+                if ratio >= 0 and ratio <= 1.05 then
+                    currentHP = math.floor(maxHP * ratio)
+                end
             end
+            data.HealthLabel.Text = "HP: " .. FormatNumber(currentHP) .. " / " .. FormatNumber(maxHP)
         else
-            connection:Disconnect()
+            data.HealthLabel.Text = "HP: N/A"
         end
-    end)
-end
 
-local function refreshHealthESP()
-    clearHealthESP()
-    if not HealthESP then return end
-
-    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
-        if player ~= game.Players.LocalPlayer and player.Character then
-            createHealthBillboard(player.Character)
+        -- === ACTUAL DAMAGE (Strength / 15 + pet/aura Damage) ===
+        local strength = GetStat(player, "Strength")
+        if strength then
+            local baseDamage = strength / 15
+            local petDamage = GetPetDamage(player)
+            local totalDamage = baseDamage + petDamage
+            data.DamageLabel.Text = "Damage: " .. FormatNumber(totalDamage)
+        else
+            data.DamageLabel.Text = "Damage: N/A"
         end
     end
 end
 
--- Button
+local function OnCharacterAdded(player)
+    player.CharacterAdded:Connect(function()
+        task.wait(0.6)
+        if ESPEnabled then
+            CreateESP(player)
+        end
+    end)
+    player.CharacterRemoving:Connect(function()
+        RemoveESP(player)
+    end)
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+    OnCharacterAdded(player)
+end
+
+Players.PlayerAdded:Connect(function(player)
+    OnCharacterAdded(player)
+    if ESPEnabled and player.Character then
+        task.wait(0.6)
+        CreateESP(player)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    RemoveESP(player)
+end)
+
+RunService.RenderStepped:Connect(function()
+    if ESPEnabled then
+        UpdateESP()
+    end
+end)
+
+-- Killer tab button
 Killer:AddButton("Display Health", function()
-    HealthESP = not HealthESP
-    if HealthESP then
-        refreshHealthESP()
-        print("Health ESP: ON")
+    ESPEnabled = not ESPEnabled
+    if ESPEnabled then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player.Character then
+                CreateESP(player)
+            end
+        end
+        print("[ESP] Display Health enabled (real damage = Strength/15 + pets)")
     else
-        clearHealthESP()
-        print("Health ESP: OFF")
+        for player, _ in pairs(ESPObjects) do
+            RemoveESP(player)
+        end
+        print("[ESP] Display Health disabled")
     end
 end)
 
--- Keep ESP working when people join / respawn
-game:GetService("Players").PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(char)
-        if HealthESP then
-            task.wait(0.5)
-            createHealthBillboard(char)
-        end
-    end)
-end)
 
-for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
-    player.CharacterAdded:Connect(function(char)
-        if HealthESP then
-            task.wait(0.5)
-            createHealthBillboard(char)
-        end
-    end)
-end
+
+
+
+
+
+
+
+
+
+
+
 
 
 Killer:AddButton("Rejoin Server", function()
@@ -1419,6 +1661,9 @@ local function formatWithCommas(n)
 end
 
 
+
+
+
 local function updateStatLabels(targetPlayer)
     if not targetPlayer then return end
 
@@ -1616,4 +1861,276 @@ task.spawn(function()
 		updateAdvancedStats(playerToInspect)  -- playerToInspect should be set elsewhere
 		task.wait(0.1)
 	end
+end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+_G.targetPlayers = {} -- list of target players
+
+local function checkCharacter()
+    if not game.Players.LocalPlayer.Character then
+        repeat
+            task.wait()
+        until game.Players.LocalPlayer.Character
+    end
+    return game.Players.LocalPlayer.Character
+end
+
+local function gettool()
+    for i, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+        if v.Name == "Punch" and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid:EquipTool(v)
+        end
+    end
+    game:GetService("Players").LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
+    game:GetService("Players").LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
+end
+
+local function killPlayer(target)
+    local character = checkCharacter()
+    if character and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        if character:FindFirstChild("LeftHand") then
+            firetouchinterest(target.Character.HumanoidRootPart, character.LeftHand, 0)
+            firetouchinterest(target.Character.HumanoidRootPart, character.LeftHand, 1)
+            gettool()
+        end
+    end
+end
+
+local function findPlayersBySubstring(substring)
+    local matchedPlayers = {}
+    substring = substring:lower()
+
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer then
+            local username = player.Name:lower()
+            local displayName = player.DisplayName:lower()
+
+            if username:find(substring, 1, true) or displayName:find(substring, 1, true) then
+                table.insert(matchedPlayers, player)
+            end
+        end
+    end
+
+    return matchedPlayers
+end
+
+local targetPlayerLabel = blood:AddLabel("Target Players: None")
+local function updateTargetPlayersLabel()
+    if #_G.targetPlayers == 0 then
+        targetPlayerLabel.Text = "Target Players: None"
+    else
+        local names = {}
+        for _, p in ipairs(_G.targetPlayers) do
+            table.insert(names, p.Name)
+        end
+        targetPlayerLabel.Text = "Target Players: " .. table.concat(names, ", ")
+    end
+end
+
+-- Enforce 3-letter input
+blood:AddTextBox("Clan Target", function(text)
+    if text and text ~= "" then
+        if #text ~= 3 then
+            -- Notify user or ignore input
+            -- Here, we'll just ignore if not 3 characters
+            _G.targetPlayers = {}
+            updateTargetPlayersLabel()
+            return
+        end
+        local matchedPlayers = findPlayersBySubstring(text)
+        if #matchedPlayers > 0 then
+            _G.targetPlayers = matchedPlayers
+            updateTargetPlayersLabel()
+        else
+            _G.targetPlayers = {}
+            updateTargetPlayersLabel()
+        end
+    end
+end)
+
+blood:AddButton("Clear Targets", function()
+    _G.targetPlayers = {}
+    updateTargetPlayersLabel()
+end)
+
+local autoKillTargetSwitch = blood:AddSwitch("Auto Kill Targets", function(bool)
+    _G.autoKillTarget = bool
+
+    if bool and #_G.targetPlayers > 0 then
+        spawn(function()
+            while _G.autoKillTarget do
+                for _, target in ipairs(_G.targetPlayers) do
+                    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                        killPlayer(target)
+                    end
+                end
+                task.wait(0.1)
+            end
+        end)
+    end
+end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local spamming = false
+
+blood:AddButton("Spam Size", function()
+    spamming = not spamming
+
+    if spamming then
+        spawn(function()
+            local sizes = {100, 2, 40, 50, 60, 72}
+            local i = 1
+
+            while spamming do
+                local args = {
+                    [1] = "changeSize",
+                    [2] = sizes[i]
+                }
+                game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
+
+                i = i + 1
+                if i > #sizes then
+                    i = 1
+                end
+
+                wait(0.05)
+            end
+        end)
+    end
+end)
+
+
+
+
+
+blood:AddButton("Normal Size", function()
+    local args = {
+        [1] = "changeSize",
+        [2] = 2
+    }
+    game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
+end)
+
+
+
+
+
+
+
+local titleLabel = blood:AddLabel("Kill While Dead ect")
+titleLabel.TextSize = 18
+titleLabel.Font = Enum.Font.Bangers        
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+
+
+
+
+blood:AddSwitch("Anti Statue", function(Value)
+    if Value then
+        -- Set Size 1
+        local args = {
+            [1] = "changeSize",
+            [2] = 1
+        }
+        game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
+
+        local targetCFrame = CFrame.new(
+            -9.0580864, -118.967911, -334.924042,
+            0.391505003, 0.000186817284, 0.92017597,
+            -0.000211292776, 1, -0.000113125207,
+            -0.92017597, -0.00015013745, 0.391505033
+        )
+
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            character.HumanoidRootPart.CFrame = targetCFrame
+        end
+
+        -- Lock position
+        getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
+            local character = LocalPlayer.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                character.HumanoidRootPart.CFrame = targetCFrame
+            end
+        end)
+
+        -- Auto Punch + Force Equip (Punch can't unequip)
+        getgenv().antiStatuePunch = true
+        task.spawn(function()
+            while getgenv().antiStatuePunch do
+                local character = LocalPlayer.Character
+                if character then
+                    -- Force Equip Protein Egg
+                    local egg = LocalPlayer.Backpack:FindFirstChild("Protein Egg")
+                        or character:FindFirstChild("Protein Egg")
+                    if egg and egg.Parent ~= character then
+                        egg.Parent = character
+                    end
+
+                    -- Force Equip Punch (prevent unequip)
+                    local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
+                        or character:FindFirstChild("Punch")
+                    if punch then
+                        if punch.Parent ~= character then
+                            punch.Parent = character
+                        end
+
+                        -- Instantly re-equip if it ever gets unequipped
+                        if not punch:GetAttribute("AntiUnequip") then
+                            punch:SetAttribute("AntiUnequip", true)
+                            punch.Unequipped:Connect(function()
+                                if getgenv().antiStatuePunch and punch then
+                                    task.defer(function()
+                                        punch.Parent = character
+                                    end)
+                                end
+                            end)
+                        end
+                    end
+
+                    -- Punch both hands
+                    if punch then
+                        LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
+                        LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
+                    end
+                end
+                task.wait(0.01)
+            end
+        end)
+    else
+        -- Unlock position
+        if getgenv().posLock then
+            getgenv().posLock:Disconnect()
+            getgenv().posLock = nil
+        end
+        -- Stop auto punch
+        getgenv().antiStatuePunch = false
+    end
 end)
