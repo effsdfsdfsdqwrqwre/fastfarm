@@ -12,7 +12,7 @@ local window = library:AddWindow("INVINCIBLE PRIVATE KILLING", {
 
 
 local Killer = window:AddTab("Killer")
-local blood = window:AddTab("Clan Killing")
+local clanTab = window:AddTab("Clan Killing")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local playerWhitelist = {}
@@ -1871,117 +1871,109 @@ end)
 
 
 
+blacklistLabel = clanTab:AddLabel("")
+blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
--- Add a label to show blacklist status
-local blacklistLabel = blood:AddLabel("")
-blacklistLabel.Position = UDim2.new(0, 10, 0, 10)
-blacklistLabel.Size = UDim2.new(0, 300, 0, 20)
+local blacklistBox = clanTab:AddTextBox("Add to Blacklist", function(txt)
+	parseList((table.concat(blacklistWords, ",")..","..txt))
+	saveList()
+	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
--- Add "Add to Blacklist" textbox
-local blacklistBox = blood:AddTextBox("Add to Blacklist", function(txt)
-    parseList((table.concat(blacklistWords, ",") .. "," .. txt))
-    saveList()
-    blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: " .. table.concat(blacklistWords, ","))
-    refreshActive()
-    if not isAnyActive() then autoPunchActive = false end
+	refreshActive()
+	if not isAnyActive() then autoPunchActive = false end
 end, {["placeholder"] = "Ej: MVX, Sigma, Juan"})
-blacklistBox.Position = UDim2.new(0, 10, 0, 40)
-blacklistBox.Size = UDim2.new(0, 200, 0, 30)
 
--- Add "Remove from Blacklist" textbox
-local removeBox = blood:AddTextBox("Remove from Blacklist", function(txt)
-    local toRemove = {}
-    for w in string.gmatch(txt, "[^,]+") do
-        local t = trim(w):lower()
-        if t ~= "" then table.insert(toRemove, t) end
-    end
-    for _, word in ipairs(toRemove) do
-        for i = #blacklistWords, 1, -1 do
-            if blacklistWords[i] == word then
-                table.remove(blacklistWords, i)
-            end
-        end
-    end
-    saveList()
-    blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: " .. table.concat(blacklistWords, ","))
-    refreshActive()
-    if not isAnyActive() then autoPunchActive = false end
-end)
-removeBox.Position = UDim2.new(0, 10, 0, 80)
-removeBox.Size = UDim2.new(0, 200, 0, 30)
+local removeBox = clanTab:AddTextBox("Remove from Blacklist", function(txt)
+	local toRemove = {}
+	for w in string.gmatch(txt, "[^,]+") do
+		local t = trim(w):lower()
+		if t ~= "" then table.insert(toRemove, t) end
+	end
 
--- Function to refresh the blacklist label on start
-local function refreshBlacklistLabel()
-    blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: " .. table.concat(blacklistWords, ","))
-end
+	for _, word in ipairs(toRemove) do
+		for i = #blacklistWords, 1, -1 do
+			if blacklistWords[i] == word then
+				table.remove(blacklistWords, i)
+			end
+		end
+	end
 
-refreshBlacklistLabel()
+	saveList()
+	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
--- Continuous heartbeat to refresh UI or states
-game:GetService("RunService").Heartbeat:Connect(function()
-    refreshActive()
+	refreshActive()
+
+	if not isAnyActive() then autoPunchActive = false end
 end)
 
--- Main attack loop
+RunService.Heartbeat:Connect(function()
+	refreshActive()
+end)
+
 task.spawn(function()
-    while true do
-        task.wait(attackDelay)
-        if not isAnyActive() then continue end
-        if not LocalPlayer.Character then continue end
-        if not characterLoaded then continue end
+	while true do
+		task.wait(attackDelay)
 
-        local punch = ensurePunchEquipped()
-        if not punch then continue end
+		if not isAnyActive() then
+			continue
+		end
 
-        local char = LocalPlayer.Character
-        local rightHand, leftHand = getHands(char)
+		if not LocalPlayer.Character then continue end
+		if not characterLoaded then continue end
 
-        for plr in pairs(active) do
-            if plr and plr.Character then
-                local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-                local hum = plr.Character:FindFirstChild("Humanoid")
-                if hrp and hum and hum.Health > 0 then
-                    pcall(function()
-                        LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
-                        LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
-                    end)
-                    pcall(function()
-                        firetouchinterest(rightHand, hrp, 1)
-                        firetouchinterest(leftHand, hrp, 1)
-                        firetouchinterest(rightHand, hrp, 0)
-                        firetouchinterest(leftHand, hrp, 0)
-                    end)
-                end
-            end
-        end
-    end
+		local punch = ensurePunchEquipped()
+		if not punch then continue end
+
+		local char = LocalPlayer.Character
+		local rightHand, leftHand = getHands(char)
+
+		for plr in pairs(active) do
+			if plr and plr.Character then
+				local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+				local hum = plr.Character:FindFirstChild("Humanoid")
+
+				if hrp and hum and hum.Health > 0 then
+					pcall(function()
+						LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
+						LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
+					end)
+
+					pcall(function()
+						firetouchinterest(rightHand, hrp, 1)
+						firetouchinterest(leftHand, hrp, 1)
+						firetouchinterest(rightHand, hrp, 0)
+						firetouchinterest(leftHand, hrp, 0)
+					end)
+				end
+			end
+		end
+	end
 end)
 
--- Update active players on new players
-game.Players.PlayerAdded:Connect(function(plr)
-    plr:GetPropertyChangedSignal("DisplayName"):Connect(function()
-        refreshActive()
-    end)
+Players.PlayerAdded:Connect(function(plr)
+	plr:GetPropertyChangedSignal("DisplayName"):Connect(function()
+		refreshActive()
+	end)
 end)
 
--- Handle character respawn
-game.Players.LocalPlayer.CharacterAdded:Connect(function()
-    characterLoaded = false
-    task.wait(0.2)
-    waitForCharacter()
-    refreshActive()
-    if isAnyActive() then
-        task.defer(function()
-            for i = 1, 50 do
-                if not isAnyActive() then break end
-                ensurePunchEquipped()
-                task.wait(0.15)
-            end
-        end)
-    end
+LocalPlayer.CharacterAdded:Connect(function()
+	characterLoaded = false
+	task.wait(0.2)
+
+	waitForCharacter()
+	refreshActive()
+
+	if isAnyActive() then
+		task.defer(function()
+			for i = 1, 50 do
+				if not isAnyActive() then break end
+				ensurePunchEquipped()
+				task.wait(0.15)
+			end
+		end)
+	end
 end)
 
--- Final refresh
 waitForCharacter()
 refreshActive()
 
@@ -1999,7 +1991,7 @@ refreshActive()
 
 local spamming = false
 
-blood:AddButton("Spam Size", function()
+clanTab:AddButton("Spam Size", function()
     spamming = not spamming
 
     if spamming then
@@ -2019,7 +2011,7 @@ blood:AddButton("Spam Size", function()
                     i = 1
                 end
 
-                wait(0.05)
+                wait(0.04)
             end
         end)
     end
@@ -2029,7 +2021,7 @@ end)
 
 
 
-blood:AddButton("Normal Size", function()
+clanTab:AddButton("Normal Size", function()
     local args = {
         [1] = "changeSize",
         [2] = 2
@@ -2043,7 +2035,7 @@ end)
 
 
 
-local titleLabel = blood:AddLabel("Kill While Dead ect")
+local titleLabel = clanTab:AddLabel("Kill While Dead ect")
 titleLabel.TextSize = 18
 titleLabel.Font = Enum.Font.Bangers        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -2052,7 +2044,7 @@ titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 
 
-blood:AddSwitch("Anti Statue", function(Value)
+clanTab:AddSwitch("Anti Statue", function(Value)
     if Value then
         -- Set Size 1
         local args = {
