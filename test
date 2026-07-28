@@ -1875,11 +1875,6 @@ end)
 
 
 
-
-local blood = window:AddTab("Clan Killing")
-
--- Put your Clan Killing UI + blacklist code here
-
 local blacklistLabel = blood:AddLabel("")
 blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
