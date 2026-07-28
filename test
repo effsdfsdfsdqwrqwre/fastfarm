@@ -1871,131 +1871,190 @@ end)
 
 
 
-blacklistLabel = clanTab:AddLabel("")
+-- ========== THIS WAS MISSING ==========
+local clanTab = window:AddTab("Clan")
+-- ======================================
+
+-- ====================== VARIABLES ======================
+local blacklistWords = {}
+local active = {}
+local autoPunchActive = false
+local characterLoaded = false
+local attackDelay = 0.05
+local spamming = false
+
+-- ====================== HELPER FUNCTIONS ======================
+local function trim(str)
+    return str:match("^%s*(.-)%s*$")
+end
+
+local function parseList(str)
+    blacklistWords = {}
+    for w in string.gmatch(str or "", "[^,]+") do
+        local t = trim(w):lower()
+        if t ~= "" then
+            table.insert(blacklistWords, t)
+        end
+    end
+end
+
+local function saveList()
+    -- Optional: writefile("blacklist.txt", table.concat(blacklistWords, ","))
+end
+
+local function isAnyActive()
+    return next(active) ~= nil
+end
+
+local function refreshActive()
+    table.clear(active)
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            local name = (plr.DisplayName or plr.Name):lower()
+            for _, word in ipairs(blacklistWords) do
+                if name:find(word, 1, true) then
+                    active[plr] = true
+                    break
+                end
+            end
+        end
+    end
+end
+
+local function waitForCharacter()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    char:WaitForChild("HumanoidRootPart")
+    char:WaitForChild("Humanoid")
+    characterLoaded = true
+end
+
+local function getHands(char)
+    local right = char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm")
+    local left  = char:FindFirstChild("LeftHand")  or char:FindFirstChild("Left Arm")
+    return right, left
+end
+
+local function ensurePunchEquipped()
+    local char = LocalPlayer.Character
+    if not char then return nil end
+
+    local punch = LocalPlayer.Backpack:FindFirstChild("Punch") or char:FindFirstChild("Punch")
+    if punch and punch.Parent ~= char then
+        punch.Parent = char
+    end
+    return punch
+end
+
+-- ====================== BLACKLIST UI ======================
+local blacklistLabel = clanTab:AddLabel("")
 blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
 local blacklistBox = clanTab:AddTextBox("Add to Blacklist", function(txt)
-	parseList((table.concat(blacklistWords, ",")..","..txt))
-	saveList()
-	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
-
-	refreshActive()
-	if not isAnyActive() then autoPunchActive = false end
+    parseList((table.concat(blacklistWords, ",")..","..txt))
+    saveList()
+    blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
+    refreshActive()
+    if not isAnyActive() then autoPunchActive = false end
 end, {["placeholder"] = "Ej: MVX, Sigma, Juan"})
 
 local removeBox = clanTab:AddTextBox("Remove from Blacklist", function(txt)
-	local toRemove = {}
-	for w in string.gmatch(txt, "[^,]+") do
-		local t = trim(w):lower()
-		if t ~= "" then table.insert(toRemove, t) end
-	end
+    local toRemove = {}
+    for w in string.gmatch(txt, "[^,]+") do
+        local t = trim(w):lower()
+        if t ~= "" then table.insert(toRemove, t) end
+    end
 
-	for _, word in ipairs(toRemove) do
-		for i = #blacklistWords, 1, -1 do
-			if blacklistWords[i] == word then
-				table.remove(blacklistWords, i)
-			end
-		end
-	end
+    for _, word in ipairs(toRemove) do
+        for i = #blacklistWords, 1, -1 do
+            if blacklistWords[i] == word then
+                table.remove(blacklistWords, i)
+            end
+        end
+    end
 
-	saveList()
-	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
-
-	refreshActive()
-
-	if not isAnyActive() then autoPunchActive = false end
+    saveList()
+    blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
+    refreshActive()
+    if not isAnyActive() then autoPunchActive = false end
 end)
 
+-- ====================== AUTO PUNCH LOOP ======================
 RunService.Heartbeat:Connect(function()
-	refreshActive()
+    refreshActive()
 end)
 
 task.spawn(function()
-	while true do
-		task.wait(attackDelay)
+    while true do
+        task.wait(attackDelay)
 
-		if not isAnyActive() then
-			continue
-		end
+        if not isAnyActive() then
+            continue
+        end
 
-		if not LocalPlayer.Character then continue end
-		if not characterLoaded then continue end
+        if not LocalPlayer.Character then continue end
+        if not characterLoaded then continue end
 
-		local punch = ensurePunchEquipped()
-		if not punch then continue end
+        local punch = ensurePunchEquipped()
+        if not punch then continue end
 
-		local char = LocalPlayer.Character
-		local rightHand, leftHand = getHands(char)
+        local char = LocalPlayer.Character
+        local rightHand, leftHand = getHands(char)
 
-		for plr in pairs(active) do
-			if plr and plr.Character then
-				local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-				local hum = plr.Character:FindFirstChild("Humanoid")
+        for plr in pairs(active) do
+            if plr and plr.Character then
+                local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                local hum = plr.Character:FindFirstChild("Humanoid")
 
-				if hrp and hum and hum.Health > 0 then
-					pcall(function()
-						LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
-						LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
-					end)
+                if hrp and hum and hum.Health > 0 then
+                    pcall(function()
+                        LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
+                        LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
+                    end)
 
-					pcall(function()
-						firetouchinterest(rightHand, hrp, 1)
-						firetouchinterest(leftHand, hrp, 1)
-						firetouchinterest(rightHand, hrp, 0)
-						firetouchinterest(leftHand, hrp, 0)
-					end)
-				end
-			end
-		end
-	end
+                    pcall(function()
+                        firetouchinterest(rightHand, hrp, 1)
+                        firetouchinterest(leftHand, hrp, 1)
+                        firetouchinterest(rightHand, hrp, 0)
+                        firetouchinterest(leftHand, hrp, 0)
+                    end)
+                end
+            end
+        end
+    end
 end)
 
 Players.PlayerAdded:Connect(function(plr)
-	plr:GetPropertyChangedSignal("DisplayName"):Connect(function()
-		refreshActive()
-	end)
+    plr:GetPropertyChangedSignal("DisplayName"):Connect(function()
+        refreshActive()
+    end)
 end)
 
 LocalPlayer.CharacterAdded:Connect(function()
-	characterLoaded = false
-	task.wait(0.2)
+    characterLoaded = false
+    task.wait(0.2)
+    waitForCharacter()
+    refreshActive()
 
-	waitForCharacter()
-	refreshActive()
-
-	if isAnyActive() then
-		task.defer(function()
-			for i = 1, 50 do
-				if not isAnyActive() then break end
-				ensurePunchEquipped()
-				task.wait(0.15)
-			end
-		end)
-	end
+    if isAnyActive() then
+        task.defer(function()
+            for i = 1, 50 do
+                if not isAnyActive() then break end
+                ensurePunchEquipped()
+                task.wait(0.15)
+            end
+        end)
+    end
 end)
 
 waitForCharacter()
 refreshActive()
 
-
-
-
-
-
-
-
-
-
-
-
-
-local spamming = false
-
+-- ====================== SIZE SPAM ======================
 clanTab:AddButton("Spam Size", function()
     spamming = not spamming
 
     if spamming then
-        spawn(function()
+        task.spawn(function()
             local sizes = {100, 2, 40, 50, 60, 72}
             local i = 1
 
@@ -2011,15 +2070,11 @@ clanTab:AddButton("Spam Size", function()
                     i = 1
                 end
 
-                wait(0.04)
+                task.wait(0.04)
             end
         end)
     end
 end)
-
-
-
-
 
 clanTab:AddButton("Normal Size", function()
     local args = {
@@ -2029,20 +2084,11 @@ clanTab:AddButton("Normal Size", function()
     game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
 end)
 
-
-
-
-
-
-
-local titleLabel = clanTab:AddLabel("Kill While Dead ect")
+-- ====================== KILL WHILE DEAD / ANTI STATUE ======================
+local titleLabel = clanTab:AddLabel("Kill While Dead etc")
 titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
+titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-
-
-
-
 
 clanTab:AddSwitch("Anti Statue", function(Value)
     if Value then
@@ -2073,7 +2119,7 @@ clanTab:AddSwitch("Anti Statue", function(Value)
             end
         end)
 
-        -- Auto Punch + Force Equip (Punch can't unequip)
+        -- Auto Punch + Force Equip
         getgenv().antiStatuePunch = true
         task.spawn(function()
             while getgenv().antiStatuePunch do
@@ -2086,7 +2132,7 @@ clanTab:AddSwitch("Anti Statue", function(Value)
                         egg.Parent = character
                     end
 
-                    -- Force Equip Punch (prevent unequip)
+                    -- Force Equip Punch
                     local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
                         or character:FindFirstChild("Punch")
                     if punch then
@@ -2094,7 +2140,6 @@ clanTab:AddSwitch("Anti Statue", function(Value)
                             punch.Parent = character
                         end
 
-                        -- Instantly re-equip if it ever gets unequipped
                         if not punch:GetAttribute("AntiUnequip") then
                             punch:SetAttribute("AntiUnequip", true)
                             punch.Unequipped:Connect(function()
@@ -2122,14 +2167,9 @@ clanTab:AddSwitch("Anti Statue", function(Value)
             getgenv().posLock:Disconnect()
             getgenv().posLock = nil
         end
-        -- Stop auto punch
         getgenv().antiStatuePunch = false
     end
 end)
-
-
-
-
 
 
 
