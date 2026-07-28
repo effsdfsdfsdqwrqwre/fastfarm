@@ -1876,44 +1876,144 @@ end)
 
 
 
+local blood = window:AddTab("Clan Killing")
 
-local blacklistLabel
+-- Put your Clan Killing UI + blacklist code here
 
-local function updateBlacklistLabel()
-    if #blacklistWords == 0 then
-        blacklistLabel.Text = "Blacklist: (empty)"
-    else
-        blacklistLabel.Text = "Blacklist: " .. table.concat(blacklistWords, ", ")
-    end
-end
+local blacklistLabel = blood:AddLabel("")
+blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
--- Blacklist display
-blacklistLabel = blood:AddLabel("Blacklist: (empty)")
+local blacklistBox = blood:AddTextBox("Add to Blacklist", function(txt)
+	parseList((table.concat(blacklistWords, ",")..","..txt))
+	saveList()
 
-blood:AddTextBox("Add to Blacklist", function(txt)
+	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
-    if txt and txt ~= "" then
-        for word in string.gmatch(txt, "([^,]+)") do
-            table.insert(blacklistWords, word)
-        end
+	refreshActive()
 
-        saveList()
-        updateBlacklistLabel()
-    end
-
-end,{
-    placeholder = "Example: PlayerName, FriendName"
+	if not isAnyActive() then 
+		autoPunchActive = false 
+	end
+end, {
+	["placeholder"] = "Ej: MVX, Sigma, Juan"
 })
 
-blood:AddButton("Clear Blacklist", function()
 
-    blacklistWords = {}
-    saveList()
-    updateBlacklistLabel()
+local removeBox = blood:AddTextBox("Remove from Blacklist", function(txt)
+	local toRemove = {}
 
+	for w in string.gmatch(txt, "[^,]+") do
+		local t = trim(w):lower()
+		if t ~= "" then 
+			table.insert(toRemove, t) 
+		end
+	end
+
+	for _, word in ipairs(toRemove) do
+		for i = #blacklistWords, 1, -1 do
+			if blacklistWords[i] == word then
+				table.remove(blacklistWords, i)
+			end
+		end
+	end
+
+	saveList()
+
+	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
+
+	refreshActive()
+
+	if not isAnyActive() then 
+		autoPunchActive = false 
+	end
 end)
 
-updateBlacklistLabel()
+
+RunService.Heartbeat:Connect(function()
+	refreshActive()
+end)
+
+
+task.spawn(function()
+	while true do
+		task.wait(attackDelay)
+
+		if not isAnyActive() then
+			continue
+		end
+
+		if not LocalPlayer.Character then 
+			continue 
+		end
+
+		if not characterLoaded then 
+			continue 
+		end
+
+		local punch = ensurePunchEquipped()
+		if not punch then 
+			continue 
+		end
+
+		local char = LocalPlayer.Character
+		local rightHand, leftHand = getHands(char)
+
+		for plr in pairs(active) do
+			if plr and plr.Character then
+				local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+				local hum = plr.Character:FindFirstChild("Humanoid")
+
+				if hrp and hum and hum.Health > 0 then
+					pcall(function()
+						LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
+						LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
+					end)
+
+					pcall(function()
+						firetouchinterest(rightHand, hrp, 1)
+						firetouchinterest(leftHand, hrp, 1)
+						firetouchinterest(rightHand, hrp, 0)
+						firetouchinterest(leftHand, hrp, 0)
+					end)
+				end
+			end
+		end
+	end
+end)
+
+
+Players.PlayerAdded:Connect(function(plr)
+	plr:GetPropertyChangedSignal("DisplayName"):Connect(function()
+		refreshActive()
+	end)
+end)
+
+
+LocalPlayer.CharacterAdded:Connect(function()
+	characterLoaded = false
+
+	task.wait(0.2)
+
+	waitForCharacter()
+	refreshActive()
+
+	if isAnyActive() then
+		task.defer(function()
+			for i = 1, 50 do
+				if not isAnyActive() then 
+					break 
+				end
+
+				ensurePunchEquipped()
+				task.wait(0.15)
+			end
+		end)
+	end
+end)
+
+
+waitForCharacter()
+refreshActive()
 
 
 
