@@ -1865,36 +1865,6 @@ end)
 
 
 
---// Clan Killing Tab Fix (UI Loading Only)
-
-local blacklistWords = {}
-
-local function trim(str)
-    return str:match("^%s*(.-)%s*$")
-end
-
-local function parseList(text)
-    blacklistWords = {}
-
-    for word in string.gmatch(text, "[^,]+") do
-        word = trim(word):lower()
-
-        if word ~= "" then
-            table.insert(blacklistWords, word)
-        end
-    end
-end
-
-local function saveList()
-    -- Add datastore/file saving here if your executor supports it
-end
-
-
-
-
-
-
-
 
 local blacklistLabel
 
@@ -1933,8 +1903,6 @@ blood:AddButton("Clear Blacklist", function()
 end)
 
 updateBlacklistLabel()
-
-
 
 
 
