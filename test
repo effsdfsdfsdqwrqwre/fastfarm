@@ -1939,7 +1939,7 @@ local function updateTargetPlayersLabel()
 end
 
 -- Enforce 3-letter input
-blood:AddTextBox("Target Players (Enter 3-letter substring)", function(text)
+blood:AddTextBox("Clan Target", function(text)
     if text and text ~= "" then
         if #text ~= 3 then
             -- Notify user or ignore input
@@ -2037,24 +2037,42 @@ end)
 
 
 
-
 local lockedPosition
+local antiStatueEnabled = false
 
 blood:AddSwitch("Anti Statue", function(Value)
     local player = game.Players.LocalPlayer
 
-    if Value then
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
+    antiStatueEnabled = Value
 
-        lockedPosition = hrp.Position
+    if antiStatueEnabled then
+        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then
+            antiStatueEnabled = false
+            return
+        end
+
+        local targetCFrame = CFrame.new(
+            -7610.19629, 116.924843, 1795.85132,
+            -0.707134247, 0, 0.707079291,
+            0, 1, 0,
+            -0.707079291, 0, -0.707134247
+        )
+
+        -- Teleport there
+        hrp.CFrame = targetCFrame
+
+        -- Lock position after teleport
+        lockedPosition = targetCFrame
 
         task.spawn(function()
-            while Value and hrp.Parent do
-                hrp.CFrame = CFrame.new(lockedPosition)
+            while antiStatueEnabled and hrp.Parent do
+                hrp.CFrame = lockedPosition
                 task.wait()
             end
         end)
+    else
+        lockedPosition = nil
     end
 end)
 
