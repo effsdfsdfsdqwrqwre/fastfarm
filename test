@@ -1492,21 +1492,32 @@ end)
 
 
 
-clanTab:AddSwitch("Slow Spin", function(Value)
+clanTab:AddSwitch("2x Punching Speed", function(Value)
     if Value then
-        getgenv().slowSpin = true
-        task.spawn(function()
-            while getgenv().slowSpin do
-                local char = LocalPlayer.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    local hrp = char.HumanoidRootPart
-                    hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(1.5), 0) -- 1.5 degrees per tick
-                end
-                task.wait(0.03) -- lower = faster spin
+        getgenv().maxSpin = true
+
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            getgenv().spinPos = char.HumanoidRootPart.Position
+            getgenv().spinAngle = 0
+        end
+
+        getgenv().spinConnection = RunService.Heartbeat:Connect(function()
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") and getgenv().spinPos then
+                local hrp = char.HumanoidRootPart
+                getgenv().spinAngle = getgenv().spinAngle + math.rad(90) -- max speed
+                hrp.CFrame = CFrame.new(getgenv().spinPos) * CFrame.Angles(0, getgenv().spinAngle, 0)
             end
         end)
     else
-        getgenv().slowSpin = false
+        getgenv().maxSpin = false
+        if getgenv().spinConnection then
+            getgenv().spinConnection:Disconnect()
+            getgenv().spinConnection = nil
+        end
+        getgenv().spinPos = nil
+        getgenv().spinAngle = nil
     end
 end)
 
