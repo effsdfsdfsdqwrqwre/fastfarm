@@ -1875,140 +1875,376 @@ end)
 
 
 
+
+------------------------------------------------
+-- CLAN KILLING TAB FIXED
+------------------------------------------------
+
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local blacklistWords = {}
+local active = {}
+local characterLoaded = false
+local attackDelay = 0.05
+local autoPunchActive = false
+
+
+local function trim(str)
+	return str:match("^%s*(.-)%s*$")
+end
+
+
+local function parseList(text)
+	blacklistWords = {}
+
+	for word in string.gmatch(text, "[^,]+") do
+		word = trim(word):lower()
+
+		if word ~= "" then
+			table.insert(blacklistWords, word)
+		end
+	end
+end
+
+
+local function saveList()
+	-- keeps list during session
+end
+
+
+local function isBlacklisted(player)
+	if not player then return false end
+
+	local name = player.Name:lower()
+	local display = player.DisplayName:lower()
+
+	for _, word in ipairs(blacklistWords) do
+		if string.find(name, word) or string.find(display, word) then
+			return true
+		end
+	end
+
+	return false
+end
+
+
+local function refreshActive()
+
+	active = {}
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and not isBlacklisted(player) then
+			active[player] = true
+		end
+	end
+end
+
+
+local function isAnyActive()
+	return next(active) ~= nil
+end
+
+
+local function getHands(char)
+
+	local right = char and char:FindFirstChild("RightHand")
+	local left = char and char:FindFirstChild("LeftHand")
+
+	return right,left
+end
+
+
+local function ensurePunchEquipped()
+
+	local backpack = LocalPlayer:FindFirstChild("Backpack")
+	local char = LocalPlayer.Character
+
+	if not backpack or not char then
+		return nil
+	end
+
+
+	local punch =
+		char:FindFirstChild("Punch")
+		or backpack:FindFirstChild("Punch")
+
+
+	if punch and punch.Parent ~= char then
+		punch.Parent = char
+	end
+
+	return punch
+end
+
+
+local function waitForCharacter()
+
+	local char = LocalPlayer.Character
+
+	if not char then
+		char = LocalPlayer.CharacterAdded:Wait()
+	end
+
+	characterLoaded = true
+end
+
+
+
+------------------------------------------------
+-- UI
+------------------------------------------------
+
+
 local blacklistLabel = blood:AddLabel("")
-blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
-local blacklistBox = blood:AddTextBox("Add to Blacklist", function(txt)
-	parseList((table.concat(blacklistWords, ",")..","..txt))
-	saveList()
+local function updateBlacklistLabel()
 
-	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
-
-	refreshActive()
-
-	if not isAnyActive() then 
-		autoPunchActive = false 
-	end
-end, {
-	["placeholder"] = "Ej: MVX, Sigma, Juan"
-})
-
-
-local removeBox = blood:AddTextBox("Remove from Blacklist", function(txt)
-	local toRemove = {}
-
-	for w in string.gmatch(txt, "[^,]+") do
-		local t = trim(w):lower()
-		if t ~= "" then 
-			table.insert(toRemove, t) 
-		end
+	if #blacklistWords == 0 then
+		blacklistLabel.Text = "Blacklist: (empty)"
+	else
+		blacklistLabel.Text =
+			"Blacklist: "..table.concat(blacklistWords,", ")
 	end
 
-	for _, word in ipairs(toRemove) do
-		for i = #blacklistWords, 1, -1 do
-			if blacklistWords[i] == word then
-				table.remove(blacklistWords, i)
+end
+
+
+updateBlacklistLabel()
+
+
+
+blood:AddTextBox(
+	"Add to Blacklist",
+	function(txt)
+
+		parseList(
+			table.concat(blacklistWords,",")..
+			","..
+			txt
+		)
+
+		saveList()
+		updateBlacklistLabel()
+		refreshActive()
+
+	end,
+	{
+		placeholder = "MVX, Sigma, Juan"
+	}
+)
+
+
+
+blood:AddTextBox(
+	"Remove from Blacklist",
+	function(txt)
+
+		for word in string.gmatch(txt,"[^,]+") do
+
+			word = trim(word):lower()
+
+			for i=#blacklistWords,1,-1 do
+
+				if blacklistWords[i] == word then
+					table.remove(
+						blacklistWords,
+						i
+					)
+				end
+
 			end
+
 		end
+
+
+		saveList()
+		updateBlacklistLabel()
+		refreshActive()
+
 	end
+)
 
-	saveList()
 
-	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
-	refreshActive()
+blood:AddSwitch(
+	"Clan Kill",
+	function(state)
 
-	if not isAnyActive() then 
-		autoPunchActive = false 
+		autoPunchActive = state
+
 	end
-end)
+)
 
 
-RunService.Heartbeat:Connect(function()
-	refreshActive()
-end)
+
+------------------------------------------------
+-- ATTACK LOOP
+------------------------------------------------
 
 
 task.spawn(function()
+
 	while true do
+
 		task.wait(attackDelay)
 
-		if not isAnyActive() then
+
+		if not autoPunchActive then
 			continue
 		end
 
-		if not LocalPlayer.Character then 
-			continue 
+
+		if not characterLoaded then
+			continue
 		end
 
-		if not characterLoaded then 
-			continue 
-		end
-
-		local punch = ensurePunchEquipped()
-		if not punch then 
-			continue 
-		end
 
 		local char = LocalPlayer.Character
-		local rightHand, leftHand = getHands(char)
 
-		for plr in pairs(active) do
-			if plr and plr.Character then
-				local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-				local hum = plr.Character:FindFirstChild("Humanoid")
-
-				if hrp and hum and hum.Health > 0 then
-					pcall(function()
-						LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
-						LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
-					end)
-
-					pcall(function()
-						firetouchinterest(rightHand, hrp, 1)
-						firetouchinterest(leftHand, hrp, 1)
-						firetouchinterest(rightHand, hrp, 0)
-						firetouchinterest(leftHand, hrp, 0)
-					end)
-				end
-			end
+		if not char then
+			continue
 		end
+
+
+		local punch = ensurePunchEquipped()
+
+		if not punch then
+			continue
+		end
+
+
+		local right,left = getHands(char)
+
+
+		for player in pairs(active) do
+
+
+			if player.Character then
+
+
+				local root =
+					player.Character:FindFirstChild(
+						"HumanoidRootPart"
+					)
+
+
+				local hum =
+					player.Character:FindFirstChildOfClass(
+						"Humanoid"
+					)
+
+
+
+				if root and hum and hum.Health > 0 then
+
+
+					pcall(function()
+
+						LocalPlayer.muscleEvent:FireServer(
+							"punch",
+							"rightHand"
+						)
+
+						LocalPlayer.muscleEvent:FireServer(
+							"punch",
+							"leftHand"
+						)
+
+					end)
+
+
+
+					pcall(function()
+
+						if right then
+							firetouchinterest(
+								right,
+								root,
+								1
+							)
+
+							firetouchinterest(
+								right,
+								root,
+								0
+							)
+						end
+
+
+						if left then
+							firetouchinterest(
+								left,
+								root,
+								1
+							)
+
+							firetouchinterest(
+								left,
+								root,
+								0
+							)
+						end
+
+
+					end)
+
+				end
+
+			end
+
+		end
+
 	end
+
 end)
 
 
-Players.PlayerAdded:Connect(function(plr)
-	plr:GetPropertyChangedSignal("DisplayName"):Connect(function()
-		refreshActive()
-	end)
+
+Players.PlayerAdded:Connect(function()
+	refreshActive()
 end)
+
+
+Players.PlayerRemoving:Connect(function()
+	refreshActive()
+end)
+
 
 
 LocalPlayer.CharacterAdded:Connect(function()
+
 	characterLoaded = false
 
-	task.wait(0.2)
+	task.wait(0.5)
 
 	waitForCharacter()
+
 	refreshActive()
 
-	if isAnyActive() then
-		task.defer(function()
-			for i = 1, 50 do
-				if not isAnyActive() then 
-					break 
-				end
-
-				ensurePunchEquipped()
-				task.wait(0.15)
-			end
-		end)
-	end
 end)
+
 
 
 waitForCharacter()
 refreshActive()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
