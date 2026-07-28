@@ -2054,6 +2054,13 @@ titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 blood:AddSwitch("Anti Statue", function(Value)
     if Value then
+        -- Set Size 1
+        local args = {
+            [1] = "changeSize",
+            [2] = 1
+        }
+        game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
+
         local targetCFrame = CFrame.new(
             -9.0580864, -118.967911, -334.924042,
             0.391505003, 0.000186817284, 0.92017597,
@@ -2074,46 +2081,55 @@ blood:AddSwitch("Anti Statue", function(Value)
             end
         end)
 
-        -- Auto Punch + Equip Protein Egg
+        -- Auto Punch + Force Equip (Punch can't unequip)
         getgenv().antiStatuePunch = true
         task.spawn(function()
             while getgenv().antiStatuePunch do
                 local character = LocalPlayer.Character
                 if character then
-                    -- Equip Punch
-                    local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
-                        or character:FindFirstChild("Punch")
-
-                    if punch and punch.Parent ~= character then
-                        punch.Parent = character
-                    end
-
-                    -- Equip Protein Egg
+                    -- Force Equip Protein Egg
                     local egg = LocalPlayer.Backpack:FindFirstChild("Protein Egg")
                         or character:FindFirstChild("Protein Egg")
-
                     if egg and egg.Parent ~= character then
                         egg.Parent = character
                     end
 
-                    -- No-animation punch
+                    -- Force Equip Punch (prevent unequip)
+                    local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
+                        or character:FindFirstChild("Punch")
+                    if punch then
+                        if punch.Parent ~= character then
+                            punch.Parent = character
+                        end
+
+                        -- Instantly re-equip if it ever gets unequipped
+                        if not punch:GetAttribute("AntiUnequip") then
+                            punch:SetAttribute("AntiUnequip", true)
+                            punch.Unequipped:Connect(function()
+                                if getgenv().antiStatuePunch and punch then
+                                    task.defer(function()
+                                        punch.Parent = character
+                                    end)
+                                end
+                            end)
+                        end
+                    end
+
+                    -- Punch both hands
                     if punch then
                         LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
                         LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
                     end
                 end
-
                 task.wait(0.01)
             end
         end)
-
     else
         -- Unlock position
         if getgenv().posLock then
             getgenv().posLock:Disconnect()
             getgenv().posLock = nil
         end
-
         -- Stop auto punch
         getgenv().antiStatuePunch = false
     end
