@@ -1873,10 +1873,12 @@ end)
 
 
 
-blacklistLabel = blood:AddLabel("")
+local blacklistSection = blood:AddSection("Blacklist")   -- change to CreateSection if your lib uses Create*
+
+blacklistLabel = blacklistSection:AddLabel("")
 blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
 
-local blacklistBox = blood:AddTextBox("Add to Blacklist", function(txt)
+local blacklistBox = blacklistSection:AddTextBox("Add to Blacklist", function(txt)
     parseList((table.concat(blacklistWords, ",")..","..txt))
     saveList()
     blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
@@ -1884,7 +1886,7 @@ local blacklistBox = blood:AddTextBox("Add to Blacklist", function(txt)
     if not isAnyActive() then autoPunchActive = false end
 end, {["placeholder"] = "Ej: MVX, Sigma, Juan"})
 
-local removeBox = blood:AddTextBox("Remove from Blacklist", function(txt)
+local removeBox = blacklistSection:AddTextBox("Remove from Blacklist", function(txt)
     local toRemove = {}
     for w in string.gmatch(txt, "[^,]+") do
         local t = trim(w):lower()
@@ -1902,68 +1904,6 @@ local removeBox = blood:AddTextBox("Remove from Blacklist", function(txt)
     refreshActive()
     if not isAnyActive() then autoPunchActive = false end
 end)
-
-RunService.Heartbeat:Connect(function()
-    refreshActive()
-end)
-
-task.spawn(function()
-    while true do
-        task.wait(attackDelay)
-        if not isAnyActive() then
-            continue
-        end
-        if not LocalPlayer.Character then continue end
-        if not characterLoaded then continue end
-        local punch = ensurePunchEquipped()
-        if not punch then continue end
-        local char = LocalPlayer.Character
-        local rightHand, leftHand = getHands(char)
-        for plr in pairs(active) do
-            if plr and plr.Character then
-                local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-                local hum = plr.Character:FindFirstChild("Humanoid")
-                if hrp and hum and hum.Health > 0 then
-                    pcall(function()
-                        LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
-                        LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
-                    end)
-                    pcall(function()
-                        firetouchinterest(rightHand, hrp, 1)
-                        firetouchinterest(leftHand, hrp, 1)
-                        firetouchinterest(rightHand, hrp, 0)
-                        firetouchinterest(leftHand, hrp, 0)
-                    end)
-                end
-            end
-        end
-    end
-end)
-
-Players.PlayerAdded:Connect(function(plr)
-    plr:GetPropertyChangedSignal("DisplayName"):Connect(function()
-        refreshActive()
-    end)
-end)
-
-LocalPlayer.CharacterAdded:Connect(function()
-    characterLoaded = false
-    task.wait(0.2)
-    waitForCharacter()
-    refreshActive()
-    if isAnyActive() then
-        task.defer(function()
-            for i = 1, 50 do
-                if not isAnyActive() then break end
-                ensurePunchEquipped()
-                task.wait(0.15)
-            end
-        end)
-    end
-end)
-
-waitForCharacter()
-refreshActive()
 
 
 
