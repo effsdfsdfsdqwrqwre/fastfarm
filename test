@@ -1866,7 +1866,41 @@ end)
 
 
 
-local blacklistLabel
+
+
+
+
+
+
+
+
+
+
+
+
+--// Clan Killing Tab Fix (UI Loading Only)
+
+local blacklistWords = {}
+
+local function trim(str)
+    return str:match("^%s*(.-)%s*$")
+end
+
+local function parseList(text)
+    blacklistWords = {}
+
+    for word in string.gmatch(text, "[^,]+") do
+        word = trim(word):lower()
+
+        if word ~= "" then
+            table.insert(blacklistWords, word)
+        end
+    end
+end
+
+local function saveList()
+    -- Add datastore/file saving here if your executor supports it
+end
 
 local function updateBlacklistLabel()
     if #blacklistWords == 0 then
@@ -1876,16 +1910,20 @@ local function updateBlacklistLabel()
     end
 end
 
+
+
+
+
+
 -- Blacklist display
 blacklistLabel = blood:AddLabel("Blacklist: (empty)")
 
+
+-- Add blacklist
 blood:AddTextBox("Add to Blacklist", function(txt)
 
     if txt and txt ~= "" then
-        for word in string.gmatch(txt, "([^,]+)") do
-            table.insert(blacklistWords, word)
-        end
-
+        parseList(table.concat(blacklistWords,",") .. "," .. txt)
         saveList()
         updateBlacklistLabel()
     end
@@ -1894,15 +1932,60 @@ end,{
     placeholder = "Example: PlayerName, FriendName"
 })
 
+
+-- Remove blacklist
+blood:AddTextBox("Remove from Blacklist", function(txt)
+
+    local remove = {}
+
+    for word in string.gmatch(txt,"[^,]+") do
+        word = trim(word):lower()
+
+        if word ~= "" then
+            table.insert(remove,word)
+        end
+    end
+
+
+    for _,removeWord in ipairs(remove) do
+        for i = #blacklistWords,1,-1 do
+            if blacklistWords[i] == removeWord then
+                table.remove(blacklistWords,i)
+            end
+        end
+    end
+
+    saveList()
+    updateBlacklistLabel()
+
+end,{
+    placeholder = "Example: PlayerName"
+})
+
+
+-- Test buttons so tab has content
 blood:AddButton("Clear Blacklist", function()
 
     blacklistWords = {}
-    saveList()
     updateBlacklistLabel()
 
 end)
 
-updateBlacklistLabel()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
