@@ -1864,8 +1864,13 @@ task.spawn(function()
 end)
 
 
-blacklistLabel = blood:AddLabel("")
 
+
+
+
+
+
+--// Clan Killing Tab Fix (UI Loading Only)
 
 local blacklistWords = {}
 
@@ -1898,9 +1903,11 @@ local function updateBlacklistLabel()
 end
 
 
+-- Blacklist display
 blacklistLabel = blood:AddLabel("Blacklist: (empty)")
 
 
+-- Add blacklist
 blood:AddTextBox("Add to Blacklist", function(txt)
 
     if txt and txt ~= "" then
@@ -1913,12 +1920,47 @@ end,{
     placeholder = "Example: PlayerName, FriendName"
 })
 
+
+-- Remove blacklist
+blood:AddTextBox("Remove from Blacklist", function(txt)
+
+    local remove = {}
+
+    for word in string.gmatch(txt,"[^,]+") do
+        word = trim(word):lower()
+
+        if word ~= "" then
+            table.insert(remove,word)
+        end
+    end
+
+
+    for _,removeWord in ipairs(remove) do
+        for i = #blacklistWords,1,-1 do
+            if blacklistWords[i] == removeWord then
+                table.remove(blacklistWords,i)
+            end
+        end
+    end
+
+    saveList()
+    updateBlacklistLabel()
+
+end,{
+    placeholder = "Example: PlayerName"
+})
+
+
+-- Test buttons so tab has content
 blood:AddButton("Clear Blacklist", function()
 
     blacklistWords = {}
     updateBlacklistLabel()
 
 end)
+
+
+
 
 
 
