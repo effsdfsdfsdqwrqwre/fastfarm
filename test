@@ -1404,7 +1404,7 @@ titleLabel.TextSize = 18
 titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-clanTab:AddSwitch("Anti Statue", function(Value)
+clanTab:AddSwitch("Anti Statue 🥚", function(Value)
     if Value then
         -- Set Size 1
         local args = {
@@ -1492,32 +1492,85 @@ end)
 
 
 
-clanTab:AddSwitch("2x Punching Speed", function(Value)
-    if Value then
-        getgenv().maxSpin = true
-
+clanTab:AddSwitch("2x Punch Speed 🥚", function(state)
+    _G.fastHitActive = state
+    if state then
+        -- Save the position we want to lock to
         local char = LocalPlayer.Character
         if char and char:FindFirstChild("HumanoidRootPart") then
-            getgenv().spinPos = char.HumanoidRootPart.Position
-            getgenv().spinAngle = 0
+            _G.lockedPos = char.HumanoidRootPart.CFrame
+            _G.spinAngle = 0
         end
-
-        getgenv().spinConnection = RunService.Heartbeat:Connect(function()
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") and getgenv().spinPos then
-                local hrp = char.HumanoidRootPart
-                getgenv().spinAngle = getgenv().spinAngle + math.rad(90) -- max speed
-                hrp.CFrame = CFrame.new(getgenv().spinPos) * CFrame.Angles(0, getgenv().spinAngle, 0)
+        -- Keep tools equipped forever + lock position + spin as fast as possible
+        task.spawn(function()
+            while _G.fastHitActive do
+                local char = LocalPlayer.Character
+                if char then
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    if hrp and _G.lockedPos then
+                        _G.spinAngle = (_G.spinAngle or 0) + math.rad(720) -- 720 deg per tick = extremely fast spin
+                        hrp.CFrame = CFrame.new(_G.lockedPos.Position) * CFrame.Angles(0, _G.spinAngle, 0)
+                        hrp.AssemblyLinearVelocity = Vector3.zero
+                        hrp.AssemblyAngularVelocity = Vector3.zero
+                    end
+                    -- Force equip Punch
+                    local punch = LocalPlayer.Backpack:FindFirstChild("Punch") or char:FindFirstChild("Punch")
+                    if punch then
+                        if punch.Parent ~= char then
+                            punch.Parent = char
+                        end
+                        if punch:FindFirstChild("attackTime") then
+                            punch.attackTime.Value = 0
+                        end
+                    end
+                    -- Force equip Protein Egg
+                    local egg = LocalPlayer.Backpack:FindFirstChild("Protein Egg") or char:FindFirstChild("Protein Egg")
+                    if egg and egg.Parent ~= char then
+                        egg.Parent = char
+                    end
+                end
+                task.wait(0.05)
             end
         end)
-    else
-        getgenv().maxSpin = false
-        if getgenv().spinConnection then
-            getgenv().spinConnection:Disconnect()
-            getgenv().spinConnection = nil
+        -- Spam Activate
+        task.spawn(function()
+            while _G.fastHitActive do
+                local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
+                if punch then
+                    pcall(function()
+                        punch:Activate()
+                    end)
+                end
+                task.wait(0.05)
+            end
+        end)
+        -- Re-equip + teleport back to locked position after death / respawn
+        if not _G.autoPunchCharConn then
+            _G.autoPunchCharConn = LocalPlayer.CharacterAdded:Connect(function(newChar)
+                if _G.fastHitActive then
+                    task.wait(0.3)
+                    local hrp = newChar:WaitForChild("HumanoidRootPart", 5)
+                    if hrp and _G.lockedPos then
+                        hrp.CFrame = CFrame.new(_G.lockedPos.Position) * CFrame.Angles(0, _G.spinAngle or 0, 0)
+                    end
+                    local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
+                    if punch then punch.Parent = newChar end
+                    local egg = LocalPlayer.Backpack:FindFirstChild("Protein Egg")
+                    if egg then egg.Parent = newChar end
+                end
+            end)
         end
-        getgenv().spinPos = nil
-        getgenv().spinAngle = nil
+    else
+        -- Unequip when turned off
+        local char = LocalPlayer.Character
+        if char then
+            local punch = char:FindFirstChild("Punch")
+            if punch then punch.Parent = LocalPlayer.Backpack end
+            local egg = char:FindFirstChild("Protein Egg")
+            if egg then egg.Parent = LocalPlayer.Backpack end
+        end
+        _G.lockedPos = nil
+        _G.spinAngle = nil
     end
 end)
 
