@@ -2126,24 +2126,28 @@ end
 blood:AddSwitch("Anti Statue", function(Value)
     local player = game.Players.LocalPlayer
     antiStatueEnabled = Value
-    
+   
     if antiStatueEnabled then
         local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
         if not hrp then
             antiStatueEnabled = false
             return
         end
-        
-        lockedPosition = CFrame.new(
-            -9.0580864, -118.967911, -334.924042,
-            0.391505003, 0.000186817284, 0.92017597,
-            -0.000211292776, 1, -0.000113125207,
-            -0.92017597, -0.00015013745, 0.391505033
-        )
-        
-        startLock(player)
+       
+        -- Capture current position and lock to it
+        local currentPos = hrp.CFrame
+        if getgenv().posLock then
+            getgenv().posLock:Disconnect()
+            getgenv().posLock = nil
+        end
+        getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                player.Character.HumanoidRootPart.CFrame = currentPos
+            end
+        end)
+       
         startBlockWater(player)
-        
+       
         -- Only connect once
         if not charAddedConn then
             charAddedConn = player.CharacterAdded:Connect(function(newChar)
@@ -2151,13 +2155,21 @@ blood:AddSwitch("Anti Statue", function(Value)
                     local hrp = newChar:WaitForChild("HumanoidRootPart", 5)
                     if hrp and antiStatueEnabled then
                         task.wait(0.1)
-                        startLock(player)
+                        -- Re-lock to the original position on respawn
+                        if getgenv().posLock then
+                            getgenv().posLock:Disconnect()
+                        end
+                        getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
+                            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                                player.Character.HumanoidRootPart.CFrame = currentPos
+                            end
+                        end)
                         startBlockWater(player)
                     end
                 end
             end)
         end
-        
+       
         -- Handle death so it re-locks + re-enables water block on respawn
         local function connectDied(char)
             local humanoid = char:FindFirstChildOfClass("Humanoid")
@@ -2166,7 +2178,15 @@ blood:AddSwitch("Anti Statue", function(Value)
                     if antiStatueEnabled then
                         task.defer(function()
                             if player.Character and antiStatueEnabled then
-                                startLock(player)
+                                -- Re-lock after death
+                                if getgenv().posLock then
+                                    getgenv().posLock:Disconnect()
+                                end
+                                getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
+                                    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                                        player.Character.HumanoidRootPart.CFrame = currentPos
+                                    end
+                                end)
                                 startBlockWater(player)
                             end
                         end)
@@ -2174,11 +2194,11 @@ blood:AddSwitch("Anti Statue", function(Value)
                 end)
             end
         end
-        
+       
         if player.Character then
             connectDied(player.Character)
         end
-        
+       
         if not player:GetAttribute("AntiStatueDiedConnected") then
             player:SetAttribute("AntiStatueDiedConnected", true)
             player.CharacterAdded:Connect(function(char)
@@ -2187,21 +2207,19 @@ blood:AddSwitch("Anti Statue", function(Value)
                 end
             end)
         end
-        
+       
     else
         -- Disable everything
-        lockedPosition = nil
-        
-        if lockConnection then
-            task.cancel(lockConnection)
-            lockConnection = nil
+        if getgenv().posLock then
+            getgenv().posLock:Disconnect()
+            getgenv().posLock = nil
         end
-        
+       
         if blockWaterConn then
             blockWaterConn:Disconnect()
             blockWaterConn = nil
         end
-        
+       
         if charAddedConn then
             charAddedConn:Disconnect()
             charAddedConn = nil
