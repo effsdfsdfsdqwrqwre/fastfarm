@@ -2045,52 +2045,25 @@ end)
 
 
 
+local lockedPosition
 
-
-
-local lockedPosition = nil
-local lockConnection = nil
-
-local targetCFrame = CFrame.new(
-    -7610.19629, 116.924843, 1795.85132,
-    -0.707134247, 0, 0.707079291,
-    0, 1, 0,
-    -0.707079291, 0, -0.707134247
-)
-
-blood:AddSwitch("Anti Statue", false, function(Value)
-    local character = game.Players.LocalPlayer.Character
-    if not character then return end
-    local hrp = character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
+blood:AddSwitch("Anti Statue", function(Value)
+    local player = game.Players.LocalPlayer
 
     if Value then
-        -- Teleport + lock
-        hrp.CFrame = targetCFrame
-        lockedPosition = targetCFrame
+        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
 
-        if lockConnection then
-            lockConnection:Disconnect()
-        end
+        lockedPosition = hrp.Position
 
-        lockConnection = game:GetService("RunService").Heartbeat:Connect(function()
-            if character and character.Parent and hrp and hrp.Parent then
-                hrp.CFrame = lockedPosition
-                hrp.AssemblyLinearVelocity = Vector3.zero
-                hrp.AssemblyAngularVelocity = Vector3.zero
+        task.spawn(function()
+            while Value and hrp.Parent do
+                hrp.CFrame = CFrame.new(lockedPosition)
+                task.wait()
             end
         end)
-    else
-        -- Unlock
-        if lockConnection then
-            lockConnection:Disconnect()
-            lockConnection = nil
-        end
-        lockedPosition = nil
     end
 end)
-
-
 
 
 
