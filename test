@@ -1878,45 +1878,69 @@ end)
 
 
 
+-- Blacklist UI
 blacklistLabel = blood:AddLabel("")
-blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
+blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: " .. table.concat(blacklistWords, ", "))
+
+local function updateBlacklistLabel()
+	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: " .. table.concat(blacklistWords, ", "))
+end
 
 local blacklistBox = blood:AddTextBox("Add to Blacklist", function(txt)
-	parseList((table.concat(blacklistWords, ",")..","..txt))
-	saveList()
-	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
+	if not txt or txt == "" then return end
 
+	local current = table.concat(blacklistWords, ",")
+	if current == "" then
+		parseList(txt)
+	else
+		parseList(current .. "," .. txt)
+	end
+
+	saveList()
+	updateBlacklistLabel()
 	refreshActive()
-	if not isAnyActive() then autoPunchActive = false end
-end, {["placeholder"] = "Ej: KTS, ZTX, KTA"})
+	if not isAnyActive() then
+		autoPunchActive = false
+	end
+end, {
+	["placeholder"] = "Ej: KTS, ZTX, KTA"
+})
 
 local removeBox = blood:AddTextBox("Remove from Blacklist", function(txt)
+	if not txt or txt == "" then return end
+
 	local toRemove = {}
 	for w in string.gmatch(txt, "[^,]+") do
 		local t = trim(w):lower()
-		if t ~= "" then table.insert(toRemove, t) end
+		if t ~= "" then
+			table.insert(toRemove, t)
+		end
 	end
 
 	for _, word in ipairs(toRemove) do
 		for i = #blacklistWords, 1, -1 do
-			if blacklistWords[i] == word then
+			if blacklistWords[i]:lower() == word then
 				table.remove(blacklistWords, i)
 			end
 		end
 	end
 
 	saveList()
-	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
-
+	updateBlacklistLabel()
 	refreshActive()
+	if not isAnyActive() then
+		autoPunchActive = false
+	end
+end, {
+	["placeholder"] = "Ej: KTS, ZTX"
+})
 
-	if not isAnyActive() then autoPunchActive = false end
-end)
-
+-- Continuous refresh
 RunService.Heartbeat:Connect(function()
 	refreshActive()
 end)
 
+-- Auto-punch loop
 task.spawn(function()
 	while true do
 		task.wait(attackDelay)
@@ -1925,14 +1949,20 @@ task.spawn(function()
 			continue
 		end
 
-		if not LocalPlayer.Character then continue end
-		if not characterLoaded then continue end
+		local char = LocalPlayer.Character
+		if not char or not characterLoaded then
+			continue
+		end
 
 		local punch = ensurePunchEquipped()
-		if not punch then continue end
+		if not punch then
+			continue
+		end
 
-		local char = LocalPlayer.Character
 		local rightHand, leftHand = getHands(char)
+		if not rightHand or not leftHand then
+			continue
+		end
 
 		for plr in pairs(active) do
 			if plr and plr.Character then
@@ -1957,6 +1987,7 @@ task.spawn(function()
 	end
 end)
 
+-- Player / character events
 Players.PlayerAdded:Connect(function(plr)
 	plr:GetPropertyChangedSignal("DisplayName"):Connect(function()
 		refreshActive()
@@ -1966,7 +1997,6 @@ end)
 LocalPlayer.CharacterAdded:Connect(function()
 	characterLoaded = false
 	task.wait(0.2)
-
 	waitForCharacter()
 	refreshActive()
 
@@ -1981,9 +2011,9 @@ LocalPlayer.CharacterAdded:Connect(function()
 	end
 end)
 
+-- Initial setup
 waitForCharacter()
 refreshActive()
-
 
 
 
