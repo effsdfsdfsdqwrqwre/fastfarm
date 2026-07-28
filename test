@@ -2054,7 +2054,6 @@ titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 blood:AddSwitch("Anti Statue", function(Value)
     if Value then
-        -- Target Position
         local targetCFrame = CFrame.new(
             -9.0580864, -118.967911, -334.924042,
             0.391505003, 0.000186817284, 0.92017597,
@@ -2062,23 +2061,60 @@ blood:AddSwitch("Anti Statue", function(Value)
             -0.92017597, -0.00015013745, 0.391505033
         )
 
-        local character = game.Players.LocalPlayer.Character
+        local character = LocalPlayer.Character
         if character and character:FindFirstChild("HumanoidRootPart") then
             character.HumanoidRootPart.CFrame = targetCFrame
         end
 
-        -- Lock Position
+        -- Lock position
         getgenv().posLock = game:GetService("RunService").Heartbeat:Connect(function()
-            local character = game.Players.LocalPlayer.Character
+            local character = LocalPlayer.Character
             if character and character:FindFirstChild("HumanoidRootPart") then
                 character.HumanoidRootPart.CFrame = targetCFrame
             end
         end)
+
+        -- Auto Punch + Equip Protein Egg
+        getgenv().antiStatuePunch = true
+        task.spawn(function()
+            while getgenv().antiStatuePunch do
+                local character = LocalPlayer.Character
+                if character then
+                    -- Equip Punch
+                    local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
+                        or character:FindFirstChild("Punch")
+
+                    if punch and punch.Parent ~= character then
+                        punch.Parent = character
+                    end
+
+                    -- Equip Protein Egg
+                    local egg = LocalPlayer.Backpack:FindFirstChild("Protein Egg")
+                        or character:FindFirstChild("Protein Egg")
+
+                    if egg and egg.Parent ~= character then
+                        egg.Parent = character
+                    end
+
+                    -- No-animation punch
+                    if punch then
+                        LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
+                        LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
+                    end
+                end
+
+                task.wait(0.01)
+            end
+        end)
+
     else
-        -- Unlock Position
+        -- Unlock position
         if getgenv().posLock then
             getgenv().posLock:Disconnect()
             getgenv().posLock = nil
         end
+
+        -- Stop auto punch
+        getgenv().antiStatuePunch = false
     end
 end)
