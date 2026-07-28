@@ -2037,11 +2037,54 @@ end)
 
 
 
-local lockedPosition
-local antiStatueEnabled = false
 
 local antiStatueEnabled = false
 local lockedPosition = nil
+local lockConnection = nil
+
+local function startLock(player)
+    local char = player.Character
+    if not char then return end
+
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+  
+    hrp.CFrame = lockedPosition
+
+    -- Cancel any previous loop
+    if lockConnection then
+        task.cancel(lockConnection)
+        lockConnection = nil
+    end
+
+    lockConnection = task.spawn(function()
+        while antiStatueEnabled do
+            local currentChar = player.Character
+            if not currentChar then
+                task.wait()
+                continue
+            end
+
+            local currentHRP = currentChar:FindFirstChild("HumanoidRootPart")
+            if currentHRP then
+                currentHRP.CFrame = lockedPosition
+            end
+
+            local punch = player.Backpack:FindFirstChild("Punch")
+            if punch then
+                punch.Parent = currentChar
+            end
+
+            local egg = player.Backpack:FindFirstChild("Protein Egg")
+            if egg then
+                egg.Parent = currentChar
+            end
+
+            task.wait()
+        end
+    end)
+end
 
 blood:AddSwitch("Anti Statue", function(Value)
     local player = game.Players.LocalPlayer
@@ -2054,37 +2097,32 @@ blood:AddSwitch("Anti Statue", function(Value)
             return
         end
 
-        local targetCFrame = CFrame.new(
+        lockedPosition = CFrame.new(
             -9.0580864, -118.967911, -334.924042,
             0.391505003, 0.000186817284, 0.92017597,
             -0.000211292776, 1, -0.000113125207,
             -0.92017597, -0.00015013745, 0.391505033
         )
 
-        -- Teleport + lock
-        hrp.CFrame = targetCFrame
-        lockedPosition = targetCFrame
+        startLock(player)
 
-        -- Lock loop + Auto Equip Punch
-        task.spawn(function()
-            while antiStatueEnabled and hrp and hrp.Parent do
-                -- keep position locked
-                hrp.CFrame = lockedPosition
-
-                -- auto equip Punch
-                local punch = player.Backpack:FindFirstChild("Punch")
-                if punch then
-                    punch.Parent = player.Character
+        if not player:FindFirstChild("AntiStatueCharConn") then
+            local conn = player.CharacterAdded:Connect(function()
+                if antiStatueEnabled then
+                    task.wait(0.1) -- small delay so character fully loads
+                    startLock(player)
                 end
-
-                task.wait()
-            end
-        end)
+            end)
+            conn.Name = "AntiStatueCharConn"
+        end
     else
         lockedPosition = nil
+        if lockConnection then
+            task.cancel(lockConnection)
+            lockConnection = nil
+        end
     end
 end)
-
 
 
 
