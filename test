@@ -1873,20 +1873,22 @@ end)
 
 
 
-local blacklistSection = blood:AddSection("Blacklist")   -- change to CreateSection if your lib uses Create*
+-- ====================== CLAN KILLING TAB ======================
+local blood = window:AddTab("Clan Killing")
+local blacklistSection = blood:AddSection("Blacklist")
 
 blacklistLabel = blacklistSection:AddLabel("")
-blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
+blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: " .. table.concat(blacklistWords, ","))
 
-local blacklistBox = blacklistSection:AddTextBox("Add to Blacklist", function(txt)
-    parseList((table.concat(blacklistWords, ",")..","..txt))
+blacklistSection:AddTextBox("Add to Blacklist", function(txt)
+    parseList((table.concat(blacklistWords, ",") .. "," .. txt))
     saveList()
-    blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
+    blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: " .. table.concat(blacklistWords, ","))
     refreshActive()
     if not isAnyActive() then autoPunchActive = false end
 end, {["placeholder"] = "Ej: MVX, Sigma, Juan"})
 
-local removeBox = blacklistSection:AddTextBox("Remove from Blacklist", function(txt)
+blacklistSection:AddTextBox("Remove from Blacklist", function(txt)
     local toRemove = {}
     for w in string.gmatch(txt, "[^,]+") do
         local t = trim(w):lower()
@@ -1900,13 +1902,96 @@ local removeBox = blacklistSection:AddTextBox("Remove from Blacklist", function(
         end
     end
     saveList()
-    blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
+    blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: " .. table.concat(blacklistWords, ","))
     refreshActive()
     if not isAnyActive() then autoPunchActive = false end
 end)
 
+-- ====================== TARGETING + KILL LOOP ======================
+local ATTACK_RANGE = 15          -- change if the game has a different max range
+local attackDelay = 0.12
 
+RunService.Heartbeat:Connect(function()
+    refreshActive()
+end)
 
+task.spawn(function()
+    while true do
+        task.wait(attackDelay)
+
+        if not isAnyActive() then continue end
+        if not LocalPlayer.Character or not characterLoaded then continue end
+
+        local punch = ensurePunchEquipped()
+        if not punch then continue end
+
+        local char = LocalPlayer.Character
+        local myHRP = char:FindFirstChild("HumanoidRootPart")
+        if not myHRP then continue end
+
+        local rightHand, leftHand = getHands(char)
+        if not rightHand or not leftHand then continue end
+
+        for plr in pairs(active) do
+            if plr and plr.Character and plr ~= LocalPlayer then
+                local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                local hum = plr.Character:FindFirstChild("Humanoid")
+
+                if hrp and hum and hum.Health > 0 then
+                    local dist = (myHRP.Position - hrp.Position).Magnitude
+
+                    if dist <= ATTACK_RANGE then
+                        -- Face the target
+                        pcall(function()
+                            myHRP.CFrame = CFrame.lookAt(myHRP.Position, Vector3.new(hrp.Position.X, myHRP.Position.Y, hrp.Position.Z))
+                        end)
+
+                        -- Fire punch remote
+                        pcall(function()
+                            LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
+                            LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
+                        end)
+
+                        -- Force touch hit
+                        pcall(function()
+                            firetouchinterest(rightHand, hrp, 1)
+                            firetouchinterest(leftHand, hrp, 1)
+                            task.wait()
+                            firetouchinterest(rightHand, hrp, 0)
+                            firetouchinterest(leftHand, hrp, 0)
+                        end)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- ====================== SUPPORT CONNECTIONS ======================
+Players.PlayerAdded:Connect(function(plr)
+    plr:GetPropertyChangedSignal("DisplayName"):Connect(function()
+        refreshActive()
+    end)
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+    characterLoaded = false
+    task.wait(0.2)
+    waitForCharacter()
+    refreshActive()
+    if isAnyActive() then
+        task.defer(function()
+            for i = 1, 50 do
+                if not isAnyActive() then break end
+                ensurePunchEquipped()
+                task.wait(0.15)
+            end
+        end)
+    end
+end)
+
+waitForCharacter()
+refreshActive()
 
 
 
