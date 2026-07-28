@@ -2137,5 +2137,49 @@ blood:AddSwitch("Anti Statue", function(Value)
 end)
 
 
+local antiWaterEnabled = false
+local waterConnection = nil
 
+blood:AddSwitch("Block Water", function(Value)
+    local player = game.Players.LocalPlayer
+    antiWaterEnabled = Value
+
+    if antiWaterEnabled then
+        -- Cancel old connection if it exists
+        if waterConnection then
+            waterConnection:Disconnect()
+            waterConnection = nil
+        end
+
+        waterConnection = game:GetService("RunService").Heartbeat:Connect(function()
+            local char = player.Character
+            if not char then return end
+
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            if not humanoid then return end
+
+            -- Stop swimming / drowning state
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
+
+            -- Keep health full (blocks water damage/kill)
+            if humanoid.Health < humanoid.MaxHealth then
+                humanoid.Health = humanoid.MaxHealth
+            end
+        end)
+    else
+        if waterConnection then
+            waterConnection:Disconnect()
+            waterConnection = nil
+        end
+
+        -- Re-enable swimming when turned off
+        local char = player.Character
+        if char then
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, true)
+            end
+        end
+    end
+end)
 
