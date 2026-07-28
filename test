@@ -1872,109 +1872,116 @@ end)
 
 
 
-blacklistLabel = blood:AddLabel("")
-blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
+-- Add a label to show blacklist status
+local blacklistLabel = blood:AddLabel("")
+blacklistLabel.Position = UDim2.new(0, 10, 0, 10)
+blacklistLabel.Size = UDim2.new(0, 300, 0, 20)
 
+-- Add "Add to Blacklist" textbox
 local blacklistBox = blood:AddTextBox("Add to Blacklist", function(txt)
-	parseList((table.concat(blacklistWords, ",")..","..txt))
-	saveList()
-	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
-
-	refreshActive()
-	if not isAnyActive() then autoPunchActive = false end
+    parseList((table.concat(blacklistWords, ",") .. "," .. txt))
+    saveList()
+    blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: " .. table.concat(blacklistWords, ","))
+    refreshActive()
+    if not isAnyActive() then autoPunchActive = false end
 end, {["placeholder"] = "Ej: MVX, Sigma, Juan"})
+blacklistBox.Position = UDim2.new(0, 10, 0, 40)
+blacklistBox.Size = UDim2.new(0, 200, 0, 30)
 
+-- Add "Remove from Blacklist" textbox
 local removeBox = blood:AddTextBox("Remove from Blacklist", function(txt)
-	local toRemove = {}
-	for w in string.gmatch(txt, "[^,]+") do
-		local t = trim(w):lower()
-		if t ~= "" then table.insert(toRemove, t) end
-	end
+    local toRemove = {}
+    for w in string.gmatch(txt, "[^,]+") do
+        local t = trim(w):lower()
+        if t ~= "" then table.insert(toRemove, t) end
+    end
+    for _, word in ipairs(toRemove) do
+        for i = #blacklistWords, 1, -1 do
+            if blacklistWords[i] == word then
+                table.remove(blacklistWords, i)
+            end
+        end
+    end
+    saveList()
+    blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: " .. table.concat(blacklistWords, ","))
+    refreshActive()
+    if not isAnyActive() then autoPunchActive = false end
+end)
+removeBox.Position = UDim2.new(0, 10, 0, 80)
+removeBox.Size = UDim2.new(0, 200, 0, 30)
 
-	for _, word in ipairs(toRemove) do
-		for i = #blacklistWords, 1, -1 do
-			if blacklistWords[i] == word then
-				table.remove(blacklistWords, i)
-			end
-		end
-	end
+-- Function to refresh the blacklist label on start
+local function refreshBlacklistLabel()
+    blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: " .. table.concat(blacklistWords, ","))
+end
 
-	saveList()
-	blacklistLabel.Text = (#blacklistWords == 0 and "Blacklist: (empty)" or "Blacklist: "..table.concat(blacklistWords, ","))
+refreshBlacklistLabel()
 
-	refreshActive()
-
-	if not isAnyActive() then autoPunchActive = false end
+-- Continuous heartbeat to refresh UI or states
+game:GetService("RunService").Heartbeat:Connect(function()
+    refreshActive()
 end)
 
-RunService.Heartbeat:Connect(function()
-	refreshActive()
-end)
-
+-- Main attack loop
 task.spawn(function()
-	while true do
-		task.wait(attackDelay)
+    while true do
+        task.wait(attackDelay)
+        if not isAnyActive() then continue end
+        if not LocalPlayer.Character then continue end
+        if not characterLoaded then continue end
 
-		if not isAnyActive() then
-			continue
-		end
+        local punch = ensurePunchEquipped()
+        if not punch then continue end
 
-		if not LocalPlayer.Character then continue end
-		if not characterLoaded then continue end
+        local char = LocalPlayer.Character
+        local rightHand, leftHand = getHands(char)
 
-		local punch = ensurePunchEquipped()
-		if not punch then continue end
-
-		local char = LocalPlayer.Character
-		local rightHand, leftHand = getHands(char)
-
-		for plr in pairs(active) do
-			if plr and plr.Character then
-				local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-				local hum = plr.Character:FindFirstChild("Humanoid")
-
-				if hrp and hum and hum.Health > 0 then
-					pcall(function()
-						LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
-						LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
-					end)
-
-					pcall(function()
-						firetouchinterest(rightHand, hrp, 1)
-						firetouchinterest(leftHand, hrp, 1)
-						firetouchinterest(rightHand, hrp, 0)
-						firetouchinterest(leftHand, hrp, 0)
-					end)
-				end
-			end
-		end
-	end
+        for plr in pairs(active) do
+            if plr and plr.Character then
+                local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                local hum = plr.Character:FindFirstChild("Humanoid")
+                if hrp and hum and hum.Health > 0 then
+                    pcall(function()
+                        LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
+                        LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
+                    end)
+                    pcall(function()
+                        firetouchinterest(rightHand, hrp, 1)
+                        firetouchinterest(leftHand, hrp, 1)
+                        firetouchinterest(rightHand, hrp, 0)
+                        firetouchinterest(leftHand, hrp, 0)
+                    end)
+                end
+            end
+        end
+    end
 end)
 
-Players.PlayerAdded:Connect(function(plr)
-	plr:GetPropertyChangedSignal("DisplayName"):Connect(function()
-		refreshActive()
-	end)
+-- Update active players on new players
+game.Players.PlayerAdded:Connect(function(plr)
+    plr:GetPropertyChangedSignal("DisplayName"):Connect(function()
+        refreshActive()
+    end)
 end)
 
-LocalPlayer.CharacterAdded:Connect(function()
-	characterLoaded = false
-	task.wait(0.2)
-
-	waitForCharacter()
-	refreshActive()
-
-	if isAnyActive() then
-		task.defer(function()
-			for i = 1, 50 do
-				if not isAnyActive() then break end
-				ensurePunchEquipped()
-				task.wait(0.15)
-			end
-		end)
-	end
+-- Handle character respawn
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    characterLoaded = false
+    task.wait(0.2)
+    waitForCharacter()
+    refreshActive()
+    if isAnyActive() then
+        task.defer(function()
+            for i = 1, 50 do
+                if not isAnyActive() then break end
+                ensurePunchEquipped()
+                task.wait(0.15)
+            end
+        end)
+    end
 end)
 
+-- Final refresh
 waitForCharacter()
 refreshActive()
 
