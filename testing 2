@@ -1,5 +1,6 @@
 local ui_options = {
 	main_color = Color3.fromRGB(41, 74, 122),
+	title_bar_color = Color3.fromRGB(0, 0, 0), -- change this to set title bar color
 	min_size = Vector2.new(400, 300),
 	toggle_key = Enum.KeyCode.RightShift,
 	can_resize = true,
@@ -133,13 +134,13 @@ Bar.Parent = Window
 Bar.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 Bar.BorderSizePixel = 0
 Bar.Position = UDim2.new(0, 0, 0, 5)
-Bar.Size = UDim2.new(1, 0, 0, 22)
+Bar.Size = UDim2.new(1, 0, 0, 26)
 
 Toggle.Name = "Toggle"
 Toggle.Parent = Bar
 Toggle.BackgroundColor3 = Color3.new(1, 1, 1)
 Toggle.BackgroundTransparency = 1
-Toggle.Position = UDim2.new(0, 5, 0, 1)
+Toggle.Position = UDim2.new(0, 5, 0, 3)
 Toggle.Rotation = 90
 Toggle.Size = UDim2.new(0, 20, 0, 20)
 Toggle.ZIndex = 2
@@ -170,7 +171,7 @@ Top.SliceCenter = Rect.new(12, 12, 12, 12)
 Skull.Name = "Skull"
 Skull.Parent = Window
 Skull.BackgroundTransparency = 1
-Skull.Position = UDim2.new(0, 28, 0, 4)
+Skull.Position = UDim2.new(0, 28, 0, 6)
 Skull.Size = UDim2.new(0, 20, 0, 20)
 Skull.ZIndex = 3
 Skull.Image = "rbxassetid://2623230"
@@ -187,7 +188,7 @@ Title.Name = "Title"
 Title.Parent = Window
 Title.BackgroundColor3 = Color3.new(1, 1, 1)
 Title.BackgroundTransparency = 1
-Title.Position = UDim2.new(0, 52, 0, 3)
+Title.Position = UDim2.new(0, 52, 0, 5)
 Title.Size = UDim2.new(0, 300, 0, 22)
 Title.Font = Enum.Font.GothamBold
 Title.Text = "ARGUS  |  PRIVATE KILLER"
@@ -960,6 +961,10 @@ function library:AddWindow(title, options)
 	title = tostring(title or "ARGUS | PRIVATE KILLER")
 	options = (typeof(options) == "table") and options or ui_options
 	options.tween_time = 0.1
+	-- ensure title_bar_color exists (falls back to black)
+	if options.title_bar_color == nil then
+		options.title_bar_color = ui_options.title_bar_color or Color3.fromRGB(0, 0, 0)
+	end
 
 	local Window = Prefabs:FindFirstChild("Window"):Clone()
 	Window.Parent = Windows
@@ -978,11 +983,12 @@ function library:AddWindow(title, options)
 
 		spawn(function()
 			while true do
-				-- Force black title bar to match the provided image style
-				Bar.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-				Base.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-				Base.ImageColor3 = Color3.fromRGB(0, 0, 0)
-				Top.ImageColor3 = Color3.fromRGB(0, 0, 0)
+				-- Title bar uses dedicated title_bar_color (changeable)
+				local tbc = options.title_bar_color or Color3.fromRGB(0, 0, 0)
+				Bar.BackgroundColor3 = tbc
+				Base.BackgroundColor3 = tbc
+				Base.ImageColor3 = tbc
+				Top.ImageColor3 = tbc
 				SplitFrame.BackgroundColor3 = options.main_color
 
 				if Skull then
@@ -1081,7 +1087,7 @@ local mouse_location = gMouse()
 
 					oldy = Window.AbsoluteSize.Y
 					Resize(open_close, {Rotation = 0}, options.tween_time)
-					Resize(Window, {Size = UDim2.new(0, Window.AbsoluteSize.X, 0, 26)}, options.tween_time)
+					Resize(Window, {Size = UDim2.new(0, Window.AbsoluteSize.X, 0, 31)}, options.tween_time)
 					open_close.Parent:FindFirstChild("Base").Transparency = 1
 
 				else
