@@ -190,11 +190,11 @@ Title.BackgroundColor3 = Color3.new(1, 1, 1)
 Title.BackgroundTransparency = 1
 Title.Position = UDim2.new(0, 56, 0, 5)
 Title.Size = UDim2.new(0, 300, 0, 35)
-Title.Font = Enum.Font.PermanentMarker
+Title.Font = Enum.Font.Bangers
 Title.Text = "PRIVATE KILLER"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 24 
-Title.TextXAlignment = Enum.Font.Gotham
+Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.TextStrokeTransparency = 0.7
 Title.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 
