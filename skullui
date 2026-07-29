@@ -1,6 +1,6 @@
 local ui_options = {
 	main_color = Color3.fromRGB(41, 74, 122),
-	title_bar_color = Color3.fromRGB(0, 0, 0), -- change this to set title bar color
+	title_bar_color = Color3.fromRGB(0, 0, 0), 
 	min_size = Vector2.new(400, 300),
 	toggle_key = Enum.KeyCode.RightShift,
 	can_resize = true,
@@ -194,7 +194,7 @@ Title.Font = Enum.Font.PermanentMarker
 Title.Text = "PRIVATE KILLER"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 24 
-Title.TextXAlignment = Gotham.TextXAlignment.Left
+Title.TextXAlignment = Enum.Font.Gotham
 Title.TextStrokeTransparency = 0.7
 Title.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 
