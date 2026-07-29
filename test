@@ -99,6 +99,7 @@ local function disableOptimization()
     end
 end
 
+
 MainTab:AddSwitch("Anti Lag", function(state)
     enabled = state
 
