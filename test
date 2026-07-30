@@ -1487,9 +1487,9 @@ end)
 
 
 
--- Burst Punching
 local burstPunchEnabled = false
 local burstCharacterConnection
+local burstLoopConnection
 
 clanTab:AddSwitch("Burst Punching", function(state)
     burstPunchEnabled = state
@@ -1497,6 +1497,11 @@ clanTab:AddSwitch("Burst Punching", function(state)
     if state then
         if burstCharacterConnection then
             burstCharacterConnection:Disconnect()
+            burstCharacterConnection = nil
+        end
+        if burstLoopConnection then
+            task.cancel(burstLoopConnection)
+            burstLoopConnection = nil
         end
 
         burstCharacterConnection = LocalPlayer.CharacterAdded:Connect(function(char)
@@ -1504,17 +1509,27 @@ clanTab:AddSwitch("Burst Punching", function(state)
             local humanoid = char:FindFirstChildOfClass("Humanoid")
             local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
 
-            if humanoid and punch then
+            if humanoid and punch and punch:IsA("Tool") then
                 humanoid:EquipTool(punch)
             end
         end)
 
-        task.spawn(function()
+        -- Equip immediately if already in character
+        local character = LocalPlayer.Character
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            local punch = character:FindFirstChild("Punch") or LocalPlayer.Backpack:FindFirstChild("Punch")
+            if humanoid and punch and punch:IsA("Tool") then
+                humanoid:EquipTool(punch)
+            end
+        end
+
+        burstLoopConnection = task.spawn(function()
             while burstPunchEnabled do
                 local character = LocalPlayer.Character
                 local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 
-                if character and humanoid then
+                if character and humanoid and humanoid.Health > 0 then
                     local punch = character:FindFirstChild("Punch") or LocalPlayer.Backpack:FindFirstChild("Punch")
 
                     if punch and punch:IsA("Tool") then
@@ -1532,34 +1547,35 @@ clanTab:AddSwitch("Burst Punching", function(state)
                             if not burstPunchEnabled then
                                 break
                             end
-
                             pcall(function()
                                 punch:Activate()
                             end)
-
                             task.wait(0.04)
                         end
 
-                        task.wait(0.30)
+                        task.wait(0.25)
                     else
-                        task.wait(0.10)
+                        task.wait(0.1)
                     end
                 else
-                    task.wait(0.10)
+                    task.wait(0.1)
                 end
             end
         end)
-
     else
         if burstCharacterConnection then
             burstCharacterConnection:Disconnect()
             burstCharacterConnection = nil
         end
+        if burstLoopConnection then
+            task.cancel(burstLoopConnection)
+            burstLoopConnection = nil
+        end
 
         local character = LocalPlayer.Character
         if character then
             local punch = character:FindFirstChild("Punch")
-            if punch then
+            if punch and punch:IsA("Tool") then
                 punch.Parent = LocalPlayer.Backpack
             end
         end
