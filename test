@@ -1491,7 +1491,7 @@ local burstPunchEnabled = false
 local burstCharacterConnection
 local burstLoopConnection
 
-clanTab:AddSwitch("Burst Punching", function(state)
+Killer:AddSwitch("Burst Punching", function(state)
     burstPunchEnabled = state
 
     if state then
