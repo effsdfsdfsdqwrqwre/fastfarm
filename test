@@ -1490,7 +1490,7 @@ end)
 
 
 
-clanTab:AddSwitch("Burst punch", function(state)
+clanTab:AddSwitch("Burst Punching", function(state)
     _G.autoPunchActive = state
     if state then
         -- Main loop that survives respawns
