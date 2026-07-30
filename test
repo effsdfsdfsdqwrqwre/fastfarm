@@ -1487,101 +1487,84 @@ end)
 
 
 
-local burstPunchEnabled = false
-local burstCharacterConnection
-local burstLoopConnection
 
-Killer:AddSwitch("Burst Punching", function(state)
-    burstPunchEnabled = state
+
+
+
+
+
+
+
+clanTab:AddSwitch("Burst Punch", function(state)
+    _G.fastHitActive = state
 
     if state then
-        if burstCharacterConnection then
-            burstCharacterConnection:Disconnect()
-            burstCharacterConnection = nil
-        end
-        if burstLoopConnection then
-            task.cancel(burstLoopConnection)
-            burstLoopConnection = nil
-        end
+        -- Re-equip + keep running after respawn
+        local function startLoops(char)
+            if not char then return end
 
-        burstCharacterConnection = LocalPlayer.CharacterAdded:Connect(function(char)
-            task.wait(0.5)
-            local humanoid = char:FindFirstChildOfClass("Humanoid")
-            local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
-
-            if humanoid and punch and punch:IsA("Tool") then
-                humanoid:EquipTool(punch)
-            end
-        end)
-
-        -- Equip immediately if already in character
-        local character = LocalPlayer.Character
-        if character then
-            local humanoid = character:FindFirstChildOfClass("Humanoid")
-            local punch = character:FindFirstChild("Punch") or LocalPlayer.Backpack:FindFirstChild("Punch")
-            if humanoid and punch and punch:IsA("Tool") then
-                humanoid:EquipTool(punch)
-            end
-        end
-
-        burstLoopConnection = task.spawn(function()
-            while burstPunchEnabled do
-                local character = LocalPlayer.Character
-                local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-
-                if character and humanoid and humanoid.Health > 0 then
-                    local punch = character:FindFirstChild("Punch") or LocalPlayer.Backpack:FindFirstChild("Punch")
-
-                    if punch and punch:IsA("Tool") then
-                        if punch.Parent ~= character then
-                            humanoid:EquipTool(punch)
-                            task.wait(0.05)
+            -- Equip loop
+            task.spawn(function()
+                while _G.fastHitActive and char.Parent do
+                    local punch = LocalPlayer.Backpack:FindFirstChild("Punch")
+                    if punch then
+                        punch.Parent = char
+                        if punch:FindFirstChild("attackTime") then
+                            punch.attackTime.Value = 0
                         end
-
-                        local attackTime = punch:FindFirstChild("attackTime")
-                        if attackTime and attackTime:IsA("NumberValue") then
-                            attackTime.Value = 0
-                        end
-
-                        for i = 1, 5 do
-                            if not burstPunchEnabled then
-                                break
-                            end
-                            pcall(function()
-                                punch:Activate()
-                            end)
-                            task.wait(0.04)
-                        end
-
-                        task.wait(0.25)
-                    else
-                        task.wait(0.1)
                     end
-                else
                     task.wait(0.1)
                 end
-            end
-        end)
-    else
-        if burstCharacterConnection then
-            burstCharacterConnection:Disconnect()
-            burstCharacterConnection = nil
-        end
-        if burstLoopConnection then
-            task.cancel(burstLoopConnection)
-            burstLoopConnection = nil
+            end)
+
+            -- Burst punch loop
+            task.spawn(function()
+                while _G.fastHitActive and char.Parent do
+                    local punch = char:FindFirstChild("Punch")
+                    if punch then
+                        -- Burst of 4-6 punches
+                        for i = 1, math.random(4, 6) do
+                            if not _G.fastHitActive then break end
+                            punch:Activate()
+                            task.wait(0.05) -- very fast inside the burst
+                        end
+                    end
+                    task.wait(0.25) -- short cooldown between bursts
+                end
+            end)
         end
 
-        local character = LocalPlayer.Character
-        if character then
-            local punch = character:FindFirstChild("Punch")
-            if punch and punch:IsA("Tool") then
-                punch.Parent = LocalPlayer.Backpack
+        -- Start on current character
+        if LocalPlayer.Character then
+            startLoops(LocalPlayer.Character)
+        end
+
+        -- Restart on every respawn
+        local conn
+        conn = LocalPlayer.CharacterAdded:Connect(function(char)
+            if not _G.fastHitActive then
+                if conn then conn:Disconnect() end
+                return
             end
+            task.wait(0.3) -- small delay so character fully loads
+            startLoops(char)
+        end)
+
+        -- Store the connection so we can clean it up when turned off
+        _G.fastHitConn = conn
+    else
+        -- Clean up
+        if _G.fastHitConn then
+            _G.fastHitConn:Disconnect()
+            _G.fastHitConn = nil
+        end
+
+        local punch = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")
+        if punch then
+            punch.Parent = LocalPlayer.Backpack
         end
     end
 end)
-
 
 
 
