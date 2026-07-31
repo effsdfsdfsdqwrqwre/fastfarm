@@ -1,3 +1,36 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Add the exact usernames that are allowed (case-sensitive)
+local Whitelist = {
+    "hebdjxhc",  
+    "krxzy_214",
+    "alt_killa08",  
+    "alexglover020",
+    "leviathanxinvincible",  
+    "Samaik09",
+    "Simulatedsketch123",  
+    "XxNexterxX1",
+    "YumixKingZyukxDragon",  
+}
+
+local function isWhitelisted(player)
+    for _, name in ipairs(Whitelist) do
+        if player.Name == name then
+            return true
+        end
+    end
+    return false
+end
+
+if not isWhitelisted(LocalPlayer) then
+    LocalPlayer:Kick("You are not whitelisted.")
+    return
+end
+
+
+
+
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))() 
 
 local window = library:AddWindow("", {
