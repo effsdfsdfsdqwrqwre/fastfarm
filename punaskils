@@ -1,6 +1,6 @@
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))() 
 
-local window = library:AddWindow("           KILLER V2", {
+local window = library:AddWindow("                     KILLER V2", {
     main_color = Color3.fromRGB(0, 0, 0),
     min_size = Vector2.new(450, 1160),
     can_resize = false,
@@ -456,20 +456,17 @@ Killer:AddButton("Size 2", function()
     game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer(unpack(args))
 end)
 
-Killer:AddSwitch("Anti Fling", function(state)
+local AntiFlingSwitch = Killer:AddSwitch("Anti Fling", function(state)
     getgenv().RemoveKnockback = state
-
     if state then
         local Players = game:GetService("Players")
         local RunService = game:GetService("RunService")
         local LP = Players.LocalPlayer
-
         local function ApplyAntiKnockback(char)
             if not char then return end
             local hrp = char:WaitForChild("HumanoidRootPart", 5)
             local hum = char:WaitForChild("Humanoid", 5)
             if not hrp or not hum then return end
-
             -- Destroy any BodyVelocity / LinearVelocity the game applies for knockback
             local function CleanForces()
                 for _, v in pairs(hrp:GetChildren()) do
@@ -478,7 +475,6 @@ Killer:AddSwitch("Anti Fling", function(state)
                     end
                 end
             end
-
             -- Main loop – only cancels high horizontal velocity (knockback)
             local conn
             conn = RunService.Heartbeat:Connect(function()
@@ -486,20 +482,16 @@ Killer:AddSwitch("Anti Fling", function(state)
                     if conn then conn:Disconnect() end
                     return
                 end
-
                 CleanForces()
-
                 local vel = hrp.AssemblyLinearVelocity
                 local horizontal = Vector3.new(vel.X, 0, vel.Z)
                 local speed = horizontal.Magnitude
-
                 -- Only cancel if it's clearly knockback (high speed) and player is not intentionally moving fast
                 if speed > 45 and hum.MoveDirection.Magnitude < 0.1 then
                     hrp.AssemblyLinearVelocity = Vector3.new(0, vel.Y, 0) -- keep vertical (jump/fall)
                 end
             end)
         end
-
         -- Apply on current character + future respawns
         if LP.Character then
             ApplyAntiKnockback(LP.Character)
@@ -507,6 +499,9 @@ Killer:AddSwitch("Anti Fling", function(state)
         LP.CharacterAdded:Connect(ApplyAntiKnockback)
     end
 end)
+
+-- Auto-activate
+AntiFlingSwitch:Set(true)
 
 
 Killer:AddSwitch("Hide Frames", function(bool)
