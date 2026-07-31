@@ -168,14 +168,6 @@ Top.ImageColor3 = Color3.fromRGB(0, 0, 0)
 Top.ScaleType = Enum.ScaleType.Slice
 Top.SliceCenter = Rect.new(12, 12, 12, 12)
 
-Skull.Name = "Skull"
-Skull.Parent = Window
-Skull.BackgroundTransparency = 1
-Skull.Position = UDim2.new(0, 32, 0, 6)
-Skull.Size = UDim2.new(0, 20, 0, 20)
-Skull.ZIndex = 3
-Skull.Image = "rbxassetid://117660103744961"
-Skull.ScaleType = Enum.ScaleType.Fit
 
 Tabs.Name = "Tabs"
 Tabs.Parent = Window
