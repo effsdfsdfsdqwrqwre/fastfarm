@@ -339,7 +339,7 @@ end)
 
 -- Start Kill with list of targets
 local kill = false
-Killer:AddSwitch("Start Kill Target", function(state)
+Killer:AddSwitch("Kill Blacklist", function(state)
     kill = state
     task.spawn(function()
         while kill do
@@ -408,7 +408,7 @@ Players.PlayerRemoving:Connect(function(player)
     end
 end)
 
-Killer:AddSwitch("View Player", function(bool)
+Killer:AddSwitch("Spectate", function(bool)
     spying = bool
     if not spying then
         local cam = workspace.CurrentCamera
