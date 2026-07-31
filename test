@@ -16,7 +16,7 @@ local window = library:AddWindow("                     INVINCIBLE | PRIVATE KILL
 
 
 
-local Killer = window:AddTab("Killer")
+local Killer = window:AddTab("  Killer  ")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local playerWhitelist = {}
@@ -1191,7 +1191,7 @@ end)
 
 
 -- ========== THIS WAS MISSING ==========
-local clanTab = window:AddTab("War")
+local clanTab = window:AddTab("  War  ")
 -- ======================================
 
 -- ====================== VARIABLES ======================
@@ -1596,7 +1596,7 @@ else
     warn("GodmodeTab is nil")
 end
 
-local GodmodeTab = window:AddTab("Godmode")
+local GodmodeTab = window:AddTab("  Godmode  ")
 
 GodmodeTab:AddLabel("PACK SPAM & PETS").TextSize = 30
 
@@ -1871,7 +1871,7 @@ end
 
 
 
-local SpecsTab = window:AddTab("Spec")
+local SpecsTab = window:AddTab("  Spec  ")
 
 SpecsTab:AddLabel("————————————————————————————")
 
@@ -2188,7 +2188,7 @@ end)
 
 
 
-local miscTab = window:AddTab("Misc")
+local miscTab = window:AddTab("  Misc  ")
 
 
 
