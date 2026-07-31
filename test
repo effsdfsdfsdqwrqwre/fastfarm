@@ -1,8 +1,8 @@
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/test%20ui", true))() 
 
-local window = library:AddWindow("K1LLER HUB", {
+local window = library:AddWindow("", {
     main_color = Color3.fromRGB(0, 0, 0),
-    min_size = Vector2.new(460, 1200),
+    min_size = Vector2.new(450, 1160),
     can_resize = false,
 })
 
@@ -2191,7 +2191,20 @@ end)
 local miscTab = window:AddTab("  Misc  ")
 
 
-miscTab:AddButton("Anti Lag", function(State)  
+
+
+
+local titleLabel = miscTab:AddLabel("Main Features")
+titleLabel.TextSize = 18
+titleLabel.Font = Enum.Font.Bangers        
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+
+
+
+
+
+miscTab:AddSwitch("Anti Lag", function(State)  
     local lighting = game:GetService("Lighting")  
     if State then  
         for _, gui in pairs(LocalPlayer.PlayerGui:GetChildren()) do  
@@ -2232,7 +2245,7 @@ miscTab:AddButton("Anti Lag", function(State)
     end  
 end)
 
-miscTab:AddSwitch("Hide All Frames", function(bool)  
+miscTab:AddSwitch("Hide Frames", function(bool)  
     local rSto = game:GetService("ReplicatedStorage")  
     for _, obj in pairs(rSto:GetChildren()) do  
         if obj.Name:match("Frame$") then  
@@ -2240,72 +2253,6 @@ miscTab:AddSwitch("Hide All Frames", function(bool)
         end  
     end  
 end)
-
-
-local itemList = {  
-    "Tropical Shake",  
-    "Energy Shake",  
-    "Protein Bar",  
-    "TOUGH Bar",  
-    "Protein Shake",  
-    "ULTRA Shake",  
-    "Protein Egg"  
-}  
-  
-local function formatEventName(itemName)  
-    local parts = {}  
-    for word in itemName:gmatch("%S+") do  
-        table.insert(parts, word:lower())  
-    end  
-    for i = 2, #parts do  
-        parts[i] = parts[i]:sub(1, 1):upper() .. parts[i]:sub(2)  
-    end  
-    return table.concat(parts)  
-end  
-  
-local function activateRandomItems(count)  
-    local shuffledItems = {}  
-    for _, item in ipairs(itemList) do  
-        table.insert(shuffledItems, item)  
-    end  
-    for i = #shuffledItems, 2, -1 do  
-        local j = math.random(i)  
-        shuffledItems[i], shuffledItems[j] = shuffledItems[j], shuffledItems[i]  
-    end  
-    for i = 1, math.min(count, #shuffledItems) do  
-        local tool =  
-            player.Character:FindFirstChild(shuffledItems[i]) or player.Backpack:FindFirstChild(shuffledItems[i])  
-        if tool then  
-            local eventName = formatEventName(shuffledItems[i])  
-            player.muscleEvent:FireServer(eventName, tool)  
-        end  
-    end  
-end  
-  
-local eatingRunning = false  
-task.spawn(  
-    function()  
-        while true do  
-            if eatingRunning then  
-                activateRandomItems(4)  
-                task.wait(0.5)  
-            else  
-                task.wait(0.5)  
-            end  
-        end  
-    end  
-)  
-  
-miscTab:AddButton(  
-    "Eat Everything",  
-    function(state)  
-        eatingRunning = state  
-        if state then  
-            activateRandomItems(4)  
-        end  
-    end  
-)  
-
 
 
 
