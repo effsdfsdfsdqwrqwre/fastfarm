@@ -1,6 +1,6 @@
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))() 
 
-local window = library:AddWindow("KILLER V2", {
+local window = library:AddWindow("           KILLER V2", {
     main_color = Color3.fromRGB(0, 0, 0),
     min_size = Vector2.new(450, 1160),
     can_resize = false,
@@ -1596,7 +1596,21 @@ else
     warn("GodmodeTab is nil")
 end
 
-local GodmodeTab = window:AddTab("  Godmode  ")
+local packspa = window:AddTab("  Packs  ")
+
+
+
+
+local titleLabel = packspa:AddLabel("Pack Spamming")
+titleLabel.TextSize = 18
+titleLabel.Font = Enum.Font.Bangers        
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+
+
+
+
+
 
 
 
@@ -1665,7 +1679,7 @@ local function getPets(folder, name)
     return t
 end
 
-GodmodeTab:AddButton("Start Pack Spam", function()
+packspa:AddButton("Start Pack Spam", function()
     if running then return end
     running = true
 
@@ -1723,7 +1737,7 @@ GodmodeTab:AddButton("Start Pack Spam", function()
     end)
 end)
 
-GodmodeTab:AddButton("Stop Pack Spam", function()
+packspa:AddButton("Stop Pack Spam", function()
     running = false
     print("[PackSpam]: Stopped")
 end)
@@ -1826,8 +1840,8 @@ local function EquipMightyMonsters()
     end
 end
 
-if GodmodeTab then
-    GodmodeTab:AddButton("Equip Health Packs", function()
+if packspa then
+    packspa:AddButton("Equip Health Packs", function()
         UnequipAll()
         task.wait(0.05)
         EquipMightyMonsters()
@@ -1859,14 +1873,14 @@ local function EquipWildWizards()
     end
 end
 
-if GodmodeTab then
-    GodmodeTab:AddButton("Equip Damage Packs", function()
+if packspa then
+    packspa:AddButton("Equip Damage Packs", function()
         UnequipAll()
         task.wait(0.05)
         EquipWildWizards()
     end)
 else
-    warn("GodmodeTab is nil")
+    warn("packspa is nil")
 end
 
 
