@@ -60,7 +60,8 @@ end)
 
 
 
-local Killer = window:AddTab("KILLING")
+
+local Killer = window:AddTab("Killer")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local playerWhitelist = {}
@@ -1235,7 +1236,7 @@ end)
 
 
 -- ========== THIS WAS MISSING ==========
-local clanTab = window:AddTab("WAR")
+local clanTab = window:AddTab("War")
 -- ======================================
 
 -- ====================== VARIABLES ======================
@@ -1825,17 +1826,6 @@ local function equipPet(petName)
     end
 end
 
-
-
-
-local titleLabel = Killer:AddLabel("Pack Select")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-
-
-
-
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -1924,7 +1914,9 @@ else
     warn("GodmodeTab is nil")
 end
 
-local SpecsTab = window:AddTab("PLAYER STATS")
+
+
+local SpecsTab = window:AddTab("Spec")
 
 SpecsTab:AddLabel("————————————————————————————")
 
@@ -2074,13 +2066,8 @@ task.spawn(function()
     end
 end)
 
-local titleLabel = SpecsTab:AddLabel("PLAYER STATS")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpecsTab:AddLabel("————————————————————————————")
 --// Make sure these are at the top
-
-
 local Player = game.Players.LocalPlayer
 
 --// Helper functions
@@ -2233,4 +2220,4 @@ task.spawn(function()
 		updateAdvancedStats(playerToInspect)  -- playerToInspect should be set elsewhere
 		task.wait(0.1)
 	end
-end)vvb
+end)
