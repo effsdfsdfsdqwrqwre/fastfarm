@@ -2187,62 +2187,48 @@ end)
 
 
 
-
 local miscTab = window:AddTab("  Misc  ")
-
-
-
-
 
 local titleLabel = miscTab:AddLabel("Misc Features")
 titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-local titleLabel = miscTab:AddLabel("Made By Invincible")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
+titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-Misc:AddButton("Anti Lag", function()
-    for _, v in pairs(game:GetDescendants()) do
-        if v:IsA("BasePart") and not v:IsA("MeshPart") then
-            v.Material = Enum.Material.SmoothPlastic
-            if v.Parent and (v.Parent:FindFirstChild("Humanoid") or v.Parent.Parent:FindFirstChild("Humanoid")) then
-            else
-                v.Reflectance = 0
-            end
+local creditLabel = miscTab:AddLabel("Made By Invincible")
+creditLabel.TextSize = 18
+creditLabel.Font = Enum.Font.Bangers
+creditLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+-- Hide Kill Frames
+miscTab:AddSwitch("Hide Kill Frames", function(bool)
+    local rSto = game:GetService("ReplicatedStorage")
+    for _, obj in pairs(rSto:GetChildren()) do
+        if obj.Name:match("Frame$") then
+            obj.Visible = not bool
         end
     end
-
-
-
-miscTab:AddSwitch("Hide Kill Frames", function(bool)  
-    local rSto = game:GetService("ReplicatedStorage")  
-    for _, obj in pairs(rSto:GetChildren()) do  
-        if obj.Name:match("Frame$") then  
-            obj.Visible = not bool  
-        end  
-    end  
 end)
 
+-- Anti Lag + Night/Day (combined)
 local isNight = false
 
-Misc:AddButton("Anti Lag", function()
+miscTab:AddSwitch("Anti Lag", function(bool)
+    -- Anti Lag
     for _, v in pairs(game:GetDescendants()) do
         if v:IsA("BasePart") and not v:IsA("MeshPart") then
             v.Material = Enum.Material.SmoothPlastic
-            if v.Parent and (v.Parent:FindFirstChild("Humanoid") or v.Parent.Parent:FindFirstChild("Humanoid")) then
-            else
+            if not (v.Parent and (v.Parent:FindFirstChild("Humanoid") or v.Parent.Parent:FindFirstChild("Humanoid"))) then
                 v.Reflectance = 0
             end
         end
     end
 
-    isNight = not isNight
+    -- Toggle Night/Day
+    isNight = bool
     if isNight then
-        game.Lighting.ClockTime = 0 
+        game.Lighting.ClockTime = 0
     else
-        game.Lighting.ClockTime = 12 
+        game.Lighting.ClockTime = 12
     end
 end)
 
