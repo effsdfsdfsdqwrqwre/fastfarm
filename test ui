@@ -193,7 +193,7 @@ Title.Size = UDim2.new(0, 300, 0, 35)
 Title.Font = Enum.Font.Bangers
 Title.Text = "PRIVATE KILLER"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 20
+Title.TextSize = 16
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.TextStrokeTransparency = 0.7
 Title.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
@@ -214,7 +214,7 @@ TabButtons.Name = "TabButtons"
 TabButtons.Parent = TabSelection
 TabButtons.BackgroundColor3 = Color3.new(1, 1, 1)
 TabButtons.BackgroundTransparency = 1
-TabButtons.Size = UDim2.new(1, 0, 1, 0)
+TabButtons.Size = UDim2.new(1, 1, 1, 1)
 
 UIListLayout.Parent = TabButtons
 UIListLayout.FillDirection = Enum.FillDirection.Horizontal
