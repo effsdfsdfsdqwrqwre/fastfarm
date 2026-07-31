@@ -174,7 +174,7 @@ Skull.BackgroundTransparency = 1
 Skull.Position = UDim2.new(0, 32, 0, 6)
 Skull.Size = UDim2.new(0, 20, 0, 20)
 Skull.ZIndex = 3
-Skull.Image = "rbxassetid://117660103744961"
+Skull.Image = "rbxassetid://118415473466702"
 Skull.ScaleType = Enum.ScaleType.Fit
 
 Tabs.Name = "Tabs"
