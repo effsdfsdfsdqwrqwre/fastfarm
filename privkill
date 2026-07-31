@@ -11,7 +11,11 @@ local window = library:AddWindow("INVINCIBLE PRIVATE KILLING", {
 })
 
 
-local Killer = window:AddTab("Killer")
+
+
+
+
+local Killer = window:AddTab("  Killer  ")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local playerWhitelist = {}
@@ -1186,7 +1190,7 @@ end)
 
 
 -- ========== THIS WAS MISSING ==========
-local clanTab = window:AddTab("War")
+local clanTab = window:AddTab("  War  ")
 -- ======================================
 
 -- ====================== VARIABLES ======================
@@ -1591,7 +1595,7 @@ else
     warn("GodmodeTab is nil")
 end
 
-local GodmodeTab = window:AddTab("Godmode")
+local GodmodeTab = window:AddTab("  Godmode  ")
 
 GodmodeTab:AddLabel("PACK SPAM & PETS").TextSize = 30
 
@@ -1812,7 +1816,7 @@ local function EquipMightyMonsters()
             remote:FireServer("equipPet", pet)
             count += 1
 
-            if count >= 7 then
+            if count >= 8 then
                 break
             end
 
@@ -1845,7 +1849,7 @@ local function EquipWildWizards()
             remote:FireServer("equipPet", pet)
             count += 1
 
-            if count >= 7 then
+            if count >= 8 then
                 break
             end
 
@@ -1864,32 +1868,9 @@ else
     warn("GodmodeTab is nil")
 end
 
-GodmodeTab:AddSwitch("HP Buff", function(state)
-    local Players = game:GetService("Players")
-    local LocalPlayer = Players.LocalPlayer
-
-    local running = state
-
-    task.spawn(function()
-        while running do
-            task.wait(0.25)
-
-            local character = LocalPlayer.Character
-            if not character then continue end
-
-            local humanoid = character:FindFirstChildOfClass("Humanoid")
-            if not humanoid then continue end
-
-            pcall(function()
-                humanoid.MaxHealth = 100
-                humanoid.Health = 100
-            end)
-        end
-    end)
-end)
 
 
-local SpecsTab = window:AddTab("Spec")
+local SpecsTab = window:AddTab("  Spec  ")
 
 SpecsTab:AddLabel("————————————————————————————")
 
@@ -2196,3 +2177,56 @@ task.spawn(function()
 end)
 
 
+
+
+
+
+
+
+
+
+
+local miscTab = window:AddTab("  Misc  ")
+
+local titleLabel = miscTab:AddLabel("Misc Features")
+titleLabel.TextSize = 18
+titleLabel.Font = Enum.Font.Bangers
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+local creditLabel = miscTab:AddLabel("Made By Invincible")
+creditLabel.TextSize = 18
+creditLabel.Font = Enum.Font.Bangers
+creditLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+-- Hide Kill Frames
+miscTab:AddSwitch("Hide Kill Frames", function(bool)
+    local rSto = game:GetService("ReplicatedStorage")
+    for _, obj in pairs(rSto:GetChildren()) do
+        if obj.Name:match("Frame$") then
+            obj.Visible = not bool
+        end
+    end
+end)
+
+-- Anti Lag + Night/Day (combined)
+local isNight = false
+
+miscTab:AddSwitch("Anti Lag", function(bool)
+    -- Anti Lag
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("BasePart") and not v:IsA("MeshPart") then
+            v.Material = Enum.Material.SmoothPlastic
+            if not (v.Parent and (v.Parent:FindFirstChild("Humanoid") or v.Parent.Parent:FindFirstChild("Humanoid"))) then
+                v.Reflectance = 0
+            end
+        end
+    end
+
+    -- Toggle Night/Day
+    isNight = bool
+    if isNight then
+        game.Lighting.ClockTime = 0
+    else
+        game.Lighting.ClockTime = 12
+    end
+end)
