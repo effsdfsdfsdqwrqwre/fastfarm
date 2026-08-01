@@ -1485,10 +1485,106 @@ clanTab:AddSwitch("Kill UnderWater [ Auto Punch + Egg ]", function(Value)
     end
 end)
 
-local AntiStatueEnabled=false;local Players=game:GetService("Players");local LocalPlayer=Players.LocalPlayer;local TargetCFrame=CFrame.new(2.90918088,85.5627899,243.827026,0.999048233,-7.40480677e-10,0.0436196439,3.18042215e-09,1,-5.58673641e-08,-0.0436196439,5.5952917e-08,0.999048233);local function EquipTools()local c=LocalPlayer.Character local b=LocalPlayer.Backpack if not(c and b)then return end local p=b:FindFirstChild("Punch")or c:FindFirstChild("Punch")if p then p.Parent=c local a=p:FindFirstChild("attackTime")if a and a:IsA("NumberValue")then a.Value=0 end end local e=b:FindFirstChild("Protein Egg")or c:FindFirstChild("Protein Egg")if e then e.Parent=c end end;local function TeleportOnRespawn(character)if not AntiStatueEnabled then return end local hrp=character:WaitForChild("HumanoidRootPart")task.wait()hrp.CFrame=TargetCFrame EquipTools()end;Players.LocalPlayer.CharacterAdded:Connect(TeleportOnRespawn);clanTab:AddSwitch("Anti Statue [ Auto Punch + Egg ]",function(Value)AntiStatueEnabled=Value;_G.autoPunchActive=Value;if Value then local c=LocalPlayer.Character if c and c:FindFirstChild("HumanoidRootPart")then c.HumanoidRootPart.CFrame=TargetCFrame EquipTools()end task.spawn(function()while _G.autoPunchActive do EquipTools()local p=LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Punch")if p then local a=p:FindFirstChild("attackTime")if a and a:IsA("NumberValue")then a.Value=0 end p:Activate()end task.wait()end end)if _G.autoPunchRespawnConn then _G.autoPunchRespawnConn:Disconnect()end _G.autoPunchRespawnConn=LocalPlayer.CharacterAdded:Connect(function()task.wait(.3)if _G.autoPunchActive then EquipTools()end end)else if _G.autoPunchRespawnConn then _G.autoPunchRespawnConn:Disconnect()_G.autoPunchRespawnConn=nil end end end)
+local AntiStatueEnabled = false
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 
+local TargetCFrame = CFrame.new(
+	2.90918088, 85.5627899, 243.827026,
+	0.999048233, -7.40480677e-10, 0.0436196439,
+	3.18042215e-09, 1, -5.58673641e-08,
+	-0.0436196439, 5.5952917e-08, 0.999048233
+)
 
+local function TeleportOnRespawn(character)
+	if not AntiStatueEnabled then return end
+	local hrp = character:WaitForChild("HumanoidRootPart", 5)
+	if hrp then
+		task.wait(0.1)
+		hrp.CFrame = TargetCFrame
+	end
+end
 
+Players.LocalPlayer.CharacterAdded:Connect(TeleportOnRespawn)
+
+local function EquipTools(character)
+	if not character then return end
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	local backpack = LocalPlayer.Backpack
+	if not humanoid or not backpack then return end
+
+	-- Equip Punch + zero attack time
+	local punch = backpack:FindFirstChild("Punch") or character:FindFirstChild("Punch")
+	if punch and punch:IsA("Tool") then
+		humanoid:EquipTool(punch)
+		local attackTime = punch:FindFirstChild("attackTime")
+		if attackTime and attackTime:IsA("NumberValue") then
+			attackTime.Value = 0
+		end
+	end
+
+	-- Equip Protein Egg
+	local egg = backpack:FindFirstChild("Protein Egg") or character:FindFirstChild("Protein Egg")
+	if egg and egg:IsA("Tool") then
+		humanoid:EquipTool(egg)
+	end
+end
+
+clanTab:AddSwitch("Anti Statue [ Auto Punch + Egg ]", function(Value)
+	AntiStatueEnabled = Value
+	_G.autoPunchActive = Value
+
+	if Value then
+		-- Teleport immediately if already alive
+		local character = LocalPlayer.Character
+		if character and character:FindFirstChild("HumanoidRootPart") then
+			character.HumanoidRootPart.CFrame = TargetCFrame
+		end
+
+		-- Keep tools equipped + zero attack time
+		task.spawn(function()
+			while _G.autoPunchActive do
+				EquipTools(LocalPlayer.Character)
+				task.wait(0.15)
+			end
+		end)
+
+		-- Continuously activate Punch
+		task.spawn(function()
+			while _G.autoPunchActive do
+				local character = LocalPlayer.Character
+				local punch = character and character:FindFirstChild("Punch")
+				if punch and punch:IsA("Tool") then
+					punch:Activate()
+				end
+				task.wait()
+			end
+		end)
+
+		-- Re-equip on respawn
+		if not _G.autoPunchRespawnConn then
+			_G.autoPunchRespawnConn = LocalPlayer.CharacterAdded:Connect(function(char)
+				if not _G.autoPunchActive then return end
+				task.wait(0.4) -- wait for tools to load
+				EquipTools(char)
+			end)
+		end
+	else
+		-- Disable: put tools back in backpack
+		local character = LocalPlayer.Character
+		if character then
+			local punch = character:FindFirstChild("Punch")
+			if punch then punch.Parent = LocalPlayer.Backpack end
+			local egg = character:FindFirstChild("Protein Egg")
+			if egg then egg.Parent = LocalPlayer.Backpack end
+		end
+
+		if _G.autoPunchRespawnConn then
+			_G.autoPunchRespawnConn:Disconnect()
+			_G.autoPunchRespawnConn = nil
+		end
+	end
+end)
 
 
 
