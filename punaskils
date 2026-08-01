@@ -1487,57 +1487,6 @@ end)
 
 
 
-clanTab:AddSwitch("Anti Statue [ Auto Punch + Egg ]", function(enabled)
-    if enabled then
-        -- Anti Statue + Auto Punch + Egg logic here
-        -- (put your existing anti-statue / auto punch / egg code inside this block)
-
-        -- Teleport to ground on death
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local humanoid = character:WaitForChild("Humanoid")
-
-        local deathConnection
-        deathConnection = humanoid.Died:Connect(function()
-            task.wait(0.1) -- small delay so the death fully registers
-
-            local root = character:FindFirstChild("HumanoidRootPart")
-            if root then
-                -- Raycast straight down to find the ground
-                local rayOrigin = root.Position
-                local rayDirection = Vector3.new(0, -1000, 0)
-                local raycastParams = RaycastParams.new()
-                raycastParams.FilterDescendantsInstances = {character}
-                raycastParams.FilterType = Enum.RaycastFilterType.Exclude
-
-                local result = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
-
-                if result then
-                    -- Teleport slightly above the hit position
-                    root.CFrame = CFrame.new(result.Position + Vector3.new(0, 3, 0))
-                else
-                    -- Fallback: just drop Y a lot if no ground found
-                    root.CFrame = CFrame
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
