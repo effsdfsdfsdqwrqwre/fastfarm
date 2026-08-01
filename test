@@ -1404,7 +1404,7 @@ titleLabel.TextSize = 18
 titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-clanTab:AddSwitch("Kill UnderWater [ Punch + Egg ]", function(Value)
+clanTab:AddSwitch("Kill UnderWater [ Auto Punch + Egg ]", function(Value)
     if Value then
         -- Set Size 1
         local args = {
@@ -1487,78 +1487,83 @@ end)
 
 
 
-
 clanTab:AddSwitch("Anti Statue [ Auto Punch + Egg ]", function(Value)
     local player = game.Players.LocalPlayer
 
-    if enabled then
-        -- Anti Statue + Auto Punch + Egg logic here
+    if Value then
+        local function forceGround(char)
+            local root = char:FindFirstChild("HumanoidRootPart") or char:WaitForChild("HumanoidRootPart", 3)
+            if not root then return end
+
+            -- Kill all velocity first
+            root.AssemblyLinearVelocity = Vector3.zero
+            root.AssemblyAngularVelocity = Vector3.zero
+
+            local params = RaycastParams.new()
+            params.FilterType = Enum.RaycastFilterType.Exclude
+            params.FilterDescendantsInstances = {char}
+            params.IgnoreWater = true
+
+            -- Try multiple times because of the delayed spawn in Muscle Legends
+            for i = 1, 8 do
+                local origin = root.Position + Vector3.new(0, 8, 0)
+                local result = workspace:Raycast(origin, Vector3.new(0, -3000, 0), params)
+
+                if result then
+                    root.CFrame = CFrame.new(result.Position + Vector3.new(0, 3.5, 0))
+                else
+                    -- Fallback if raycast fails (common near some statue areas)
+                    root.CFrame = CFrame.new(root.Position.X, 20, root.Position.Z)
+                end
+
+                root.AssemblyLinearVelocity = Vector3.zero
+                task.wait(0.05)
+            end
+        end
 
         local function setupDeathTP(character)
-            local humanoid = character:WaitForChild("Humanoid")
-            
+            local humanoid = character:WaitForChild("Humanoid", 5)
+            if not humanoid then return end
+
             if getgenv().AntiStatueDeathConn then
                 getgenv().AntiStatueDeathConn:Disconnect()
             end
 
             getgenv().AntiStatueDeathConn = humanoid.Died:Connect(function()
-                task.wait(0.2)
-
-                -- Wait for respawn
-                local newCharacter = player.CharacterAdded:Wait()
-                local root = newCharacter:WaitForChild("HumanoidRootPart")
-
-                task.wait(0.1)
-
-                local rayOrigin = root.Position
-                local rayDirection = Vector3.new(0, -1000, 0)
-
-                local params = RaycastParams.new()
-                params.FilterType = Enum.RaycastFilterType.Exclude
-                params.FilterDescendantsInstances = {newCharacter}
-
-                local result = workspace:Raycast(
-                    rayOrigin,
-                    rayDirection,
-                    params
-                )
-
-                if result then
-                    root.CFrame = CFrame.new(
-                        result.Position + Vector3.new(0, 3, 0)
-                    )
-                else
-                    root.CFrame = CFrame.new(
-                        root.Position.X,
-                        10,
-                        root.Position.Z
-                    )
-                end
+                -- Wait for new character as fast as possible
+                local newChar = player.CharacterAdded:Wait()
+                
+                -- Run the force ground immediately + a couple extra times
+                task.spawn(function()
+                    forceGround(newChar)
+                    task.wait(0.15)
+                    forceGround(newChar)
+                    task.wait(0.2)
+                    forceGround(newChar)
+                end)
             end)
         end
 
+        -- Setup on current character
         if player.Character then
             setupDeathTP(player.Character)
         end
 
-        getgenv().AntiStatueCharacterConn = player.CharacterAdded:Connect(function(char)
-            setupDeathTP(char)
-        end)
+        -- Setup on future characters
+        if getgenv().AntiStatueCharacterConn then
+            getgenv().AntiStatueCharacterConn:Disconnect()
+        end
+        getgenv().AntiStatueCharacterConn = player.CharacterAdded:Connect(setupDeathTP)
 
     else
-        -- Disable everything
-
         if getgenv().AntiStatueDeathConn then
             getgenv().AntiStatueDeathConn:Disconnect()
             getgenv().AntiStatueDeathConn = nil
         end
-
         if getgenv().AntiStatueCharacterConn then
             getgenv().AntiStatueCharacterConn:Disconnect()
             getgenv().AntiStatueCharacterConn = nil
         end
-
-        -- Disable anti-statue / auto punch / egg logic here
     end
 end)
 
