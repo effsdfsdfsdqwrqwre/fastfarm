@@ -16,6 +16,8 @@ local window = library:AddWindow("                     OBLITERATOR KILLING", {
 
 
 
+
+
 local Killer = window:AddTab("  Killer  ")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -1404,7 +1406,7 @@ titleLabel.TextSize = 18
 titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-clanTab:AddSwitch("Kill UnderWater [ Punch + Egg ]", function(Value)
+clanTab:AddSwitch("Kill UnderWater [ Auto Punch + Egg ]", function(Value)
     if Value then
         -- Set Size 1
         local args = {
@@ -1488,6 +1490,135 @@ end)
 
 
 
+
+
+
+
+
+
+
+
+
+
+local AntiStatueEnabled = false
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local TargetCFrame = CFrame.new(
+	2.90918088, 85.5627899, 243.827026,
+	0.999048233, -7.40480677e-10, 0.0436196439,
+	3.18042215e-09, 1, -5.58673641e-08,
+	-0.0436196439, 5.5952917e-08, 0.999048233
+)
+
+local function TeleportOnRespawn(character)
+	if not AntiStatueEnabled then return end
+	local hrp = character:WaitForChild("HumanoidRootPart", 5)
+	if hrp then
+		task.wait(0.1)
+		hrp.CFrame = TargetCFrame
+	end
+end
+
+Players.LocalPlayer.CharacterAdded:Connect(TeleportOnRespawn)
+
+local function GetTool(name, character)
+	return LocalPlayer.Backpack:FindFirstChild(name) or (character and character:FindFirstChild(name))
+end
+
+local function EquipPunch(character)
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	local punch = GetTool("Punch", character)
+	if punch and punch:IsA("Tool") then
+		humanoid:EquipTool(punch)
+		local attackTime = punch:FindFirstChild("attackTime")
+		if attackTime and attackTime:IsA("NumberValue") then
+			attackTime.Value = 0
+		end
+	end
+end
+
+local function EquipEgg(character)
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	local egg = GetTool("Protein Egg", character)
+	if egg and egg:IsA("Tool") then
+		humanoid:EquipTool(egg)
+	end
+end
+
+clanTab:AddSwitch("Anti Statue [ Auto Punch + Egg ]", function(Value)
+	AntiStatueEnabled = Value
+	_G.autoPunchActive = Value
+
+	if Value then
+		-- Teleport immediately if alive
+		local character = LocalPlayer.Character
+		if character and character:FindFirstChild("HumanoidRootPart") then
+			character.HumanoidRootPart.CFrame = TargetCFrame
+		end
+
+		-- Main loop: keep Punch equipped + zero attack time
+		task.spawn(function()
+			while _G.autoPunchActive do
+				local char = LocalPlayer.Character
+				EquipPunch(char)
+				task.wait(0.1)
+			end
+		end)
+
+		-- Occasionally equip the egg for a short time
+		task.spawn(function()
+			while _G.autoPunchActive do
+				task.wait(2) -- every 2 seconds
+				if not _G.autoPunchActive then break end
+
+				local char = LocalPlayer.Character
+				EquipEgg(char)
+				task.wait(0.3) -- hold egg for 0.3s
+				EquipPunch(char) -- switch back to Punch
+			end
+		end)
+
+		-- Continuously activate Punch
+		task.spawn(function()
+			while _G.autoPunchActive do
+				local char = LocalPlayer.Character
+				local punch = char and char:FindFirstChild("Punch")
+				if punch and punch:IsA("Tool") then
+					punch:Activate()
+				end
+				task.wait()
+			end
+		end)
+
+		-- Re-equip on respawn
+		if not _G.autoPunchRespawnConn then
+			_G.autoPunchRespawnConn = LocalPlayer.CharacterAdded:Connect(function(char)
+				if not _G.autoPunchActive then return end
+				task.wait(0.5)
+				EquipPunch(char)
+			end)
+		end
+	else
+		-- Disable
+		local character = LocalPlayer.Character
+		if character then
+			local punch = character:FindFirstChild("Punch")
+			if punch then punch.Parent = LocalPlayer.Backpack end
+			local egg = character:FindFirstChild("Protein Egg")
+			if egg then egg.Parent = LocalPlayer.Backpack end
+		end
+
+		if _G.autoPunchRespawnConn then
+			_G.autoPunchRespawnConn:Disconnect()
+			_G.autoPunchRespawnConn = nil
+		end
+	end
+end)
 
 
 
@@ -2015,11 +2146,23 @@ task.spawn(function()
     end
 end)
 
-
-local titleLabel = SpecsTab:AddLabel("PLAYER HEALTH")
+local titleLabel = SpecsTab:AddLabel(" ")
 titleLabel.TextSize = 20
 titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+local titleLabel = SpecsTab:AddLabel("ADVANCED STATS")
+titleLabel.TextSize = 20
+titleLabel.Font = Enum.Font.Bangers
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+
+local titleLabel = SpecsTab:AddLabel(" ")
+titleLabel.TextSize = 20
+titleLabel.Font = Enum.Font.Bangers
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+
 
 
 --// Make sure these are at the top
