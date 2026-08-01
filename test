@@ -1488,7 +1488,7 @@ end)
 
 
 
-clanTab:AddSwitch("Anti Statue [ Auto Punch + Egg ]", function(enabled)
+clanTab:AddSwitch("Anti Statue [ Auto Punch + Egg ]", function(Value)
     local player = game.Players.LocalPlayer
 
     if enabled then
