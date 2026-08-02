@@ -1374,7 +1374,7 @@ refreshActive()
 
 
 
-clanTab:AddSwitch("Flinging Spot [ Auto Punch + Egg ]", function(Value)
+clanTab:AddButton("Flinging Spot", function(Value)
     local player = game.Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local root = character:WaitForChild("HumanoidRootPart")
@@ -1697,7 +1697,67 @@ end)
 
 
 
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
 
+local blockEatingEggs = false
+
+-- The switch
+clanTab:AddSwitch("Block Eating Eggs", function(Value)
+    blockEatingEggs = Value
+end)
+
+-- Method 1: Block the remote (most reliable)
+local eatEvent = ReplicatedStorage:WaitForChild("rEvents"):WaitForChild("eatEvent")
+local oldFireServer = eatEvent.FireServer
+
+eatEvent.FireServer = function(self, action, item, ...)
+    if blockEatingEggs and action == "eat" and item and (item.Name == "Protein Egg" or item.Name == "ProteinEgg") then
+        return -- Block it
+    end
+    return oldFireServer(self, action, item, ...)
+end
+
+-- Method 2: Also block equipping + Activate (for scripts that do it the tool way)
+local function blockTool(tool)
+    if tool.Name == "Protein Egg" or tool.Name == "ProteinEgg" then
+        tool.Activated:Connect(function()
+            if blockEatingEggs then
+                tool:Deactivate()
+            end
+        end)
+        
+        -- Prevent equipping while blocked
+        tool:GetPropertyChangedSignal("Parent"):Connect(function()
+            if blockEatingEggs and tool.Parent == LocalPlayer.Character then
+                tool.Parent = LocalPlayer.Backpack
+            end
+        end)
+    end
+end
+
+-- Apply to existing tools
+for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+    if tool:IsA("Tool") then
+        blockTool(tool)
+    end
+end
+
+-- Apply to future tools
+LocalPlayer.Backpack.ChildAdded:Connect(function(child)
+    if child:IsA("Tool") then
+        blockTool(child)
+    end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    char.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") then
+            blockTool(child)
+        end
+    end)
+end)
 
 
 
