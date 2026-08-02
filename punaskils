@@ -1,10 +1,35 @@
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))() 
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))()
 
 local window = library:AddWindow("                     OBLITERATOR KILLING", {
     main_color = Color3.fromRGB(0, 0, 0),
     min_size = Vector2.new(450, 1160),
     can_resize = false,
 })
+
+--// Anti AFK (auto starts)
+local VirtualUser = game:GetService("VirtualUser")
+
+game:GetService("Players").LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+
+--// Anti Lag (auto starts)
+for _, v in ipairs(game:GetDescendants()) do
+    if v:IsA("BasePart") and not v:IsA("MeshPart") then
+        v.Material = Enum.Material.SmoothPlastic
+
+        if not (
+            (v.Parent and v.Parent:FindFirstChild("Humanoid")) or
+            (v.Parent and v.Parent.Parent and v.Parent.Parent:FindFirstChild("Humanoid"))
+        ) then
+            v.Reflectance = 0
+        end
+    end
+end
+
+-- Force night
+game:GetService("Lighting").ClockTime = 0
 
 
 
@@ -1365,6 +1390,71 @@ end)
 waitForCharacter()
 refreshActive()
 
+
+
+
+
+
+
+
+
+
+clanTab:AddSwitch("Flinging Spot", function(Value)
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local root = character:WaitForChild("HumanoidRootPart")
+
+    if Value then
+        -- Teleport to the CFrame
+        root.CFrame = CFrame.new(
+            637.977356, 6030.86377, 788.313965,
+            0.333803862, 0.13127102, 0.933457494,
+            6.64315269e-09, 0.990256071, -0.139258534,
+            -0.94264257, 0.0464850441, 0.330551296
+        )
+
+        -- Lock position (anchor + freeze)
+        root.Anchored = true
+        if character:FindFirstChildOfClass("Humanoid") then
+            character.Humanoid.WalkSpeed = 0
+            character.Humanoid.JumpPower = 0
+        end
+    else
+        -- Unlock position
+        root.Anchored = false
+        if character:FindFirstChildOfClass("Humanoid") then
+            character.Humanoid.WalkSpeed = 16   -- default walkspeed
+            character.Humanoid.JumpPower = 50  -- default jumppower
+        end
+    end
+end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- ====================== SIZE SPAM ======================
 clanTab:AddButton("Spam Size", function()
     spamming = not spamming
@@ -1632,7 +1722,70 @@ end)
 
 
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Backpack = LocalPlayer:WaitForChild("Backpack")
 
+local blockEatingEggs = false
+
+clanTab:AddSwitch("Block Eating Eggs", function(Value)
+    blockEatingEggs = Value
+end)
+
+local function isProteinEgg(tool)
+    return tool:IsA("Tool") and (tool.Name == "Protein Egg" or tool.Name == "ProteinEgg")
+end
+
+local function setupTool(tool)
+    if not isProteinEgg(tool) then
+        return
+    end
+
+    tool.Activated:Connect(function()
+        if blockEatingEggs then
+            tool:Deactivate()
+
+            local character = LocalPlayer.Character
+            if character and tool.Parent == character then
+                tool.Parent = Backpack
+            end
+        end
+    end)
+
+    tool:GetPropertyChangedSignal("Parent"):Connect(function()
+        if not blockEatingEggs then
+            return
+        end
+
+        local character = LocalPlayer.Character
+        if character and tool.Parent == character then
+            task.defer(function()
+                if tool.Parent == character then
+                    tool.Parent = Backpack
+                end
+            end)
+        end
+    end)
+end
+
+for _, tool in ipairs(Backpack:GetChildren()) do
+    setupTool(tool)
+end
+
+Backpack.ChildAdded:Connect(setupTool)
+
+local function onCharacter(character)
+    for _, tool in ipairs(character:GetChildren()) do
+        setupTool(tool)
+    end
+    character.ChildAdded:Connect(setupTool)
+end
+
+if LocalPlayer.Character then
+    onCharacter(LocalPlayer.Character)
+end
+
+LocalPlayer.CharacterAdded:Connect(onCharacter)
 
 
 
@@ -2151,7 +2304,7 @@ titleLabel.TextSize = 20
 titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-local titleLabel = SpecsTab:AddLabel("ADVANCED STATS")
+local titleLabel = SpecsTab:AddLabel("_____________________________")
 titleLabel.TextSize = 20
 titleLabel.Font = Enum.Font.Bangers
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
