@@ -461,6 +461,12 @@ end)
 
 
 
+
+
+
+
+
+
 local titleLabel = Killer:AddLabel("____________________")
 titleLabel.TextSize = 18
 titleLabel.Font = Enum.Font.Bangers        
@@ -1709,6 +1715,60 @@ clanTab:AddSwitch("Anti Statue [ Auto Punch + Egg ]", function(Value)
 		end
 	end
 end)
+
+
+local comboSwitch = clanTab:AddSwitch("Kill while dead [  NaN + Egg + Punch ]", function(bool)
+    comboActive = bool
+    autoEquipPunch = bool   -- reuse the same state so it turns on/off with the switch
+   
+    if bool then
+        changeSpeedSizeRemote:InvokeServer("changeSize", 0/0)
+       
+        -- Protein Egg loop
+        eggLoop = task.spawn(function()
+            while comboActive do
+                ensureEggEquipped()
+                task.wait(0.2)
+            end
+        end)
+       
+        -- Auto Equip Punch loop
+        task.spawn(function()
+            while autoEquipPunch do
+                local punch = player.Backpack:FindFirstChild("Punch")
+                if punch and player.Character then
+                    punch.Parent = player.Character
+                end
+                task.wait(0.1)
+            end
+        end)
+       
+        characterAddedConn = player.CharacterAdded:Connect(function(newChar)
+            task.wait(0.5)
+            ensureEggEquipped()
+        end)
+       
+        ensureEggEquipped()
+       
+    else
+        if eggLoop then
+            task.cancel(eggLoop)
+            eggLoop = nil
+        end
+        if characterAddedConn then
+            characterAddedConn:Disconnect()
+            characterAddedConn = nil
+        end
+    end
+end)
+
+
+
+
+
+
+
+
 
 
 
