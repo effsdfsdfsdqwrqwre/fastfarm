@@ -493,81 +493,63 @@ end)
 
 
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 
-local LocalPlayer = Players.LocalPlayer
-local antiKnockbackEnabled = true
-local connection = nil
-local bodyVelocity = nil
 
-local function cleanup()
-    if connection then
-        connection:Disconnect()
-        connection = nil
-    end
-    if bodyVelocity and bodyVelocity.Parent then
-        bodyVelocity:Destroy()
-    end
-    bodyVelocity = nil
-end
 
-local function applyAntiKnockback(character)
-    cleanup()
 
-    local rootPart = character:WaitForChild("HumanoidRootPart", 5)
-    if not rootPart then return end
 
-    -- Strong BodyVelocity
-    bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.Name = "AntiFlingBV"
-    bodyVelocity.MaxForce = Vector3.new(math.huge, 0, math.huge)
-    bodyVelocity.Velocity = Vector3.zero
-    bodyVelocity.P = 1250
-    bodyVelocity.Parent = rootPart
 
-    -- Force every frame (this is the important part)
-    connection = RunService.Heartbeat:Connect(function()
-        if not antiKnockbackEnabled or not rootPart or not rootPart.Parent then
-            return
-        end
 
-        -- Keep BodyVelocity alive and strong
-        if bodyVelocity and bodyVelocity.Parent then
-            bodyVelocity.Velocity = Vector3.zero
-            bodyVelocity.MaxForce = Vector3.new(math.huge, 0, math.huge)
-        end
 
-        -- Directly kill horizontal velocity (this removes most knockback)
-        local vel = rootPart.AssemblyLinearVelocity
-        rootPart.AssemblyLinearVelocity = Vector3.new(0, vel.Y, 0)
-    end)
-end
 
-local function onCharacterAdded(character)
-    if antiKnockbackEnabled then
-        task.spawn(applyAntiKnockback, character)
-    end
-end
-
-if LocalPlayer.Character then
-    onCharacterAdded(LocalPlayer.Character)
-end
-LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
 
 local antiKnockbackSwitch = Killer:AddSwitch("Anti Fling", function(bool)
-    antiKnockbackEnabled = bool
-
     if bool then
-        if LocalPlayer.Character then
-            applyAntiKnockback(LocalPlayer.Character)
+        local playerName = game.Players.LocalPlayer.Name
+        local character = game.Workspace:FindFirstChild(playerName)
+        if character then
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            if rootPart then
+                local bodyVelocity = Instance.new("BodyVelocity")
+                bodyVelocity.MaxForce = Vector3.new(100000, 0, 100000)
+                bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                bodyVelocity.P = 1250
+                bodyVelocity.Parent = rootPart
+            end
         end
     else
-        cleanup()
+        local playerName = game.Players.LocalPlayer.Name
+        local character = game.Workspace:FindFirstChild(playerName)
+        if character then
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            if rootPart then
+                local existingVelocity = rootPart:FindFirstChild("BodyVelocity")
+                if existingVelocity and existingVelocity.MaxForce == Vector3.new(100000, 0, 100000) then
+                    existingVelocity:Destroy()
+                end
+            end
+        end
     end
 end)
-
 antiKnockbackSwitch:Set(true)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Killer:AddSwitch("Hide Frames", function(bool)
     local rSto = game:GetService("ReplicatedStorage")
