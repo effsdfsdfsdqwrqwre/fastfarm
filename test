@@ -16,6 +16,8 @@ local window = library:AddWindow("                     OBLITERATOR KILLING", {
 
 
 
+
+
 local Killer = window:AddTab("  Killer  ")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -1362,6 +1364,71 @@ end)
 
 waitForCharacter()
 refreshActive()
+
+
+
+
+
+
+
+
+
+
+clanTab:AddSwitch("Flinging Spot [ Auto Punch + Egg ]", function(Value)
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local root = character:WaitForChild("HumanoidRootPart")
+
+    if Value then
+        -- Teleport to the CFrame
+        root.CFrame = CFrame.new(
+            637.977356, 6030.86377, 788.313965,
+            0.333803862, 0.13127102, 0.933457494,
+            6.64315269e-09, 0.990256071, -0.139258534,
+            -0.94264257, 0.0464850441, 0.330551296
+        )
+
+        -- Lock position (anchor + freeze)
+        root.Anchored = true
+        if character:FindFirstChildOfClass("Humanoid") then
+            character.Humanoid.WalkSpeed = 0
+            character.Humanoid.JumpPower = 0
+        end
+    else
+        -- Unlock position
+        root.Anchored = false
+        if character:FindFirstChildOfClass("Humanoid") then
+            character.Humanoid.WalkSpeed = 16   -- default walkspeed
+            character.Humanoid.JumpPower = 50  -- default jumppower
+        end
+    end
+end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- ====================== SIZE SPAM ======================
 clanTab:AddButton("Spam Size", function()
