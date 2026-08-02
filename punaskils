@@ -503,60 +503,57 @@ end)
 
 
 
--- Put this near the top of your script
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
+Killer:AddSwitch("remove knockback", function(state)
+    getgenv().RemoveKnockback = state
 
-getgenv().AntiFling = true  -- starts enabled
-local antiFlingConnection = nil
+    if state then
+        local Players = game:GetService("Players")
+        local RunService = game:GetService("RunService")
+        local LP = Players.LocalPlayer
 
-local function enableAntiFling()
-    if antiFlingConnection then return end
+        local function ApplyAntiKnockback(char)
+            if not char then return end
+            local hrp = char:WaitForChild("HumanoidRootPart", 5)
+            local hum = char:WaitForChild("Humanoid", 5)
+            if not hrp or not hum then return end
 
-    antiFlingConnection = RunService.Heartbeat:Connect(function()
-        if not getgenv().AntiFling then return end
+            -- Destroy any BodyVelocity / LinearVelocity the game applies for knockback
+            local function CleanForces()
+                for _, v in pairs(hrp:GetChildren()) do
+                    if v:IsA("BodyVelocity") or v:IsA("BodyForce") or v:IsA("LinearVelocity") or v:IsA("VectorForce") then
+                        v:Destroy()
+                    end
+                end
+            end
 
-        local char = LocalPlayer.Character
-        if not char then return end
+            -- Main loop – only cancels high horizontal velocity (knockback)
+            local conn
+            conn = RunService.Heartbeat:Connect(function()
+                if not getgenv().RemoveKnockback or not char.Parent or not hrp.Parent then
+                    if conn then conn:Disconnect() end
+                    return
+                end
 
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
+                CleanForces()
 
-        local velocity = hrp.AssemblyLinearVelocity
-        if velocity.Magnitude > 40 then
-            hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                local vel = hrp.AssemblyLinearVelocity
+                local horizontal = Vector3.new(vel.X, 0, vel.Z)
+                local speed = horizontal.Magnitude
+
+                -- Only cancel if it's clearly knockback (high speed) and player is not intentionally moving fast
+                if speed > 45 and hum.MoveDirection.Magnitude < 0.1 then
+                    hrp.AssemblyLinearVelocity = Vector3.new(0, vel.Y, 0) -- keep vertical (jump/fall)
+                end
+            end)
         end
 
-        local angular = hrp.AssemblyAngularVelocity
-        if angular.Magnitude > 20 then
-            hrp.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+        -- Apply on current character + future respawns
+        if LP.Character then
+            ApplyAntiKnockback(LP.Character)
         end
-    end)
-end
-
-local function disableAntiFling()
-    if antiFlingConnection then
-        antiFlingConnection:Disconnect()
-        antiFlingConnection = nil
-    end
-end
-
--- Create the switch and force it ON
-local antiKnockbackSwitch = Killer:AddSwitch("Anti Fling", function(bool)
-    getgenv().AntiFling = bool
-
-    if bool then
-        enableAntiFling()
-    else
-        disableAntiFling()
+        LP.CharacterAdded:Connect(ApplyAntiKnockback)
     end
 end)
-
--- Auto turn the switch on
-antiKnockbackSwitch:Set(true)   -- if your UI library supports :Set()
-enableAntiFling()               -- start the protection immediately
-
 
 
 
