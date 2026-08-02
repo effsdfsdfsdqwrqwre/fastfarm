@@ -1976,13 +1976,26 @@ packspa:AddButton("Smart Pack Spam", function()
     end)
 end)
 
-packspa:AddButton("Stop Pack Spam", function()
+packspa:AddButton("Stop Spaming", function()
     running = false
     print("[PackSpam]: Stopped")
 end)
 
 
 
+
+
+
+
+
+
+
+
+
+local titleLabel = packspa:AddLabel("________________")
+titleLabel.TextSize = 18
+titleLabel.Font = Enum.Font.Bangers        
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 
 
