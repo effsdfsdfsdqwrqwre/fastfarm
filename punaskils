@@ -503,59 +503,85 @@ end)
 
 
 
-Killer:AddSwitch("remove knockback", function(state)
-    getgenv().RemoveKnockback = state
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
-    if state then
-        local Players = game:GetService("Players")
-        local RunService = game:GetService("RunService")
-        local LP = Players.LocalPlayer
+local LP = Players.LocalPlayer
 
-        local function ApplyAntiKnockback(char)
-            if not char then return end
-            local hrp = char:WaitForChild("HumanoidRootPart", 5)
-            local hum = char:WaitForChild("Humanoid", 5)
-            if not hrp or not hum then return end
+local HeartbeatConnection
+local CharacterConnection
 
-            -- Destroy any BodyVelocity / LinearVelocity the game applies for knockback
-            local function CleanForces()
-                for _, v in pairs(hrp:GetChildren()) do
-                    if v:IsA("BodyVelocity") or v:IsA("BodyForce") or v:IsA("LinearVelocity") or v:IsA("VectorForce") then
-                        v:Destroy()
-                    end
-                end
-            end
+local KNOCKBACK_THRESHOLD = 45
 
-            -- Main loop – only cancels high horizontal velocity (knockback)
-            local conn
-            conn = RunService.Heartbeat:Connect(function()
-                if not getgenv().RemoveKnockback or not char.Parent or not hrp.Parent then
-                    if conn then conn:Disconnect() end
-                    return
-                end
-
-                CleanForces()
-
-                local vel = hrp.AssemblyLinearVelocity
-                local horizontal = Vector3.new(vel.X, 0, vel.Z)
-                local speed = horizontal.Magnitude
-
-                -- Only cancel if it's clearly knockback (high speed) and player is not intentionally moving fast
-                if speed > 45 and hum.MoveDirection.Magnitude < 0.1 then
-                    hrp.AssemblyLinearVelocity = Vector3.new(0, vel.Y, 0) -- keep vertical (jump/fall)
-                end
-            end)
-        end
-
-        -- Apply on current character + future respawns
-        if LP.Character then
-            ApplyAntiKnockback(LP.Character)
-        end
-        LP.CharacterAdded:Connect(ApplyAntiKnockback)
+local function DisconnectConnections()
+    if HeartbeatConnection then
+        HeartbeatConnection:Disconnect()
+        HeartbeatConnection = nil
     end
+
+    if CharacterConnection then
+        CharacterConnection:Disconnect()
+        CharacterConnection = nil
+    end
+end
+
+local function ApplyAntiKnockback(Character)
+    if HeartbeatConnection then
+        HeartbeatConnection:Disconnect()
+    end
+
+    local HRP = Character:FindFirstChild("HumanoidRootPart") or Character:WaitForChild("HumanoidRootPart", 5)
+    local Humanoid = Character:FindFirstChild("Humanoid") or Character:WaitForChild("Humanoid", 5)
+
+    if not HRP or not Humanoid then
+        return
+    end
+
+    HeartbeatConnection = RunService.Heartbeat:Connect(function()
+        if not getgenv().RemoveKnockback then
+            DisconnectConnections()
+            return
+        end
+
+        -- Remove physics forces
+        for _, Obj in ipairs(HRP:GetChildren()) do
+            if Obj:IsA("BodyVelocity")
+            or Obj:IsA("BodyForce")
+            or Obj:IsA("LinearVelocity")
+            or Obj:IsA("VectorForce")
+            or Obj:IsA("BodyPosition")
+            or Obj:IsA("BodyGyro")
+            then
+                Obj:Destroy()
+            end
+        end
+
+        local Velocity = HRP.AssemblyLinearVelocity
+        local HorizontalVelocity = Vector3.new(Velocity.X, 0, Velocity.Z)
+
+        if HorizontalVelocity.Magnitude > KNOCKBACK_THRESHOLD
+            and Humanoid.MoveDirection.Magnitude < 0.1
+        then
+            HRP.AssemblyLinearVelocity = Vector3.new(0, Velocity.Y, 0)
+        end
+    end)
+end
+
+Killer:AddSwitch("Remove Knockback", function(State)
+    getgenv().RemoveKnockback = State
+
+    DisconnectConnections()
+
+    if not State then
+        return
+    end
+
+    if LP.Character then
+        ApplyAntiKnockback(LP.Character)
+    end
+
+    CharacterConnection = LP.CharacterAdded:Connect(ApplyAntiKnockback)
 end)
-
-
 
 
 
