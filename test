@@ -1717,96 +1717,50 @@ clanTab:AddSwitch("Anti Statue [ Auto Punch + Egg ]", function(Value)
 end)
 
 
-local function checkCharacter()
-    if not game.Players.LocalPlayer.Character then
-        repeat task.wait() until game.Players.LocalPlayer.Character
-    end
-    return game.Players.LocalPlayer.Character
-end
-
-local function gettool()
-    for _, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
-        if v.Name == "Punch" and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-            game.Players.LocalPlayer.Character.Humanoid:EquipTool(v)
-        end
-    end
-    game.Players.LocalPlayer.muscleEvent:FireServer("punch", "leftHand")
-    game.Players.LocalPlayer.muscleEvent:FireServer("punch", "rightHand")
-end
-
-local function isPlayerAlive(player)
-    return player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and
-           player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0
-end
-
-local function killPlayer(target)
-    if not isPlayerAlive(target) then return end
-    local character = checkCharacter()
-    if character and character:FindFirstChild("LeftHand") then
-        pcall(function()
-            firetouchinterest(target.Character.HumanoidRootPart, character.LeftHand, 0)
-            firetouchinterest(target.Character.HumanoidRootPart, character.LeftHand, 1)
-            gettool()
-        end)
-    end
-end
-
-local player = game:GetService("Players").LocalPlayer
-
-local comboActive = false
-local eggLoop, characterAddedConn
-
-local function ensureEggEquipped()
-    if not comboActive or not player.Character then return end
-    
-    local eggsInHand = 0
-    for _, item in ipairs(player.Character:GetChildren()) do
-        if item.Name == "Protein Egg" then
-            eggsInHand += 1
-            if eggsInHand > 1 then
-                item.Parent = player.Backpack
-            end
-        end
-    end
-    
-    if eggsInHand == 0 then
-        local egg = player.Backpack:FindFirstChild("Protein Egg")
-        if egg then
-            egg.Parent = player.Character
-        end
-    end
-end
-
-local comboSwitch = clanTab:AddSwitch("Kill while dead [ Auto Egg ]", function(bool)
+local comboSwitch = KillingTab:AddSwitch("Kill while dead [  NaN + Egg + Punch ]", function(bool)
     comboActive = bool
-    
+    autoEquipPunch = bool   -- reuse the same state so it turns on/off with the switch
+   
     if bool then
         changeSpeedSizeRemote:InvokeServer("changeSize", 0/0)
-        
+       
+        -- Protein Egg loop
         eggLoop = task.spawn(function()
             while comboActive do
                 ensureEggEquipped()
                 task.wait(0.2)
             end
         end)
-        
+       
+        -- Auto Equip Punch loop
+        task.spawn(function()
+            while autoEquipPunch do
+                local punch = player.Backpack:FindFirstChild("Punch")
+                if punch and player.Character then
+                    punch.Parent = player.Character
+                end
+                task.wait(0.1)
+            end
+        end)
+       
         characterAddedConn = player.CharacterAdded:Connect(function(newChar)
             task.wait(0.5)
             ensureEggEquipped()
         end)
-        
+       
         ensureEggEquipped()
-        
+       
     else
-        if eggLoop then task.cancel(eggLoop) end
-        if characterAddedConn then characterAddedConn:Disconnect() end
+        if eggLoop then
+            task.cancel(eggLoop)
+            eggLoop = nil
+        end
+        if characterAddedConn then
+            characterAddedConn:Disconnect()
+            characterAddedConn = nil
+        end
     end
 end)
-
-    local vu155 = false
-
-
-
 
 
 
