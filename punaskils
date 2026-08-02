@@ -503,36 +503,52 @@ end)
 
 
 
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local connection = nil
+
+local MAX_HORIZONTAL_SPEED = 50 
+
 local antiKnockbackSwitch = Killer:AddSwitch("Anti Fling", function(bool)
     if bool then
-        local playerName = game.Players.LocalPlayer.Name
-        local character = game.Workspace:FindFirstChild(playerName)
-        if character then
-            local rootPart = character:FindFirstChild("HumanoidRootPart")
-            if rootPart then
-                local bodyVelocity = Instance.new("BodyVelocity")
-                bodyVelocity.MaxForce = Vector3.new(100000, 0, 100000)
-                bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-                bodyVelocity.P = 1250
-                bodyVelocity.Parent = rootPart
-            end
+        -- clean up any previous connection just in case
+        if connection then
+            connection:Disconnect()
+            connection = nil
         end
-    else
-        local playerName = game.Players.LocalPlayer.Name
-        local character = game.Workspace:FindFirstChild(playerName)
-        if character then
-            local rootPart = character:FindFirstChild("HumanoidRootPart")
-            if rootPart then
-                local existingVelocity = rootPart:FindFirstChild("BodyVelocity")
-                if existingVelocity and existingVelocity.MaxForce == Vector3.new(100000, 0, 100000) then
-                    existingVelocity:Destroy()
-                end
+
+        connection = RunService.Heartbeat:Connect(function()
+            local character = player.Character
+            if not character then return end
+
+            local root = character:FindFirstChild("HumanoidRootPart")
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if not root or not humanoid or humanoid.Health <= 0 then return end
+
+            local vel = root.AssemblyLinearVelocity
+            local horizontal = Vector3.new(vel.X, 0, vel.Z)
+            local speed = horizontal.Magnitude
+
+            -- only fight the velocity when it is abnormally high (fling)
+            if speed > MAX_HORIZONTAL_SPEED then
+                -- completely kill the horizontal velocity (keeps Y so you can still jump / fall)
+                root.AssemblyLinearVelocity = Vector3.new(0, vel.Y, 0)
+
+                -- alternative (softer): scale it down instead of zeroing
+                -- root.AssemblyLinearVelocity = Vector3.new(vel.X * 0.05, vel.Y, vel.Z * 0.05)
             end
+        end)
+    else
+        if connection then
+            connection:Disconnect()
+            connection = nil
         end
     end
 end)
-antiKnockbackSwitch:Set(true)
 
+antiKnockbackSwitch:Set(true)
 
 
 
