@@ -503,107 +503,62 @@ end)
 
 
 
+getgenv().RemoveKnockback = true
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LP = Players.LocalPlayer
-local AntiKBConnection
-local CharConnection
 
-local function Cleanup()
-    if AntiKBConnection then
-        AntiKBConnection:Disconnect()
-        AntiKBConnection = nil
+local function ApplyAntiKnockback(char)
+    if not char then return end
+    local hrp = char:WaitForChild("HumanoidRootPart", 5)
+    local hum = char:WaitForChild("Humanoid", 5)
+    if not hrp or not hum then return end
+
+    local function CleanForces()
+        for _, v in pairs(hrp:GetChildren()) do
+            if v:IsA("BodyVelocity") or v:IsA("BodyForce") or v:IsA("LinearVelocity") or v:IsA("VectorForce") then
+                v:Destroy()
+            end
+        end
     end
-    if CharConnection then
-        CharConnection:Disconnect()
-        CharConnection = nil
-    end
-end
 
-local function ProtectCharacter(Character)
-    local HRP = Character:WaitForChild("HumanoidRootPart")
-    local Humanoid = Character:WaitForChild("Humanoid")
-    local LastVelocity = HRP.AssemblyLinearVelocity
-
-    AntiKBConnection = RunService.Heartbeat:Connect(function()
-        if not getgenv().RemoveKnockback then
-            Cleanup()
+    local conn
+    conn = RunService.Heartbeat:Connect(function()
+        if not getgenv().RemoveKnockback or not char.Parent or not hrp.Parent then
+            if conn then conn:Disconnect() end
             return
         end
 
-        -- Remove physics movers
-        for _, obj in ipairs(HRP:GetDescendants()) do
-            if obj:IsA("BodyVelocity")
-            or obj:IsA("BodyForce")
-            or obj:IsA("BodyPosition")
-            or obj:IsA("BodyGyro")
-            or obj:IsA("LinearVelocity")
-            or obj:IsA("VectorForce")
-            or obj:IsA("AlignPosition")
-            or obj:IsA("AlignOrientation")
-            then
-                obj:Destroy()
-            end
+        CleanForces()
+
+        local vel = hrp.AssemblyLinearVelocity
+        local horizontal = Vector3.new(vel.X, 0, vel.Z)
+        local speed = horizontal.Magnitude
+
+        if speed > 45 and hum.MoveDirection.Magnitude < 0.1 then
+            hrp.AssemblyLinearVelocity = Vector3.new(0, vel.Y, 0)
         end
-
-        local CurrentVelocity = HRP.AssemblyLinearVelocity
-        local Delta = CurrentVelocity - LastVelocity
-
-        -- Cancel sudden horizontal pushes
-        if Vector3.new(Delta.X, 0, Delta.Z).Magnitude > 8 then
-            HRP.AssemblyLinearVelocity = Vector3.new(
-                LastVelocity.X,
-                CurrentVelocity.Y,
-                LastVelocity.Z
-            )
-        end
-
-        -- Remove remaining horizontal launch velocity
-        local Horizontal = Vector3.new(
-            CurrentVelocity.X,
-            0,
-            CurrentVelocity.Z
-        )
-        if Horizontal.Magnitude > 60 then
-            HRP.AssemblyLinearVelocity = Vector3.new(
-                0,
-                CurrentVelocity.Y,
-                0
-            )
-        end
-
-        LastVelocity = HRP.AssemblyLinearVelocity
     end)
 end
-
--- Auto-activate
-getgenv().RemoveKnockback = true
-Cleanup()
 
 if LP.Character then
-    ProtectCharacter(LP.Character)
+    ApplyAntiKnockback(LP.Character)
 end
+LP.CharacterAdded:Connect(ApplyAntiKnockback)
 
-CharConnection = LP.CharacterAdded:Connect(function(char)
-    task.wait(1)
-    ProtectCharacter(char)
-end)
-
--- Optional: keep the switch so you can still toggle it off/on later
+-- Optional: still keep the switch so you can turn it off later
 Killer:AddSwitch("Anti Fling", function(state)
     getgenv().RemoveKnockback = state
-    Cleanup()
-    if not state then
-        return
-    end
-    if LP.Character then
-        ProtectCharacter(LP.Character)
-    end
-    CharConnection = LP.CharacterAdded:Connect(function(char)
-        task.wait(1)
-        ProtectCharacter(char)
-    end)
-end)
+end, true) -- true = starts enabled
+
+
+
+
+
+
+
+
 
 
 
