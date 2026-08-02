@@ -503,57 +503,59 @@ end)
 
 
 
-local RunService = game:GetService("RunService")
+-- Put this near the top of your script
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
 
-local player = Players.LocalPlayer
-local connection = nil
+getgenv().AntiFling = true  -- starts enabled
+local antiFlingConnection = nil
 
+local function enableAntiFling()
+    if antiFlingConnection then return end
+
+    antiFlingConnection = RunService.Heartbeat:Connect(function()
+        if not getgenv().AntiFling then return end
+
+        local char = LocalPlayer.Character
+        if not char then return end
+
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        local velocity = hrp.AssemblyLinearVelocity
+        if velocity.Magnitude > 40 then
+            hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+        end
+
+        local angular = hrp.AssemblyAngularVelocity
+        if angular.Magnitude > 20 then
+            hrp.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+        end
+    end)
+end
+
+local function disableAntiFling()
+    if antiFlingConnection then
+        antiFlingConnection:Disconnect()
+        antiFlingConnection = nil
+    end
+end
+
+-- Create the switch and force it ON
 local antiKnockbackSwitch = Killer:AddSwitch("Anti Fling", function(bool)
+    getgenv().AntiFling = bool
+
     if bool then
-        if connection then
-            connection:Disconnect()
-            connection = nil
-        end
-
-        connection = RunService.Heartbeat:Connect(function()
-            local character = player.Character
-            if not character then return end
-
-            local root = character:FindFirstChild("HumanoidRootPart")
-            local humanoid = character:FindFirstChildOfClass("Humanoid")
-            if not root or not humanoid or humanoid.Health <= 0 then return end
-
-            local vel = root.AssemblyLinearVelocity
-            local horizontal = Vector3.new(vel.X, 0, vel.Z)
-            local speed = horizontal.Magnitude
-
-            -- Allow up to 3× your current WalkSpeed + a big safety margin
-            -- This lets normal walking, running, and small game boosts through
-            local maxAllowed = math.max(humanoid.WalkSpeed * 3, 80)
-
-            if speed > maxAllowed then
-                -- Soft clamp instead of hard zero → feels much smoother
-                local direction = horizontal.Unit
-                root.AssemblyLinearVelocity = Vector3.new(
-                    direction.X * maxAllowed,
-                    vel.Y,          -- keep jump / fall
-                    direction.Z * maxAllowed
-                )
-            end
-        end)
+        enableAntiFling()
     else
-        if connection then
-            connection:Disconnect()
-            connection = nil
-        end
+        disableAntiFling()
     end
 end)
 
-antiKnockbackSwitch:Set(true)
-
-
-
+-- Auto turn the switch on
+antiKnockbackSwitch:Set(true)   -- if your UI library supports :Set()
+enableAntiFling()               -- start the protection immediately
 
 
 
