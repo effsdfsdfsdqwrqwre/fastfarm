@@ -509,11 +509,8 @@ local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local connection = nil
 
-local MAX_HORIZONTAL_SPEED = 50 
-
 local antiKnockbackSwitch = Killer:AddSwitch("Anti Fling", function(bool)
     if bool then
-        -- clean up any previous connection just in case
         if connection then
             connection:Disconnect()
             connection = nil
@@ -531,13 +528,18 @@ local antiKnockbackSwitch = Killer:AddSwitch("Anti Fling", function(bool)
             local horizontal = Vector3.new(vel.X, 0, vel.Z)
             local speed = horizontal.Magnitude
 
-            -- only fight the velocity when it is abnormally high (fling)
-            if speed > MAX_HORIZONTAL_SPEED then
-                -- completely kill the horizontal velocity (keeps Y so you can still jump / fall)
-                root.AssemblyLinearVelocity = Vector3.new(0, vel.Y, 0)
+            -- Allow up to 3× your current WalkSpeed + a big safety margin
+            -- This lets normal walking, running, and small game boosts through
+            local maxAllowed = math.max(humanoid.WalkSpeed * 3, 80)
 
-                -- alternative (softer): scale it down instead of zeroing
-                -- root.AssemblyLinearVelocity = Vector3.new(vel.X * 0.05, vel.Y, vel.Z * 0.05)
+            if speed > maxAllowed then
+                -- Soft clamp instead of hard zero → feels much smoother
+                local direction = horizontal.Unit
+                root.AssemblyLinearVelocity = Vector3.new(
+                    direction.X * maxAllowed,
+                    vel.Y,          -- keep jump / fall
+                    direction.Z * maxAllowed
+                )
             end
         end)
     else
@@ -549,7 +551,6 @@ local antiKnockbackSwitch = Killer:AddSwitch("Anti Fling", function(bool)
 end)
 
 antiKnockbackSwitch:Set(true)
-
 
 
 
