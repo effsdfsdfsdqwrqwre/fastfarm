@@ -43,7 +43,7 @@ game:GetService("Lighting").ClockTime = 0
 
 
 
-local Killer = window:AddTab("  Killer  ")
+local Killer = window:AddTab("     Killer     ")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local playerWhitelist = {}
@@ -1232,7 +1232,7 @@ end)
 
 
 -- ========== THIS WAS MISSING ==========
-local clanTab = window:AddTab("  War  ")
+local clanTab = window:AddTab("     War     ")        
 -- ======================================
 
 -- ====================== VARIABLES ======================
@@ -1962,7 +1962,7 @@ else
     warn("GodmodeTab is nil")
 end
 
-local packspa = window:AddTab("  Packs  ")
+local packspa = window:AddTab("     Packs     ")
 
 
 local Label = packspa:AddLabel("Pack Spamming")
@@ -2374,7 +2374,7 @@ end
 
 
 
-local SpecsTab = window:AddTab("  Spec  ")
+local SpecsTab = window:AddTab("     Stats     ")
 
 
 
