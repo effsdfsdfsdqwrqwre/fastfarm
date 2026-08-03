@@ -115,7 +115,7 @@ Window.ClipsDescendants = true
 Window.Position = UDim2.new(0, 20, 0, 20)
 Window.Selectable = true
 Window.Size = UDim2.new(0, 200, 0, 200)
-Window.Image = "rbxassetid://132957269126491"
+Window.Image = "rbxassetid://94406620827248"
 Window.ImageColor3 = Color3.new(0.1223529, 0.1262745, 0.1301961)
 Window.ScaleType = Enum.ScaleType.Stretch
 
@@ -143,7 +143,7 @@ Toggle.Position = UDim2.new(0, 2, 0, 0)
 Toggle.Rotation = 90
 Toggle.Size = UDim2.new(0, 26, 0, 26)
 Toggle.ZIndex = 2
-Toggle.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=11715543755"
+Toggle.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=113281701497572"
 
 Base.Name = "Base"
 Base.Parent = Bar
