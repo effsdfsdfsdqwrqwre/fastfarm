@@ -2371,9 +2371,16 @@ end
 
 local SpecsTab = window:AddTab("  Spec  ")
 
-SpecsTab:AddLabel("————————————————————————————").Font = Enum.Font.Bangers
-SpecsTab:AddLabel("Player Stats:").TextSize = 24
-SpecsTab:AddLabel("Player Stats:").Font = Enum.Font.Bangers
+local Label = SpecsTab:AddLabel("PLAYER STATS")
+Label.Font = Enum.Font.Bangers
+Label.TextSize = 30
+
+
+local Label = SpecsTab:AddLabel(" ")
+Label.Font = Enum.Font.Bangers
+Label.TextSize = 30
+
+
 
 local playerToInspect = nil
 local emojiMap = {
