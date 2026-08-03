@@ -6,7 +6,7 @@ local window = library:AddWindow("                        OBLITERATOR KILLING", 
     can_resize = false,
 })
 
---// Anti AFK (auto starts)
+
 local VirtualUser = game:GetService("VirtualUser")
 
 game:GetService("Players").LocalPlayer.Idled:Connect(function()
@@ -14,7 +14,7 @@ game:GetService("Players").LocalPlayer.Idled:Connect(function()
     VirtualUser:ClickButton2(Vector2.new())
 end)
 
---// Anti Lag (auto starts)
+
 for _, v in ipairs(game:GetDescendants()) do
     if v:IsA("BasePart") and not v:IsA("MeshPart") then
         v.Material = Enum.Material.SmoothPlastic
@@ -28,11 +28,7 @@ for _, v in ipairs(game:GetDescendants()) do
     end
 end
 
--- Force night
 game:GetService("Lighting").ClockTime = 0
-
-
-
 
 
 
