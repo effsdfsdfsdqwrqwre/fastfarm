@@ -1965,15 +1965,8 @@ end
 local packspa = window:AddTab("  Packs  ")
 
 
-
 local Label = packspa:AddLabel("Pack Spamming")
-
-Label.FontFace = Font.new(
-    "rbxasset://fonts/families/LuckiestGuy.json",
-    Enum.FontWeight.Regular,
-    Enum.FontStyle.Normal
-)
-
+Label.Font = Enum.Font.Bangers
 Label.TextSize = 30
 
 
