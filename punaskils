@@ -1969,7 +1969,7 @@ local packspa = window:AddTab("  Packs  ")
 local Label = packspa:AddLabel("Pack Spamming")
 
 Label.FontFace = Font.new(
-    "rbxasset://fonts/families/PermanentMarker.json",
+    "rbxasset://fonts/families/LuckiestGuy.json",
     Enum.FontWeight.Regular,
     Enum.FontStyle.Normal
 )
