@@ -1,1007 +1,693 @@
-local playerService = game:GetService("Players")
-local localPlayer = playerService.LocalPlayer
-local runService = game:GetService("RunService")
-local replicatedStorage = game:GetService("ReplicatedStorage")
-local virtualInput = game:GetService("VirtualInputManager")
-local lighting = game:GetService("Lighting")
-
-local whitelistUrl = "https://raw.githubusercontent.com/reaperXKSGIV/ml/refs/heads/main/Moon%20Hub/whitelist.lua"
-
-local function checkWhitelist(playerName)
-    local success, response = pcall(function()
-        return game:HttpGet(whitelistUrl)
+urn end
+    pcall(function()
+        if typeof(conn) == "RBXScriptConnection" and conn.Disconnect then
+            conn:Disconnect()
+        elseif type(conn) == "table" and conn.Disconnect then
+            conn:Disconnect()
+        end
     end)
-    if success and response then
-        for line in string.gmatch(response, "[^\r\n]+") do
-            if string.lower(line:match("^%s*(.-)%s*$")) == string.lower(playerName) then
-                return true
+    connections[name] = nil
+end
+
+local function disconnectAll()
+    for name, _ in pairs(connections) do
+        connections[name] = nil
+    end
+end
+
+local function disableAllAutoFeatures()
+    _G.AutoPunchToggle = false
+    _G.AutoProteinEgg = false
+    getgenv().AntiFlyActive = false
+    for name, _ in pairs(connections) do
+        disconnectByName(name)
+    end
+    connections = {}
+    disconnectAll()
+end
+
+local function startTinyIslandLoop()
+    globalState.TinyIslandLoop = true
+    task.spawn(function()
+        local targetCFrame = CFrame.new(-37.1, 9.2, 1919)
+        while globalState.TinyIslandLoop and not windowMinimized do
+            pcall(function()
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    char.HumanoidRootPart.CFrame = targetCFrame
+                end
+            end)
+            task.wait(0.2)
+        end
+    end)
+end
+
+local function startAutoProteinEgg()
+    _G.AutoProteinEgg = true
+    globalState.ProteinEgg = true
+
+    task.spawn(function()
+        local eggName = "Protein Egg"
+        local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        if not char then return end
+
+        local function makePartsVisible(obj)
+            for _, part in pairs(obj:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    pcall(function() part.Transparency = 0 end)
+                    pcall(function() part.LocalTransparencyModifier = 0 end)
+                end
             end
         end
-    end
-    return false
-end
 
-local function formatNumberShort(value)
-    value = math.abs(value)
-    if value >= 1e15 then return string.format("%.2fQ", value / 1e15) end
-    if value >= 1e12 then return string.format("%.2fT", value / 1e12) end
-    if value >= 1e9 then return string.format("%.2fB", value / 1e9) end
-    if value >= 1e6 then return string.format("%.2fM", value / 1e6) end
-    if value >= 1e3 then return string.format("%.2fK", value / 1e3) end
-    return string.format("%.0f", value)
-end
+        local function findEgg()
+            local backpack = LocalPlayer:FindFirstChild("Backpack")
+            if backpack then
+                local egg = backpack:FindFirstChild(eggName)
+                if egg then return egg end
+            end
+            local egg = StarterPack:FindFirstChild(eggName)
+            if egg then return egg end
+            egg = ReplicatedStorage:FindFirstChild(eggName)
+            return egg
+        end
 
-local function formatNumberSigned(value)
-    local isNegative = value < 0
-    local prefix = isNegative and "-" or ""
-    value = math.abs(value)
-    if value >= 1e15 then return prefix .. string.format("%.2fQa", value / 1e15) end
-    if value >= 1e12 then return prefix .. string.format("%.2fT", value / 1e12) end
-    if value >= 1e9 then return prefix .. string.format("%.2fB", value / 1e9) end
-    if value >= 1e6 then return prefix .. string.format("%.2fM", value / 1e6) end
-    if value >= 1e3 then return prefix .. string.format("%.2fK", value / 1e3) end
-    return prefix .. string.format("%.2f", value)
-end
+        local function equipEgg(egg)
+            local character = LocalPlayer.Character
+            if not character then return end
+            local humanoid = character:FindFirstChild("Humanoid")
+            if not humanoid then return end
 
-local function equipToolByName(toolName)
-    pcall(function()
-        local tool = localPlayer.Backpack:FindFirstChild(toolName)
-        if tool then
-            localPlayer.Character.Humanoid:EquipTool(tool)
+            pcall(function()
+                humanoid:EquipTool(egg)
+            end)
+            task.wait(0.1)
+
+            if not character:FindFirstChild(eggName) then
+                pcall(function()
+                    egg.Parent = character
+                end)
+                task.wait(0.1)
+            end
+
+            local equipped = character:FindFirstChild(eggName)
+            if equipped then
+                makePartsVisible(equipped)
+            end
+        end
+
+        local function disableScripts(obj)
+            for _, item in pairs(obj:GetDescendants()) do
+                if item:IsA("Script") then
+                    pcall(function() item:Destroy() end)
+                elseif item:IsA("LocalScript") then
+                    pcall(function() item.Disabled = true end)
+                elseif item:IsA("RemoteEvent") then
+                    pcall(function()
+                        item.FireServer = function() end
+                    end)
+                end
+            end
+        end
+
+        local function processProteinEgg()
+            if not _G.AutoProteinEgg then return end
+            local character = LocalPlayer.Character
+            if not character then return end
+
+            local egg = findEgg()
+            if egg then
+                equipEgg(egg)
+                disableScripts(egg)
+            end
+        end
+
+        local function monitorContainer(container)
+            if not container then return end
+            for _, tool in pairs(container:GetChildren()) do
+                if tool:IsA("Tool") and tool.Name == eggName then
+                    processProteinEgg()
+                end
+            end
+            return container.ChildAdded:Connect(function(child)
+                if child:IsA("Tool") and child.Name == eggName then
+                    task.defer(function()
+                        processProteinEgg()
+                    end)
+                end
+            end)
+        end
+
+        disconnectByName("MonitorBackpack")
+        disconnectByName("MonitorCharacter")
+        connections.MonitorBackpack = monitorContainer(
+            LocalPlayer:FindFirstChild("Backpack") or LocalPlayer:WaitForChild("Backpack")
+        )
+        connections.MonitorCharacter = monitorContainer(LocalPlayer.Character)
+
+        disconnectByName("CharacterAddedProtein")
+        connections.CharacterAddedProtein = LocalPlayer.CharacterAdded:Connect(function(newChar)
+            task.wait(1)
+            disconnectByName("MonitorBackpack")
+            disconnectByName("MonitorCharacter")
+            connections.MonitorBackpack = monitorContainer(
+                LocalPlayer:FindFirstChild("Backpack") or LocalPlayer:WaitForChild("Backpack")
+            )
+            connections.MonitorCharacter = monitorContainer(newChar)
+            processProteinEgg()
+        end)
+
+        disconnectByName("BackpackChildProtein")
+        local backpackRef = LocalPlayer:WaitForChild("Backpack")
+        connections.BackpackChildProtein = backpackRef.ChildAdded:Connect(function(child)
+            if _G.AutoProteinEgg and child.Name == eggName then
+                task.wait(0.2)
+                processProteinEgg()
+            end
+        end)
+
+        while _G.AutoProteinEgg and globalState.ProteinEgg do
+            pcall(processProteinEgg)
+            task.wait(0.5)
         end
     end)
 end
 
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "SCPPaidLoad"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = localPlayer:WaitForChild("PlayerGui")
+local function startAutoPunch()
+    _G.AutoPunchToggle = true
+    globalState.AutoPunch = true
 
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 380, 0, 170)
-mainFrame.Position = UDim2.new(0.5, -190, 0.5, -85)
-mainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = screenGui
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 14)
+    task.spawn(function()
+        local backpack = LocalPlayer:WaitForChild("Backpack")
+        local punchHand = "rightHand"
 
-local headerFrame = Instance.new("Frame")
-headerFrame.Size = UDim2.new(1, 0, 0, 50)
-headerFrame.BackgroundColor3 = Color3.fromRGB(139, 0, 0)
-headerFrame.BorderSizePixel = 0
-headerFrame.Parent = mainFrame
-Instance.new("UICorner", headerFrame).CornerRadius = UDim.new(0, 14)
+        local function getMuscleEvent()
+            return LocalPlayer:FindFirstChild("muscleEvent")
+        end
 
-local headerLabel = Instance.new("TextLabel")
-headerLabel.Size = UDim2.new(1, 0, 1, 0)
-headerLabel.BackgroundTransparency = 1
-headerLabel.Text = "Moon Hub | Private Script"
-headerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-headerLabel.TextSize = 20
-headerLabel.Font = Enum.Font.GothamBold
-headerLabel.Parent = headerFrame
+        disconnectByName("CharAddedForAutoPunch")
+        connections.CharAddedForAutoPunch = LocalPlayer.CharacterAdded:Connect(function(newChar)
+            if windowMinimized then return end
+            if connections.HumanoidResetHook ~= nil then return end
 
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, 0, 0, 40)
-statusLabel.Position = UDim2.new(0, 0, 0, 60)
-statusLabel.BackgroundTransparency = 1
-statusLabel.Text = "Checking whitelist..."
-statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-statusLabel.TextSize = 15
-statusLabel.Font = Enum.Font.Gotham
-statusLabel.Parent = mainFrame
+            local humanoid = newChar:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                disconnectByName("ResetDeath")
+                connections.ResetDeath = humanoid.Died:Connect(function()
+                    task.wait(0.5)
+                    disableAllAutoFeatures()
+                end)
+            end
+        end)
 
-local footerLabel = Instance.new("TextLabel")
-footerLabel.Size = UDim2.new(1, 0, 0, 30)
-footerLabel.Position = UDim2.new(0, 0, 0, 128)
-footerLabel.BackgroundTransparency = 1
-footerLabel.Text = "Private Can't Buy"
-footerLabel.TextColor3 = Color3.fromRGB(139, 0, 0)
-footerLabel.TextSize = 14
-footerLabel.Font = Enum.Font.GothamBold
-footerLabel.Parent = mainFrame
+        disconnectByName("BackpackChildForAutoPunch")
+        connections.BackpackChildForAutoPunch = LocalPlayer.ChildAdded:Connect(function(child)
+            if child.Name == "Backpack" then
+                backpack = child
+            end
+        end)
 
-task.wait()
+        while _G.AutoPunchToggle and globalState.AutoPunch do
+            local muscleEvent = getMuscleEvent()
+            local character = LocalPlayer.Character
 
-if localPlayer and localPlayer.Character then
-    localPlayer:WaitForChild("leaderstats", 15)
-    task.wait(1)
+            if character and character:FindFirstChild("Humanoid") then
+                local punchInBackpack = LocalPlayer:FindFirstChild("Backpack")
+                    and LocalPlayer.Backpack:FindFirstChild("Punch")
 
-    local isNotWhitelisted = not checkWhitelist(localPlayer.Name)
-    if isNotWhitelisted then
-        statusLabel.Text = "NOT WHITELISTED!"
-        statusLabel.TextColor3 = Color3.fromRGB(255, 60, 60)
-        task.wait(3)
-        screenGui:Destroy()
-        localPlayer:Kick("NOT WHITELISTED!")
+                if not character:FindFirstChild("Punch") and punchInBackpack then
+                    pcall(function()
+                        character.Humanoid:EquipTool(punchInBackpack)
+                    end)
+                end
+
+                if muscleEvent then
+                    pcall(function()
+                        muscleEvent:FireServer("punch", punchHand)
+                    end)
+                end
+            end
+            task.wait(0.0001)
+        end
+    end)
+end
+
+local function startAntiFly()
+    getgenv().AntiFlyActive = true
+    disconnectByName("AntiFly")
+    connections.AntiFly = RunService.Heartbeat:Connect(function()
+        local char = LocalPlayer.Character
+        if not char then return end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        if not humanoid then return end
+
+        local hitPart, hitPos = workspace:FindPartOnRay(
+            Ray.new(hrp.Position, Vector3.new(0, -500, 0)),
+            char
+        )
+
+        if hitPart then
+            local floorY = hitPos.Y
+            if hrp.Position.Y - floorY > 0.5 then
+                hrp.CFrame = CFrame.new(hrp.Position.X, floorY + 0.5, hrp.Position.Z)
+                humanoid.PlatformStand = true
+                humanoid.PlatformStand = false
+            end
+        end
+    end)
+end
+
+local function setupCharacterReset(char)
+    if not char then return end
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    disconnectByName("ResetDeath")
+    if humanoid then
+        connections.ResetDeath = humanoid.Died:Connect(function()
+            task.wait(0.5)
+            disableAllAutoFeatures()
+        end)
+    end
+end
+
+KillingTab:Toggle("Master Killing Toggle", false, "Enables all killing features at once", function(state)
+    windowMinimized = state
+    disconnectAll()
+
+    if not state then return end
+
+    pcall(function()
+        local rEvents = ReplicatedStorage:FindFirstChild("rEvents")
+        if rEvents then
+            local sizeRemote = rEvents:FindFirstChild("changeSpeedSizeRemote")
+            if sizeRemote and sizeRemote.InvokeServer then
+                pcall(function()
+                    sizeRemote:InvokeServer("changeSize", 0 / 0)
+                end)
+            end
+        end
+    end)
+
+    startAutoPunch()
+    startAutoProteinEgg()
+    startAntiFly()
+    startTinyIslandLoop()
+    disableAllAutoFeatures()
+
+    if LocalPlayer.Character then
+        setupCharacterReset(LocalPlayer.Character)
+    end
+
+    disconnectByName("CharacterAddedReset")
+    connections.CharacterAddedReset = LocalPlayer.CharacterAdded:Connect(function(newChar)
+        task.wait(0.5)
+        setupCharacterReset(newChar)
+    end)
+end)
+
+local autoTargetAttack = false
+KillingTab:Toggle("Auto Target Attack", false, "Automatically attack selected target", function(state)
+    autoTargetAttack = state
+    if not state then return end
+
+    task.spawn(function()
+        while autoTargetAttack do
+            local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+            if char then
+                local rightHand = char:FindFirstChild("RightHand")
+                local leftHand = char:FindFirstChild("LeftHand")
+
+                if targetMode and rightHand and leftHand then
+                    local targetPlayer = Players:FindFirstChild(targetMode)
+                    if targetPlayer then
+                        local targetChar = targetPlayer.Character
+                        local targetHRP = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+                        if targetHRP then
+                            pcall(function()
+                                firetouchinterest(rightHand, targetHRP, 1)
+                                firetouchinterest(leftHand, targetHRP, 1)
+                                firetouchinterest(rightHand, targetHRP, 0)
+                                firetouchinterest(leftHand, targetHRP, 0)
+                            end)
+                        end
+                    end
+                end
+                task.wait(0.05)
+            end
+        end
+    end)
+end)
+
+local viewPlayerEnabled = false
+KillingTab:Toggle("View Player", false, "Set camera to view target player", function(state)
+    viewPlayerEnabled = state
+    local camera = workspace.CurrentCamera
+
+    if state then
+        task.spawn(function()
+            while viewPlayerEnabled do
+                if targetHitbox then
+                    local targetPlayer = Players:FindFirstChild(targetHitbox)
+                    if targetPlayer and targetPlayer.Character then
+                        camera.CameraSubject = targetPlayer.Character
+                    end
+                end
+                task.wait(0.1)
+            end
+
+            local char = LocalPlayer.Character
+            if char then
+                camera.CameraSubject = char:FindFirstChild("Humanoid")
+            end
+        end)
+    else
+        if workspace.CurrentCamera then
+            local char = LocalPlayer.Character
+            workspace.CurrentCamera.CameraSubject = char and char:FindFirstChildOfClass("Humanoid")
+        end
+    end
+end)
+
+local function registerPlayer(player)
+    if player ~= LocalPlayer then
+        killTargets[player.DisplayName] = player.Name
+    end
+end
+
+local function unregisterPlayer(player)
+    killTargets[player.DisplayName] = nil
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+    registerPlayer(player)
+end
+
+Players.PlayerAdded:Connect(registerPlayer)
+Players.PlayerRemoving:Connect(unregisterPlayer)
+
+local targetLabel = KillingTab:Label("Target: NONE")
+local viewLabel = KillingTab:Label("Viewing: NONE")
+
+task.spawn(function()
+    while true do
+        local targetText = "Target: NONE"
+        if targetMode then
+            local foundPlayer = Players:FindFirstChild(targetMode)
+            if foundPlayer then
+                targetText = "Target: " .. foundPlayer.DisplayName
+            end
+        end
+        pcall(function() targetLabel:Set(targetText) end)
+
+        local viewText = "Viewing: NONE"
+        if targetHitbox then
+            local foundPlayer = Players:FindFirstChild(targetHitbox)
+            if foundPlayer then
+                viewText = "Viewing: " .. foundPlayer.DisplayName
+            end
+        end
+        pcall(function() viewLabel:Set(viewText) end)
+
+        task.wait(0.2)
+    end
+end)
+
+-- ============================================
+-- PET MANAGEMENT TAB
+-- ============================================
+local PetsTab = Window:Tab("Pets", "rbxassetid://10723415358")
+
+local petsFolder = LocalPlayer:WaitForChild("petsFolder")
+local hatchRemote = ReplicatedStorage:WaitForChild("rEvents"):WaitForChild("openEggRemote")
+local evolveRemote = ReplicatedStorage.rEvents:WaitForChild("evolvePetEvent")
+local tradeRemote = ReplicatedStorage.rEvents:WaitForChild("tradeRemote")
+local giftRemote = ReplicatedStorage.rEvents:WaitForChild("giftRemote")
+
+local selectedEgg = nil
+local selectedPet = nil
+local selectedGiftTarget = nil
+local petGiveAmount = 6
+local autoHatchEnabled = false
+local autoEvolveEnabled = false
+local autoGiftEnabled = false
+local autoGiftAllEnabled = false
+local isHatching = false
+local isEvolving = false
+local isGifting = false
+local isGiftingAll = false
+
+local function autoHatch()
+    if isHatching then return end
+    isHatching = true
+    while autoHatchEnabled do
+        if selectedEgg then
+            local eggObj = StarterPack:FindFirstChild(selectedEgg)
+            if eggObj then
+                local success, err = pcall(function()
+                    hatchRemote:InvokeServer(eggObj)
+                end)
+                if not success then
+                    warn("Auto Hatch Error: " .. tostring(err))
+                end
+            end
+        end
+        task.wait(0.1)
+    end
+    isHatching = false
+end
+
+local function giftPetByName(targetName, amount)
+    local petsContainer = LocalPlayer:FindFirstChild("petsFolder")
+    if not petsContainer then return end
+
+    local uniqueFolder = petsContainer:FindFirstChild("Unique")
+    if not uniqueFolder then return end
+
+    local given = 0
+    for _, pet in ipairs(uniqueFolder:GetChildren()) do
+        if pet.Name == targetName then
+            tradeRemote:FireServer("offerItem", pet)
+            task.wait(0.05)
+            given = given + 1
+            if given >= amount then break end
+        end
+    end
+end
+
+local function autoEvolve()
+    if isEvolving then return end
+    isEvolving = true
+    while autoEvolveEnabled do
+        if selectedPet then
+            local success, err = pcall(function()
+                evolveRemote:FireServer("evolvePet", selectedPet)
+            end)
+            if not success then
+                warn("Auto Evolve Error: " .. tostring(err))
+            end
+        end
+        task.wait(0.1)
+    end
+    isEvolving = false
+end
+
+local function attemptTrade(targetPlayer)
+    if not targetPlayer or not selectedPet then return end
+    pcall(function()
+        tradeRemote:FireServer("sendTradeRequest", targetPlayer)
+    end)
+    task.wait(0.2)
+    giftPetByName(selectedPet, petGiveAmount)
+    task.wait(0.1)
+    pcall(function()
+        tradeRemote:FireServer("acceptTrade")
+    end)
+end
+
+local function autoGift()
+    if isGifting then return end
+    isGifting = true
+    while autoGiftEnabled do
+        if selectedGiftTarget then
+            attemptTrade(selectedGiftTarget)
+        end
+        task.wait(0.5)
+    end
+    isGifting = false
+end
+
+local function autoGiftAll()
+    if isGiftingAll then return end
+    isGiftingAll = true
+    while autoGiftAllEnabled do
+        if selectedPet then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer then
+                    attemptTrade(player)
+                    task.wait(0.2)
+                end
+            end
+            task.wait(1)
+        end
+    end
+    isGiftingAll = false
+end
+
+PetsTab:Label("Pet Management")
+
+PetsTab:Dropdown("Select Pet", {}, nil, function(value)
+    selectedPet = value
+end)
+
+local petList = {
+    "Common Pet", "Uncommon Pet", "Rare Pet", "Epic Pet", "Legendary Pet",
+    "Mythic Pet", "Strong Pet", "Tribal Overlord", "Swift Samurai", "Iron Titan",
+    "Power Beast", "Golden Lion", "Crystal Eagle", "Shadow Wolf", "Fire Dragon",
+    "Ice Phoenix", "Storm Hawk", "Earth Golem", "Lava Bear", "Dark Knight",
+    "Ancient Warrior", "Cosmic Guardian", "Nebula Beast", "Star Hunter",
+    "Galaxy Lord", "Universe King", "Black Hole Beast", "Quantum Tiger",
+    "Time Walker", "Space Marine", "Void Hunter", "Eternal King",
+    "Infinity Beast", "Divine Lord", "Holy Beast", "Sacred Guardian"
+}
+
+for _, petName in ipairs(petList) do
+    selectedPet = petName
+end
+
+PetsTab:Toggle("Auto Hatch", false, "Automatically hatch selected egg", function(state)
+    autoHatchEnabled = state
+    if state then
+        task.spawn(autoHatch)
+    end
+end)
+
+PetsTab:Toggle("Auto Evolve", false, "Automatically evolve selected pet", function(state)
+    autoEvolveEnabled = state
+    if state then
+        task.spawn(autoEvolve)
+    end
+end)
+
+PetsTab:Label("Pet Trading")
+
+PetsTab:Dropdown("Select Player", {}, nil, function(playerName)
+    local foundPlayer = Players:FindFirstChild(playerName)
+    if foundPlayer then
+        selectedGiftTarget = foundPlayer
+    end
+end)
+
+local playerListDropdown = nil
+
+local function addPlayerToList(player)
+    if player ~= LocalPlayer then
+        if playerListDropdown then
+            playerListDropdown:Add(player.Name)
+        end
+    end
+end
+
+local function removePlayerFromList(player)
+    if player ~= LocalPlayer then
+        pcall(function()
+            if playerListDropdown then
+                playerListDropdown:Remove(player.Name)
+            end
+        end)
+    end
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+    addPlayerToList(player)
+end
+
+Players.PlayerAdded:Connect(addPlayerToList)
+Players.PlayerRemoving:Connect(removePlayerFromList)
+
+PetsTab:Toggle("Auto Gift", false, "Automatically gift to selected player", function(state)
+    autoGiftEnabled = state
+    if state then
+        task.spawn(autoGift)
+    end
+end)
+
+PetsTab:Toggle("Auto Gift All Players", false, "Gift to every player in server", function(state)
+    autoGiftAllEnabled = state
+    if state then
+        task.spawn(autoGiftAll)
+    end
+end)
+
+PetsTab:Label("Manual Trade: " .. tostring(petGiveAmount) .. " pets per trade")
+
+PetsTab:Button("Gift Selected Pet", function()
+    if selectedPet then
+        giftPetByName(selectedPet, petGiveAmount)
+    else
+        warn("Select a pet first.")
+    end
+end)
+
+PetsTab:Button("Send Gift to Selected Player", function()
+    if not selectedPet then
+        warn("Select a pet to give.")
+        return
+    end
+    if not selectedGiftTarget then
+        warn("Select a player to give to.")
         return
     end
 
-    statusLabel.Text = "Whitelisted! Loading hub..."
-    statusLabel.TextColor3 = Color3.fromRGB(0, 220, 100)
-    task.wait(1.5)
-    screenGui:Destroy()
-
-    local playerName = localPlayer.Name
-    local playerUserId = localPlayer.UserId
-    local muscleEvent = localPlayer:WaitForChild("muscleEvent")
-    local leaderstats = localPlayer:WaitForChild("leaderstats")
-    local rebirthsStat = leaderstats:WaitForChild("Rebirths")
-
-    local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/YoshiroScripts/Wspwsp/refs/heads/main/Decode", true))()
-    local mainWindow = library:AddWindow("              Moon Hub      | Private Script       |      Farming Script     |  Welcome ", {
-        main_color = Color3.fromRGB(0, 0, 0),
-        min_size = Vector2.new(700, 700),
-        can_resize = true,
-    })
-
-    local displayName = localPlayer.DisplayName or localPlayer.Name
-
-    local infoTab = mainWindow:AddTab("InfoTab")
-    local separator = string.rep("\xe2\x95\x90", 38)
-    infoTab:AddLabel(separator)
-
-    local welcomeLabel = infoTab:AddLabel("WELCOME TO MOON HUB PRIVATE")
-    welcomeLabel.TextSize = 28
-    task.spawn(function()
-        while true do
-            welcomeLabel.TextColor3 = Color3.fromHSV(tick() * 0.2 % 1, 0.9, 1)
-            task.wait(0.02)
-        end
-    end)
-
-    infoTab:AddLabel(separator)
-    infoTab:AddLabel("Made by: REAPER ||")
-    infoTab:AddLabel("Version: PRIVATE V1")
-    infoTab:AddLabel(separator)
-    infoTab:AddLabel("TABS: Stats | Pack Rebs | Speed Farm | Rocks | Gifting | Settings")
-
-    local statsTab = mainWindow:AddTab("STATS")
-    local strengthStat = leaderstats:WaitForChild("Strength")
-    local rebirthsStatRef = leaderstats:WaitForChild("Rebirths")
-    local killsStat = leaderstats:WaitForChild("Kills")
-    local durabilityStat = localPlayer:WaitForChild("Durability")
-    local agilityStat = localPlayer:WaitForChild("Agility")
-    local evilKarmaStat = localPlayer:WaitForChild("evilKarma")
-    local goodKarmaStat = localPlayer:WaitForChild("goodKarma")
-
-    local initialStrength = strengthStat.Value
-    local initialDurability = durabilityStat.Value
-    local initialRebirths = rebirthsStatRef.Value
-    local sessionStartTime = os.time()
-
-    statsTab:AddLabel("[ SESSION STATS ]")
-    local timeLabel = statsTab:AddLabel("Time in server: 0d 0h 0m 0s")
-    task.spawn(function()
-        while task.wait(1) do
-            local elapsed = os.time() - sessionStartTime
-            timeLabel.Text = string.format(
-                "Time in server: %dd %dh %dm %ds",
-                floorFn(elapsed / 86400),
-                floorFn(elapsed % 86400 / 3600),
-                floorFn(elapsed % 3600 / 60),
-                elapsed % 60
-            )
-        end
-    end)
-
-    statsTab:AddLabel(separator)
-    statsTab:AddLabel("[ YOUR STATS ]")
-
-    local strengthLabel = statsTab:AddLabel("Strength: 0 | Gained: 0")
-    local durabilityLabel = statsTab:AddLabel("Durability: 0 | Gained: 0")
-    local rebirthsLabel = statsTab:AddLabel("Rebirths: 0 | Gained: 0")
-    local killsLabel = statsTab:AddLabel("Kills: 0")
-    local agilityLabel = statsTab:AddLabel("Agility: 0")
-    local evilKarmaLabel = statsTab:AddLabel("Evil Karma: 0")
-    local goodKarmaLabel = statsTab:AddLabel("Good Karma: 0")
-
-    task.spawn(function()
-        while task.wait(0.5) do
-            pcall(function()
-                strengthLabel.Text = "Strength: " .. formatNumberShort(strengthStat.Value) .. " | Gained: " .. formatNumberShort(strengthStat.Value - initialStrength)
-                durabilityLabel.Text = "Durability: " .. formatNumberShort(durabilityStat.Value) .. " | Gained: " .. formatNumberShort(durabilityStat.Value - initialDurability)
-                rebirthsLabel.Text = "Rebirths: " .. formatNumberShort(rebirthsStatRef.Value) .. " | Gained: " .. formatNumberShort(rebirthsStatRef.Value - initialRebirths)
-                killsLabel.Text = "Kills: " .. formatNumberShort(killsStat.Value)
-                agilityLabel.Text = "Agility: " .. formatNumberShort(agilityStat.Value)
-                evilKarmaLabel.Text = "Evil Karma: " .. formatNumberShort(evilKarmaStat.Value)
-                goodKarmaLabel.Text = "Good Karma: " .. formatNumberShort(goodKarmaStat.Value)
-            end)
-        end
-    end)
-
-    statsTab:AddLabel(separator)
-    statsTab:AddLabel("[ RATE TRACKER (Strength & Durability) ]")
-    local strengthRateLabel = statsTab:AddLabel("Strength Rate: warming up...")
-    local durabilityRateLabel = statsTab:AddLabel("Durability Rate: warming up...")
-
-    local strengthSamples = {}
-    local durabilitySamples = {}
-    local rateTrackingStarted = false
-    local rateWindow = 10
-
-    task.spawn(function()
-        local lastCalcTime = tick()
-        while task.wait(0.05) do
-            pcall(function()
-                local now = tick()
-                local currentStrength = strengthStat.Value
-
-                if not rateTrackingStarted and currentStrength - initialStrength >= 1000000000 then
-                    rateTrackingStarted = true
-                    strengthSamples = {}
-                    durabilitySamples = {}
-                end
-
-                if rateTrackingStarted then
-                    table.insert(strengthSamples, { t = now, v = currentStrength })
-                    table.insert(durabilitySamples, { t = now, v = durabilityStat.Value })
-
-                    while #strengthSamples > 0 and now - strengthSamples[1].t > rateWindow do
-                        table.remove(strengthSamples, 1)
-                    end
-
-                    while #durabilitySamples > 0 and now - durabilitySamples[1].t > rateWindow do
-                        table.remove(durabilitySamples, 1)
-                    end
-
-                    if now - lastCalcTime >= rateWindow then
-                        lastCalcTime = now
-                        if #strengthSamples >= 2 then
-                            local rate = (strengthSamples[#strengthSamples].v - strengthSamples[1].v) / rateWindow
-                            strengthRateLabel.Text = "Str: " .. formatNumberShort(floorFn(rate * 3600)) .. "/hr | " .. formatNumberShort(floorFn(rate * 86400)) .. "/day"
-                        end
-                        if #durabilitySamples >= 2 then
-                            local rate = (durabilitySamples[#durabilitySamples].v - durabilitySamples[1].v) / rateWindow
-                            durabilityRateLabel.Text = "Dur: " .. formatNumberShort(floorFn(rate * 3600)) .. "/hr | " .. formatNumberShort(floorFn(rate * 86400)) .. "/day"
-                        end
-                    end
-                end
-            end)
-        end
-    end)
-
-    statsTab:AddLabel(separator)
-    statsTab:AddLabel("[ TRACK OTHER PLAYERS ]")
-
-    local trackedPlayerLabel = statsTab:AddLabel("Player: -")
-    local trackedStrengthLabel = statsTab:AddLabel("Strength: -")
-    local trackedDurabilityLabel = statsTab:AddLabel("Durability: -")
-    local trackedRebirthsLabel = statsTab:AddLabel("Rebirths: -")
-    local trackedKillsLabel = statsTab:AddLabel("Kills: -")
-    local trackedAgilityLabel = statsTab:AddLabel("Agility: -")
-    local trackedPlayer = nil
-
-    local function updateTrackedPlayer(player)
-        if not player then
-            trackedPlayerLabel.Text = "Player: Not Found"
-            return
-        end
-        trackedPlayerLabel.Text = "Player: " .. player.Name .. " (" .. player.DisplayName .. ")"
-        local stats = player:FindFirstChild("leaderstats")
-        if stats then
-            local str = stats:FindFirstChild("Strength")
-            trackedStrengthLabel.Text = "Strength: " .. formatNumberShort(str and str.Value or 0)
-            local reb = stats:FindFirstChild("Rebirths")
-            trackedRebirthsLabel.Text = "Rebirths: " .. formatNumberShort(reb and reb.Value or 0)
-            local kls = stats:FindFirstChild("Kills")
-            trackedKillsLabel.Text = "Kills: " .. formatNumberShort(kls and kls.Value or 0)
-        end
-        local dur = player:FindFirstChild("Durability")
-        trackedDurabilityLabel.Text = "Durability: " .. formatNumberShort(dur and dur.Value or 0)
-        local agi = player:FindFirstChild("Agility")
-        trackedAgilityLabel.Text = "Agility: " .. formatNumberShort(agi and agi.Value or 0)
+    local petsContainer = LocalPlayer:FindFirstChild("petsFolder")
+    if not petsContainer then
+        warn("petsFolder not found.")
+        return
     end
 
-    statsTab:AddTextBox("Search player (name or display name)", function(input)
-        local searchLower = input:lower()
-        for _, plr in ipairs(playerService:GetPlayers()) do
-            if plr.Name:lower():find(searchLower, 1, true) or plr.DisplayName:lower():find(searchLower, 1, true) then
-                trackedPlayer = plr
-                break
-            end
-        end
-        updateTrackedPlayer(trackedPlayer)
-    end, { clear = false, placeholder = "Type name..." })
-
-    task.spawn(function()
-        while task.wait(1) do
-            if trackedPlayer then
-                updateTrackedPlayer(trackedPlayer)
-            end
-        end
-    end)
-
-    local farmTab = mainWindow:AddTab("Farm V1")
-    farmTab:AddLabel(separator)
-    farmTab:AddLabel("AUTO KING (teleport to king position):")
-
-    local kingPosition = CFrame.new(-8865, 430, -5749)
-
-    farmTab:AddSwitch("Auto King", function(enabled)
-        if enabled then
-            getgenv().kingLockConnection = runService.Heartbeat:Connect(function()
-                local character = localPlayer.Character
-                if character and character:FindFirstChild("HumanoidRootPart") then
-                    character.HumanoidRootPart.CFrame = kingPosition
-                end
-            end)
-        else
-            if getgenv().kingLockConnection then
-                getgenv().kingLockConnection:Disconnect()
-                getgenv().kingLockConnection = nil
-            end
-        end
-    end)
-
-    farmTab:AddLabel(separator)
-    farmTab:AddLabel("REBIRTH FUNCTIONS:")
-
-    local targetRebirthAmount = 0
-    farmTab:AddTextBox("Target Rebirth Amount", function(input)
-        targetRebirthAmount = tonumber(input) or 0
-    end, { clear = false, placeholder = "Enter target rebirth amount" })
-
-    farmTab:AddSwitch("Auto Rebirth", function(enabled)
-        getgenv().autoRebirth = enabled
-        if enabled then
-            spawn(function()
-                while getgenv().autoRebirth do
-                    local stats = localPlayer:FindFirstChild("leaderstats")
-                    if stats then
-                        local rebirths = stats:FindFirstChild("Rebirths")
-                        if rebirths and targetRebirthAmount > 0 and rebirths.Value >= targetRebirthAmount then
-                            getgenv().autoRebirth = false
-                            break
-                        end
-                        pcall(function()
-                            replicatedStorage.rEvents.rebirthRemote:InvokeServer("rebirthRequest")
-                        end)
-                        task.wait(0.1)
-                    end
-                end
-            end)
-        end
-    end)
-
-    farmTab:AddLabel("═══ AUTO WEIGHT ═══")
-    farmTab:AddSwitch("Auto Weight", function(enabled)
-        getgenv().autoWeight = enabled
-        if enabled then
-            spawn(function()
-                while getgenv().autoWeight do
-                    pcall(function()
-                        local tool = localPlayer.Backpack:FindFirstChild("Weight")
-                        if tool then
-                            localPlayer.Character.Humanoid:EquipTool(tool)
-                        end
-                        localPlayer.muscleEvent:FireServer("rep")
-                    end)
-                    task.wait(0.01)
-                end
-            end)
-        end
-    end)
-
-    farmTab:AddLabel("═══ AUTO SIZE 2 ═══")
-    farmTab:AddSwitch("Auto Size 2", function(enabled)
-        getgenv().autoSize2 = enabled
-        if enabled then
-            spawn(function()
-                while getgenv().autoSize2 do
-                    pcall(function()
-                        replicatedStorage.rEvents.changeSpeedSizeRemote:InvokeServer("changeSize", 2)
-                    end)
-                    task.wait(0)
-                end
-            end)
-        end
-    end)
-
-    farmTab:AddLabel(separator)
-    farmTab:AddLabel("AUTO EQUIP TOOLS:")
-
-    farmTab:AddSwitch("Auto Equip Weight", function(enabled)
-        getgenv().autoWeightSp = enabled
-        if enabled then
-            spawn(function()
-                while getgenv().autoWeightSp do
-                    equipToolByName("Weight")
-                    task.wait(0.2)
-                end
-            end)
-        end
-    end)
-
-    farmTab:AddSwitch("Auto Equip Pushups", function(enabled)
-        getgenv().autoPushupsSp = enabled
-        if enabled then
-            spawn(function()
-                while getgenv().autoPushupsSp do
-                    equipToolByName("Pushups")
-                    task.wait(0.2)
-                end
-            end)
-        end
-    end)
-
-    farmTab:AddSwitch("Auto Equip Situps", function(enabled)
-        getgenv().autoSitupsSp = enabled
-        if enabled then
-            spawn(function()
-                while getgenv().autoSitupsSp do
-                    equipToolByName("Situps")
-                    task.wait(0.2)
-                end
-            end)
-        end
-    end)
-
-    farmTab:AddSwitch("Auto Equip Handstands", function(enabled)
-        getgenv().autoHandstandsSp = enabled
-        if enabled then
-            spawn(function()
-                while getgenv().autoHandstandsSp do
-                    equipToolByName("Handstand")
-                    task.wait(0.2)
-                end
-            end)
-        end
-    end)
-
-    local fastRebirthTab = mainWindow:AddTab("Fast Rebirth")
-
-    local fastRebirthActive = false
-    local fastRebirthStartTick = 0
-    local fastRebirthAccumulatedTime = 0
-    local fastRebirthInitialRebirths = rebirthsStat.Value
-
-    fastRebirthTab:AddLabel("Time:").TextSize = 20
-    local fastRebirthTimeLabel = fastRebirthTab:AddLabel("0d 0h 0m 0s - Inactive")
-    local paceLabel = fastRebirthTab:AddLabel("Pace: 0 / Hour | 0 / Day | 0 / Week")
-    local avgPaceLabel = fastRebirthTab:AddLabel("Average Pace: 0 / Hour | 0 / Day | 0 / Week")
-
-    paceLabel.TextSize = 17
-    avgPaceLabel.TextSize = 17
-    fastRebirthTimeLabel.TextSize = 17
-    fastRebirthTimeLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-
-    local rebirthsDisplayLabel = fastRebirthTab:AddLabel("Rebirths: " .. formatNumberShort(rebirthsStat.Value) .. " | Gained: 0")
-    rebirthsDisplayLabel.TextSize = 17
-
-    local previousRebirthValue = rebirthsStat.Value
-    local paceCounter = 0
-    local paceSamplesHr = {}
-    local paceSamplesDay = {}
-    local paceSamplesWeek = {}
-    local maxPaceSamples = 20
-    local lastPaceCalcTick = tick()
-    local lastPaceRebirthValue = rebirthsStat.Value
-
-    local function updateRebirthDisplay()
-        rebirthsDisplayLabel.Text = string.format("Rebirths: %s | Gained: %s", formatNumberShort(rebirthsStat.Value), formatNumberShort(rebirthsStat.Value - fastRebirthInitialRebirths))
+    local uniqueFolder = petsContainer:FindFirstChild("Unique")
+    if not uniqueFolder then
+        warn("Unique pets folder not found.")
+        return
     end
 
-    local function updateFastRebirthTimer(forceUpdate)
-        local elapsed = fastRebirthActive and (tick() - fastRebirthStartTick + fastRebirthAccumulatedTime) or fastRebirthAccumulatedTime
-        fastRebirthTimeLabel.Text = string.format(
-            "%dd %dh %dm %ds - %s",
-            floorFn(elapsed / 86400),
-            floorFn(elapsed % 86400 / 3600),
-            floorFn(elapsed % 3600 / 60),
-            floorFn(elapsed % 60),
-            fastRebirthActive and "Rebirthing" or "Paused"
-        )
-        fastRebirthTimeLabel.TextColor3 = fastRebirthActive and Color3.fromRGB(50, 255, 50) or Color3.fromRGB(255, 50, 50)
-    end
-
-    local function calculatePace()
-        paceCounter = paceCounter + 1
-        if paceCounter < 2 then
-            lastPaceCalcTick = tick()
-            lastPaceRebirthValue = rebirthsStat.Value
-            return
-        end
-        local now = tick()
-        local gained = rebirthsStat.Value - lastPaceRebirthValue
-        if gained > 0 then
-            local timePer = (now - lastPaceCalcTick) / gained
-            local perHour = 3600 / timePer
-            local perDay = 86400 / timePer
-            local perWeek = 604800 / timePer
-            paceLabel.Text = string.format("Pace: %s / Hour | %s / Day | %s / Week", formatNumberShort(perHour), formatNumberShort(perDay), formatNumberShort(perWeek))
-            table.insert(paceSamplesHr, perHour)
-            table.insert(paceSamplesDay, perDay)
-            table.insert(paceSamplesWeek, perWeek)
-            if #paceSamplesHr > maxPaceSamples then
-                table.remove(paceSamplesHr, 1)
-                table.remove(paceSamplesDay, 1)
-                table.remove(paceSamplesWeek, 1)
-            end
-            local function average(tbl)
-                local sum = 0
-                for _, val in ipairs(tbl) do
-                    sum = sum + val
-                end
-                return #tbl > 0 and sum / #tbl or 0
-            end
-            avgPaceLabel.Text = string.format("Average Pace: %s / Hour | %s / Day | %s / Week", formatNumberShort(average(paceSamplesHr)), formatNumberShort(average(paceSamplesDay)), formatNumberShort(average(paceSamplesWeek)))
-            lastPaceCalcTick = now
-            lastPaceRebirthValue = rebirthsStat.Value
+    local petToGift = nil
+    for _, pet in ipairs(uniqueFolder:GetChildren()) do
+        if pet.Name == selectedPet then
+            petToGift = pet
+            break
         end
     end
 
-    rebirthsStat:GetPropertyChangedSignal("Value"):Connect(function()
-        calculatePace()
-        updateRebirthDisplay()
-    end)
+    if not petToGift then
+        warn("Pet not found in your collection.")
+        return
+    end
 
-    local function unequipAllPets()
+    if giftRemote then
         pcall(function()
-            local petsFolder = localPlayer.petsFolder
-            for _, folder in pairs(petsFolder:GetChildren()) do
-                if folder:IsA("Folder") then
-                    for _, pet in pairs(folder:GetChildren()) do
-                        replicatedStorage.rEvents.equipPetEvent:FireServer("unequipPet", pet)
-                    end
-                end
-            end
+            giftRemote:InvokeServer("giftRequest", selectedGiftTarget, petToGift)
         end)
-        task.wait(0.1)
+    else
+        warn("Gift remote not available.")
     end
+end)
 
-    local function equipUniquePet(petName)
-        unequipAllPets()
-        task.wait(0.01)
-        pcall(function()
-            local uniqueFolder = localPlayer.petsFolder.Unique
-            for _, pet in pairs(uniqueFolder:GetChildren()) do
-                if pet.Name == petName then
-                    replicatedStorage.rEvents.equipPetEvent:FireServer("equipPet", pet)
-                end
-            end
-        end)
+-- ============================================
+-- LINKS TAB
+-- ============================================
+local LinksTab = Window:Tab("Links", "rbxassetid://10723434947")
+
+LinksTab:Seperator("Social Links")
+
+LinksTab:Button("Copy YouTube Link", function()
+    if setclipboard then
+        setclipboard("https://www.youtube.com/@LunoraHub")
     end
+end)
 
-    local function useTropicalShake()
-        pcall(function()
-            local character = localPlayer.Character
-            local shake = character:FindFirstChild("Tropical Shake")
-            if shake then
-                muscleEvent:FireServer("tropicalShake", shake)
-            end
-        end)
+LinksTab:Button("Copy Discord Link", function()
+    if setclipboard then
+        setclipboard("https://discord.gg/e37tPFsAmM")
     end
-
-    local autoTropicalShakeEnabled = false
-    task.spawn(function()
-        while true do
-            if autoTropicalShakeEnabled then
-                useTropicalShake()
-                task.wait(450)
-            else
-                task.wait(1)
-            end
-        end
-    end)
-
-    local function useProteinEgg()
-        pcall(function()
-            local character = localPlayer.Character
-            local egg = character:FindFirstChild("Protein Egg")
-            if egg then
-                muscleEvent:FireServer("proteinEgg", egg)
-            end
-        end)
-    end
-
-    local autoProteinEggEnabled = false
-    task.spawn(function()
-        while true do
-            if autoProteinEggEnabled then
-                useProteinEgg()
-                task.wait(1800)
-            else
-                task.wait(1)
-            end
-        end
-    end)
-
-    local autoTropicalShake2Enabled = false
-    task.spawn(function()
-        while true do
-            if autoTropicalShake2Enabled then
-                useTropicalShake()
-                task.wait(900)
-            else
-                task.wait(1)
-            end
-        end
-    end)
-
-    local function fastRebirthLoop()
-        while fastRebirthActive do
-            equipUniquePet("Swift Samurai")
-            local requiredStrength = 5000 + rebirthsStat.Value * 2550
-            while fastRebirthActive and localPlayer.leaderstats.Strength.Value < requiredStrength do
-                local reps = localPlayer.MembershipType == Enum.MembershipType.Premium and 8 or 14
-                for _ = 1, reps do
-                    muscleEvent:FireServer("rep")
-                end
-                task.wait(0.02)
-            end
-            if fastRebirthActive and localPlayer.leaderstats.Strength.Value >= requiredStrength then
-                equipUniquePet("Tribal Overlord")
-                task.wait(0.25)
-                local prevRebirths = rebirthsStat.Value
-                replicatedStorage.rEvents.rebirthRemote:InvokeServer("rebirthRequest")
-                task.wait(0.05)
-                if rebirthsStat.Value > prevRebirths or not fastRebirthActive then
-                end
-            end
-            task.wait(0.5)
-        end
-    end
-
-    fastRebirthTab:AddSwitch("Fast Rebirth", function(enabled)
-        fastRebirthActive = enabled
-        if enabled then
-            fastRebirthStartTick = tick()
-            task.spawn(fastRebirthLoop)
-        else
-            fastRebirthAccumulatedTime = fastRebirthAccumulatedTime + tick() - fastRebirthStartTick
-            updateFastRebirthTimer(true)
-        end
-    end)
-
-    rebirthsStat:GetPropertyChangedSignal("Value"):Connect(function()
-        if fastRebirthActive then
-            calculatePace()
-        end
-        updateRebirthDisplay()
-    end)
-
-    task.spawn(function()
-        while true do
-            updateFastRebirthTimer(false)
-            task.wait(0.1)
-        end
-    end)
-
-    local autoMinSizeEnabled = false
-    local autoMinSizeCoroutine = nil
-
-    fastRebirthTab:AddSwitch("Auto Size 1", function(enabled)
-        autoMinSizeEnabled = enabled
-        if enabled then
-            autoMinSizeCoroutine = coroutine.create(function()
-                while autoMinSizeEnabled do
-                    replicatedStorage.rEvents.changeSpeedSizeRemote:InvokeServer("changeSize", 1)
-                    wait(0.01)
-                end
-            end)
-            coroutine.resume(autoMinSizeCoroutine)
-        end
-    end)
-
-    local function applyDarkMode()
-        pcall(function()
-            local playerGui = localPlayer:WaitForChild("PlayerGui")
-            local lightingService = game:GetService("Lighting")
-
-            for _, gui in pairs(playerGui:GetChildren()) do
-                if gui:IsA("ScreenGui") then
-                    gui:Destroy()
-                end
-            end
-
-            for _, obj in pairs(workspace:GetDescendants()) do
-                if obj:IsA("ParticleEmitter") then
-                    obj:Destroy()
-                end
-            end
-
-            for _, obj in pairs(workspace:GetDescendants()) do
-                if obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
-                    obj:Destroy()
-                end
-            end
-
-            for _, obj in pairs(lightingService:GetChildren()) do
-                if obj:IsA("Sky") then
-                    obj:Destroy()
-                end
-            end
-
-            local darkSky = Instance.new("Sky")
-            darkSky.Name = "DarkSky"
-            darkSky.SkyboxBk = "rbxassetid://0"
-            darkSky.SkyboxDn = "rbxassetid://0"
-            darkSky.SkyboxFt = "rbxassetid://0"
-            darkSky.SkyboxLf = "rbxassetid://0"
-            darkSky.SkyboxRt = "rbxassetid://0"
-            darkSky.SkyboxUp = "rbxassetid://0"
-            darkSky.Parent = lightingService
-            lightingService.Brightness = 0
-            lightingService.ClockTime = 0
-            lightingService.TimeOfDay = "00:00:00"
-            lightingService.OutdoorAmbient = Color3.new(0, 0, 0)
-            lightingService.Ambient = Color3.new(0, 0, 0)
-            lightingService.FogColor = Color3.new(0, 0, 0)
-            lightingService.FogEnd = 100
-
-            task.spawn(function()
-                while true do
-                    wait(5)
-                    if not lightingService:FindFirstChild("DarkSky") then
-                        darkSky:Clone().Parent = lightingService
-                    end
-                    lightingService.Brightness = 0
-                    lightingService.ClockTime = 0
-                    lightingService.OutdoorAmbient = Color3.new(0, 0, 0)
-                    lightingService.Ambient = Color3.new(0, 0, 0)
-                    lightingService.FogColor = Color3.new(0, 0, 0)
-                    lightingService.FogEnd = 100
-                end
-            end)
-        end)
-    end
-
-    fastRebirthTab:AddButton("Dark Mode", applyDarkMode)
-
-    fastRebirthTab:AddSwitch("Auto Fortune Wheel", function(enabled)
-        _G.AutoSpinWheel = enabled
-        if enabled then
-            spawn(function()
-                while _G.AutoSpinWheel do
-                    pcall(function()
-                        replicatedStorage.rEvents.openFortuneWheelRemote:InvokeServer("openFortuneWheel", replicatedStorage.fortuneWheelChances["Fortune Wheel"])
-                    end)
-                    wait(1)
-                end
-            end)
-        end
-    end)
-
-    fastRebirthTab:AddButton("Teleport to Fortune Wheel", function()
-        local character = localPlayer.Character
-        if character then
-            character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(-8642.396484375, 6.7980651855, 2086.1030273)
-            task.wait(0.2)
-            virtualInput:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-            task.wait(0.05)
-            virtualInput:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-        end
-    end)
-
-    local lockPositionEnabled = false
-    local lockPositionCoroutine = nil
-
-    fastRebirthTab:AddSwitch("Lock Position", function(enabled)
-        lockPositionEnabled = enabled
-        if enabled then
-            local character = localPlayer.Character
-            if character then
-                local rootPart = character:WaitForChild("HumanoidRootPart")
-                local lockedPosition = rootPart.Position
-                lockPositionCoroutine = coroutine.create(function()
-                    while lockPositionEnabled do
-                        rootPart.Velocity = Vector3.new(0, 0, 0)
-                        rootPart.RotVelocity = Vector3.new(0, 0, 0)
-                        rootPart.CFrame = CFrame.new(lockedPosition)
-                        wait(0.05)
-                    end
-                end)
-                coroutine.resume(lockPositionCoroutine)
-            end
-        end
-    end)
-
-    fastRebirthTab:AddSwitch("Auto Tropical Shake", function(enabled)
-        autoTropicalShakeEnabled = enabled
-        if enabled then
-            useTropicalShake()
-        end
-    end)
-
-    fastRebirthTab:AddSwitch("Auto Protein Egg", function(enabled)
-        autoProteinEggEnabled = enabled
-        if enabled then
-            useProteinEgg()
-        end
-    end)
-
-    fastRebirthTab:AddSwitch("Auto Tropical Shake 2", function(enabled)
-        autoTropicalShake2Enabled = enabled
-        if enabled then
-            useTropicalShake()
-        end
-    end)
-
-    fastRebirthTab:AddSwitch("Auto Fortune Wheel 2", function(enabled)
-        _G.AutoSpinWheel = enabled
-        if enabled then
-            spawn(function()
-                while _G.AutoSpinWheel do
-                    pcall(function()
-                        replicatedStorage.rEvents.openFortuneWheelRemote:InvokeServer("openFortuneWheel", replicatedStorage.fortuneWheelChances["Fortune Wheel"])
-                    end)
-                    wait(1)
-                end
-            end)
-        end
-    end)
-
-    fastRebirthTab:AddButton("Teleport to Shop", function()
-        local character = localPlayer.Character
-        if character then
-            character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(-8371.43359375, 6.79806327, 2858.8852539)
-            task.wait(0.2)
-            virtualInput:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-            task.wait(0.05)
-            virtualInput:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-        end
-    end)
-
-    fastRebirthTab:AddButton("Dark Mode 2", applyDarkMode)
-
-    fastRebirthTab:AddButton("Equip Swift Samurai", function()
-        unequipAllPets()
-        equipUniquePet("Swift Samurai")
-    end)
-
-    local speedFarmTab = mainWindow:AddTab("Speed Farm")
-    local initialStrengthSpeed = strengthStat.Value
-    local initialDurabilitySpeed = durabilityStat.Value
-    local speedFarmStrengthLabel = speedFarmTab:AddLabel("Strength: 0 | Gained: 0")
-    local speedFarmDurabilityLabel = speedFarmTab:AddLabel("Durability: 0 | Gained: 0")
-    speedFarmStrengthLabel.TextSize = 17
-    speedFarmDurabilityLabel.TextSize = 17
-
-    local speedFarmActive = false
-    local speedFarmRunning = false
-    local speedFarmStartTick = 0
-    local speedFarmAccumulatedTime = 0
-    local speedFarmStrSamples = {}
-    local speedFarmDurSamples = {}
-    local speedFarmRateWindow = 10
-
-    local speedFarmTimeLabel = speedFarmTab:AddLabel("0d 0h 0m 0s - Inactive")
-    speedFarmTimeLabel.TextSize = 17
-    speedFarmTimeLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-
-    local speedFarmStrPaceLabel = speedFarmTab:AddLabel("Strength Pace: warming up...")
-    speedFarmStrPaceLabel.TextSize = 17
-    local speedFarmDurPaceLabel = speedFarmTab:AddLabel("Durability Pace: warming up...")
-    speedFarmDurPaceLabel.TextSize = 17
-    local speedFarmAvgStrPaceLabel = speedFarmTab:AddLabel("Average Strength Pace: warming up...")
-    speedFarmAvgStrPaceLabel.TextSize = 17
-    local speedFarmAvgDurPaceLabel = speedFarmTab:AddLabel("Average Durability Pace: warming up...")
-    speedFarmAvgDurPaceLabel.TextSize = 17
-
-    local repsPerCycle = 1
-
-    local function getPing()
-        local ping = 0
-        pcall(function()
-            local stats = game:GetService("Stats")
-            local perfStats = stats:FindFirstChild("PerformanceStats")
-            local pingObj = perfStats and perfStats:FindFirstChild("Ping")
-            if pingObj then
-                ping = pingObj:GetValue()
-            end
-        end)
-        return ping
-    end
-
-    speedFarmTab:AddTextBox("Reps per cycle", function(input)
-        local num = tonumber(input)
-        if num and num > 0 then
-            repsPerCycle = floorFn(num)
-        end
-    end, { clear = false, placeholder = "1" })
-
-    local function speedFarmLoop()
-        while speedFarmActive do
-            if getPing() < 350 then
-                for _ = 1, repsPerCycle do
-                    muscleEvent:FireServer("rep")
-                end
-                task.wait(0.02)
-            else
-                task.wait(1)
-            end
-        end
-    end
-
-    speedFarmTab:AddSwitch("Fast Rep", function(enabled)
-        if enabled and not speedFarmActive then
-            speedFarmActive = true
-            task.spawn(speedFarmLoop)
-        elseif not enabled and speedFarmActive then
-            speedFarmActive = false
-        end
-    end)
-
-    task.spawn(function()
-        local lastTime = tick()
-        while true do
-            local now = tick()
-            local currentStr = strengthStat.Value
-            local currentDur = durabilityStat.Value
-
-            speedFarmStrengthLabel.Text = "Strength: " .. formatNumberSigned(currentStr) .. " | Gained: " .. formatNumberSigned(currentStr - initialStrengthSpeed)
-            speedFarmDurabilityLabel.Text = "Durability: " .. formatNumberSigned(currentDur) .. " | Gained: " .. formatNumberSigned(currentDur - initialDurabilitySpeed)
-
-            if speedFarmActive then
-                if not speedFarmRunning then
-                    speedFarmRunning = true
-                    speedFarmStartTick = tick()
-                    speedFarmStrSamples = {}
-                    speedFarmDurSamples = {}
-                end
-
-                local elapsed = speedFarmAccumulatedTime + now - speedFarmStartTick
-                speedFarmTimeLabel.Text = string.format(
-                    "%dd %dh %dm %ds - Fast Rep Running",
-                    floorFn(elapsed / 86400),
-                    floorFn(elapsed % 86400 / 3600),
-                    floorFn(elapsed % 3600 / 60),
-                    floorFn(elapsed % 60)
-                )
-                speedFarmTimeLabel.TextColor3 = Color3.fromRGB(50, 255, 50)
-
-                table.insert(speedFarmStrSamples, { time = now, value = currentStr })
-                table.insert(speedFarmDurSamples, { time = now, value = currentDur })
-
-                while #speedFarmStrSamples > 0 and now - speedFarmStrSamples[1].time > speedFarmRateWindow do
-                    table.remove(speedFarmStrSamples, 1)
-                end
-                while #speedFarmDurSamples > 0 and now - speedFarmDurSamples[1].time > speedFarmRateWindow do
-                    table.remove(speedFarmDurSamples, 1)
-                end
-
-                if now - lastTime >= speedFarmRateWindow then
-                    lastTime = now
-                    if #speedFarmStrSamples >= 2 then
-                        local rate = (speedFarmStrSamples[#speedFarmStrSamples].value - speedFarmStrSamples[1].value) / speedFarmRateWindow
-                        speedFarmStrPaceLabel.Text = "Strength Pace: " .. formatNumberSigned(rate * 3600) .. "/Hour | " .. formatNumberSigned(rate * 86400) .. "/Day | " .. formatNumberSigned(rate * 604800) .. "/Week"
-                    end
-                    if #speedFarmDurSamples >= 2 then
-                        local rate = (speedFarmDurSamples[#speedFarmDurSamples].value - speedFarmDurSamples[1].value) / speedFarmRateWindow
-                        speedFarmDurPaceLabel.Text = "Durability Pace: " .. formatNumberSigned(rate * 3600) .. "/Hour | " .. formatNumberSigned(rate * 86400) .. "/Day | " .. formatNumberSigned(rate * 604800) .. "/Week"
-                    end
-
-                    if elapsed > 0 then
-                        local avgStrRate = (currentStr - initialStrengthSpeed) / elapsed
-                        speedFarmAvgStrPaceLabel.Text = "Average Strength Pace: " .. formatNumberSigned(avgStrRate * 3600) .. "/Hour | " .. formatNumberSigned(avgStrRate * 86400) .. "/Day | " .. formatNumberSigned(avgStrRate * 604800) .. "/Week"
-                        local avgDurRate = (currentDur - initialDurabilitySpeed) / elapsed
-                        speedFarmAvgDurPaceLabel.Text = "Average Durability Pace: " .. formatNumberSigned(avgDurRate * 3600) .. "/Hour | " .. formatNumberSigned(avgDurRate * 86400) .. "/Day | " .. formatNumberSigned(avgDurRate * 604800) .. "/Week"
-                    end
-                end
-            else
-                if speedFarmRunning then
-                    speedFarmRunning = false
-                    speedFarmAccumulatedTime = speedFarmAccumulatedTime + tick() - speedFarmStartTick
-                    local elapsed = speedFarmAccumulatedTime
-                    speedFarmTimeLabel.Text = string.format(
-                        "%dd %dh %dm %ds - Fast Rep Stopped",
-                        floorFn(elapsed / 86400),
-                        floorFn(elapsed % 86400 / 3600),
-                        floorFn(elapsed % 3600 / 60),
-                        floorFn(elapsed % 60)
-                    )
-                    speedFarmTimeLabel.TextColor3 = Color3.fromRGB(255, 165, 0)
-                    speedFarmStrPaceLabel.Text = "Strength Pace: 0 /Hour | 0 /Day | 0 /Week"
-                    speedFarmDurPaceLabel.Text = "Durability Pace: 0 /Hour | 0 /Day | 0 /Week"
-                    speedFarmAvgStrPaceLabel.Text = "Average Strength Pace: 0 /Hour | 0 /Day | 0 /Week"
-                    speedFarmAvgDurPaceLabel.Text = "Average Durability Pace: 0 /Hour | 0 /Day | 0 /Week"
-                    speedFarmStrSamples = {}
-                    speedFarmDurSamples = {}
-                end
-            end
-
-            task.wait(0.05)
-        end
-    end)
-end
+end)
