@@ -115,10 +115,9 @@ Window.ClipsDescendants = true
 Window.Position = UDim2.new(0, 20, 0, 20)
 Window.Selectable = true
 Window.Size = UDim2.new(0, 200, 0, 200)
-Window.Image = "rbxassetid://132957269126491"
+Window.Image = "rbxassetid://137309615859244"
 Window.ImageColor3 = Color3.new(0.1223529, 0.1262745, 0.1301961)
-Window.ScaleType = Enum.ScaleType.Slice
-Window.SliceCenter = Rect.new(12, 12, 12, 12)
+Window.ScaleType = Enum.ScaleType.Stretch
 
 Resizer.Name = "Resizer"
 Resizer.Parent = Window
@@ -168,6 +167,14 @@ Top.ImageColor3 = Color3.fromRGB(0, 0, 0)
 Top.ScaleType = Enum.ScaleType.Slice
 Top.SliceCenter = Rect.new(12, 12, 12, 12)
 
+Skull.Name = "Skull"
+Skull.Parent = Window
+Skull.BackgroundTransparency = 1
+Skull.Position = UDim2.new(0, 32, 0, 6)
+Skull.Size = UDim2.new(0, 20, 0, 20)
+Skull.ZIndex = 3
+Skull.Image = "rbxassetid://117660103744961"
+Skull.ScaleType = Enum.ScaleType.Fit
 
 Tabs.Name = "Tabs"
 Tabs.Parent = Window
@@ -452,7 +459,7 @@ Toggle_2.BackgroundColor3 = Color3.new(1, 1, 1)
 Toggle_2.BackgroundTransparency = 1
 Toggle_2.Position = UDim2.new(0, 5, 0, 0)
 Toggle_2.Size = UDim2.new(0, 20, 0, 20)
-Toggle_2.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=113457989554278"
+Toggle_2.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=4731371541"
 
 Objects_2.Name = "Objects"
 Objects_2.Parent = Folder
