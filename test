@@ -1,1 +1,46 @@
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/test%20ui", true))()
 
+local window = library:AddWindow("                        OBLITERATOR KILLING", {
+    main_color = Color3.fromRGB(0, 0, 0),
+    min_size = Vector2.new(450, 1160),
+    can_resize = false,
+})
+
+--// Anti AFK (auto starts)
+local VirtualUser = game:GetService("VirtualUser")
+
+game:GetService("Players").LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+
+--// Anti Lag (auto starts)
+for _, v in ipairs(game:GetDescendants()) do
+    if v:IsA("BasePart") and not v:IsA("MeshPart") then
+        v.Material = Enum.Material.SmoothPlastic
+
+        if not (
+            (v.Parent and v.Parent:FindFirstChild("Humanoid")) or
+            (v.Parent and v.Parent.Parent and v.Parent.Parent:FindFirstChild("Humanoid"))
+        ) then
+            v.Reflectance = 0
+        end
+    end
+end
+
+-- Force night
+game:GetService("Lighting").ClockTime = 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+local Test = window:AddTab("   Test   ")
