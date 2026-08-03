@@ -37,10 +37,4 @@ game:GetService("Lighting").ClockTime = 0
 
 
 
-
-
-
-
-
-
 local Test = window:AddTab("   Test   ")
