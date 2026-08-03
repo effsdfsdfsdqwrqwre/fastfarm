@@ -1967,10 +1967,13 @@ local packspa = window:AddTab("  Packs  ")
 
 
 
-local titleLabel = packspa:AddLabel("Pack Spamming")
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.Bangers        
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+local Label = packspa:AddLabel("Pack Spamming")
+Label.FontFace = Font.new(
+    "rbxasset://fonts/families/Creepster.json",
+    Enum.FontWeight.Regular,
+    Enum.FontStyle.Normal
+)
+Label.TextSize = 30
 
 
 
@@ -2371,14 +2374,7 @@ end
 
 local SpecsTab = window:AddTab("  Spec  ")
 
-local Label = SpecsTab:AddLabel("PLAYER STATS")
-Label.Font = Enum.Font.Bangers
-Label.TextSize = 30
 
-
-local Label = SpecsTab:AddLabel(" ")
-Label.Font = Enum.Font.Bangers
-Label.TextSize = 30
 
 
 
