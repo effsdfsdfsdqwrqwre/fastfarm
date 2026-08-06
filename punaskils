@@ -1,8 +1,8 @@
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))()
 
-local window = library:AddWindow("                        OBLITERATOR KILLING", {
+local window = library:AddWindow("                   OBLITERATOR KILLING", {
     main_color = Color3.fromRGB(0, 0, 0),
-    min_size = Vector2.new(450, 1160),
+    min_size = Vector2.new(500, 1160),
     can_resize = false,
 })
 
@@ -28,7 +28,6 @@ for _, v in ipairs(game:GetDescendants()) do
     end
 end
 
--- Force night
 game:GetService("Lighting").ClockTime = 0
 
 
@@ -92,7 +91,7 @@ end)
 local Wild_Wizard = dropdown:Add("Wild Wizard")
 local Powerful_Monster = dropdown:Add("Mighty Monster")
 
--- Auto Good Karma
+
 Killer:AddSwitch("Auto Good Karma", function(bool)
     autoGoodKarma = bool
     task.spawn(function()
@@ -122,7 +121,7 @@ Killer:AddSwitch("Auto Good Karma", function(bool)
     end)
 end)
 
--- Auto Bad Karma
+
 Killer:AddSwitch("Auto Bad Karma", function(bool)
     autoBadKarma = bool
     task.spawn(function()
@@ -152,7 +151,6 @@ Killer:AddSwitch("Auto Bad Karma", function(bool)
     end)
 end)
 
--- Auto Whitelist Friends
 local friendWhitelistActive = false
 Killer:AddSwitch("Auto Whitelist Friends", function(state)
     friendWhitelistActive = state
@@ -332,7 +330,7 @@ Killer:AddButton("Remove Blacklist", function()
     end
 end)
 
--- Populate initial players
+
 for _, player in ipairs(Players:GetPlayers()) do
     if player ~= LocalPlayer then
         targetDropdown:Add(player.DisplayName)
@@ -340,7 +338,6 @@ for _, player in ipairs(Players:GetPlayers()) do
     end
 end
 
--- Player joins
 Players.PlayerAdded:Connect(function(player)
     if player ~= LocalPlayer then
         targetDropdown:Add(player.DisplayName)
@@ -348,7 +345,6 @@ Players.PlayerAdded:Connect(function(player)
     end
 end)
 
--- Player leaves
 Players.PlayerRemoving:Connect(function(player)
     if targetDropdownItems[player.Name] then
         targetDropdownItems[player.Name] = nil
@@ -364,7 +360,6 @@ Players.PlayerRemoving:Connect(function(player)
     end
 end)
 
--- Start Kill with list of targets
 local kill = false
 Killer:AddSwitch("Kill Blacklist", function(state)
     kill = state
@@ -399,7 +394,6 @@ Killer:AddSwitch("Kill Blacklist", function(state)
     end)
 end)
 
--- View Player (Spy)
 local targetPlayerName = nil
 local spyTargetDropdownItems = {}
 local spyTargetDropdown = Killer:AddDropdown("Select View Target", function(displayName)
@@ -725,241 +719,6 @@ freezeSwitch:Set(true)
 
 
 
--- // Display Health ESP (Killer Tab) - Muscle Legends Fixed //
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local ESPEnabled = false
-local ESPObjects = {}
-
-local function FormatNumber(n)
-    n = tonumber(n) or 0
-    if n < 1000 then
-        return tostring(math.floor(n))
-    elseif n < 1e6 then
-        return string.format("%.1fk", n / 1e3):gsub("%.0k", "k")
-    elseif n < 1e9 then
-        return string.format("%.1fm", n / 1e6):gsub("%.0m", "m")
-    elseif n < 1e12 then
-        return string.format("%.1fb", n / 1e9):gsub("%.0b", "b")
-    elseif n < 1e15 then
-        return string.format("%.1ft", n / 1e12):gsub("%.0t", "t")
-    elseif n < 1e18 then
-        return string.format("%.1fqa", n / 1e15):gsub("%.0qa", "qa")
-    else
-        return string.format("%.1fqi", n / 1e18):gsub("%.0qi", "qi")
-    end
-end
-
-local function GetStat(player, name)
-    local success, value = pcall(function()
-        local stats = player:FindFirstChild("leaderstats")
-        if stats and stats:FindFirstChild(name) then
-            return stats[name].Value
-        end
-        if player:FindFirstChild(name) then
-            return player[name].Value
-        end
-        local private = player:FindFirstChild("PrivateStats")
-        if private and private:FindFirstChild(name) then
-            return private[name].Value
-        end
-        return nil
-    end)
-    return success and value or nil
-end
-
--- Tries to get total Damage from pets/auras (common locations)
-local function GetPetDamage(player)
-    local total = 0
-    local success = pcall(function()
-        -- Common places the game stores equipped pet/aura Damage
-        local folders = {
-            player:FindFirstChild("Pets"),
-            player:FindFirstChild("EquippedPets"),
-            player:FindFirstChild("Items"),
-            player:FindFirstChild("Inventory"),
-            player:FindFirstChild("PrivateStats"),
-            player:FindFirstChild("Data"),
-        }
-        for _, folder in ipairs(folders) do
-            if folder then
-                for _, obj in ipairs(folder:GetDescendants()) do
-                    if obj.Name == "Damage" and (obj:IsA("NumberValue") or obj:IsA("IntValue")) then
-                        total = total + (tonumber(obj.Value) or 0)
-                    end
-                end
-            end
-        end
-    end)
-    return success and total or 0
-end
-
-local function CreateESP(player)
-    if player == LocalPlayer then return end
-    if ESPObjects[player] then return end
-    local char = player.Character
-    if not char then return end
-    local head = char:FindFirstChild("Head")
-    local humanoid = char:FindFirstChildOfClass("Humanoid")
-    if not head then return end
-
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "HealthESP"
-    billboard.Adornee = head
-    billboard.Size = UDim2.new(0, 240, 0, 75)
-    billboard.StudsOffset = Vector3.new(0, 3.5, 0)
-    billboard.AlwaysOnTop = true
-    billboard.MaxDistance = 500
-    billboard.Parent = head
-
-    local nameLabel = Instance.new("TextLabel")
-    nameLabel.Name = "Username"
-    nameLabel.Size = UDim2.new(1, 0, 0, 22)
-    nameLabel.Position = UDim2.new(0, 0, 0, 0)
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.Text = player.DisplayName
-    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    nameLabel.TextStrokeTransparency = 0.4
-    nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-    nameLabel.Font = Enum.Font.Bangers
-    nameLabel.TextSize = 18
-    nameLabel.TextXAlignment = Enum.TextXAlignment.Center
-    nameLabel.Parent = billboard
-
-    local healthLabel = Instance.new("TextLabel")
-    healthLabel.Name = "Health"
-    healthLabel.Size = UDim2.new(1, 0, 0, 20)
-    healthLabel.Position = UDim2.new(0, 0, 0, 24)
-    healthLabel.BackgroundTransparency = 1
-    healthLabel.Text = "HP: ?"
-    healthLabel.TextColor3 = Color3.fromRGB(100, 255, 130)
-    healthLabel.TextStrokeTransparency = 0.4
-    healthLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-    healthLabel.Font = Enum.Font.Bangers
-    healthLabel.TextSize = 16
-    healthLabel.TextXAlignment = Enum.TextXAlignment.Center
-    healthLabel.Parent = billboard
-
-    local damageLabel = Instance.new("TextLabel")
-    damageLabel.Name = "Damage"
-    damageLabel.Size = UDim2.new(1, 0, 0, 20)
-    damageLabel.Position = UDim2.new(0, 0, 0, 46)
-    damageLabel.BackgroundTransparency = 1
-    damageLabel.Text = "Damage: ?"
-    damageLabel.TextColor3 = Color3.fromRGB(255, 60, 60)
-    damageLabel.TextStrokeTransparency = 0.4
-    damageLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-    damageLabel.Font = Enum.Font.Bangers
-    damageLabel.TextSize = 16
-    damageLabel.TextXAlignment = Enum.TextXAlignment.Center
-    damageLabel.Parent = billboard
-
-    ESPObjects[player] = {
-        Billboard = billboard,
-        HealthLabel = healthLabel,
-        DamageLabel = damageLabel,
-        Humanoid = humanoid
-    }
-end
-
-local function RemoveESP(player)
-    if ESPObjects[player] then
-        if ESPObjects[player].Billboard then
-            ESPObjects[player].Billboard:Destroy()
-        end
-        ESPObjects[player] = nil
-    end
-end
-
-local function UpdateESP()
-    for player, data in pairs(ESPObjects) do
-        if not player or not player.Parent or not player.Character then
-            RemoveESP(player)
-            continue
-        end
-
-        -- === REAL HEALTH (Durability is the actual HP pool) ===
-        local durability = GetStat(player, "Durability")
-        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-        if durability then
-            local maxHP = durability
-            local currentHP = maxHP
-            if humanoid and humanoid.MaxHealth > 0 then
-                local ratio = humanoid.Health / humanoid.MaxHealth
-                if ratio >= 0 and ratio <= 1.05 then
-                    currentHP = math.floor(maxHP * ratio)
-                end
-            end
-            data.HealthLabel.Text = "HP: " .. FormatNumber(currentHP) .. " / " .. FormatNumber(maxHP)
-        else
-            data.HealthLabel.Text = "HP: N/A"
-        end
-
-        -- === ACTUAL DAMAGE (Strength / 15 + pet/aura Damage) ===
-        local strength = GetStat(player, "Strength")
-        if strength then
-            local baseDamage = strength / 15
-            local petDamage = GetPetDamage(player)
-            local totalDamage = baseDamage + petDamage
-            data.DamageLabel.Text = "Damage: " .. FormatNumber(totalDamage)
-        else
-            data.DamageLabel.Text = "Damage: N/A"
-        end
-    end
-end
-
-local function OnCharacterAdded(player)
-    player.CharacterAdded:Connect(function()
-        task.wait(0.6)
-        if ESPEnabled then
-            CreateESP(player)
-        end
-    end)
-    player.CharacterRemoving:Connect(function()
-        RemoveESP(player)
-    end)
-end
-
-for _, player in ipairs(Players:GetPlayers()) do
-    OnCharacterAdded(player)
-end
-
-Players.PlayerAdded:Connect(function(player)
-    OnCharacterAdded(player)
-    if ESPEnabled and player.Character then
-        task.wait(0.6)
-        CreateESP(player)
-    end
-end)
-
-Players.PlayerRemoving:Connect(function(player)
-    RemoveESP(player)
-end)
-
-RunService.RenderStepped:Connect(function()
-    if ESPEnabled then
-        UpdateESP()
-    end
-end)
-
--- Killer tab button
-Killer:AddButton("Display Health", function()
-    ESPEnabled = not ESPEnabled
-    if ESPEnabled then
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player.Character then
-                CreateESP(player)
-            end
-        end
-        print("[ESP] Display Health enabled (real damage = Strength/15 + pets)")
-    else
-        for player, _ in pairs(ESPObjects) do
-            RemoveESP(player)
-        end
-        print("[ESP] Display Health disabled")
-    end
-end)
 
 
 
@@ -993,7 +752,7 @@ titleLabel.TextSize = 18
 titleLabel.Font = Enum.Font.Bangers        
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- God Mode (join brawl)
+
 local godModeToggle = false
 Killer:AddSwitch("God mode (for pussies)", function(State)
     godModeToggle = State
