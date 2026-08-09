@@ -256,13 +256,13 @@ rebirthTab:AddLabel("🔄️ Rebirth:").TextSize = 17
 
 
 
-
 local isRunning = false
 local startTime = 0
 local totalElapsed = 0
 
 rebirthTab:AddSwitch("Fast Rebirth", function(state)
     isRunning = state
+
     if state then
         startTime = tick()
         if savedPaceHour > 0 then
@@ -271,13 +271,15 @@ rebirthTab:AddSwitch("Fast Rebirth", function(state)
             averagePaceLabel.Text = string.format("Average Pace: %s / Hour | %s / Day | %s / Week",
                 formatNumber(savedAvgHour), formatNumber(savedAvgDay), formatNumber(savedAvgWeek))
         end
+
         task.spawn(function()
-            local remote = game:GetService("ReplicatedStorage").Remotes.Rebirth
             while isRunning do
-                for _ = 1, 50 do         
-                    remote:FireServer()
-                end
-                task.wait()               
+                -- Fire as fast as possible (replace remote path if needed)
+                game:GetService("ReplicatedStorage").Remotes.Rebirth:FireServer()
+                -- Optional: fire multiple times per cycle for even more speed
+                -- game:GetService("ReplicatedStorage").Remotes.Rebirth:FireServer()
+                -- game:GetService("ReplicatedStorage").Remotes.Rebirth:FireServer()
+                task.wait(0) -- absolute minimum delay
             end
         end)
     else
@@ -289,8 +291,9 @@ end)
 task.spawn(function()
     while true do
         updateUI(false)
-        task.wait(0.03)
+        task.wait(0)
     end
+end)
 end)
 
 
