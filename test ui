@@ -116,7 +116,7 @@ Window.Position = UDim2.new(0, 20, 0, 20)
 Window.Selectable = true
 Window.Size = UDim2.new(0, 200, 0, 200)
 Window.Image = "rbxassetid://130158956302423"
-Window.ImageColor3 = Color3.new(0.1223529, 0.1262745, 0.1301961)
+Window.ImageColor3 = Color3.fromRGB(31, 32, 33)
 Window.ScaleType = Enum.ScaleType.Stretch
 
 Resizer.Name = "Resizer"
