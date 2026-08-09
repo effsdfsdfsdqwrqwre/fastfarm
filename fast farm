@@ -253,43 +253,29 @@ rebirthTab:AddLabel("")
 rebirthTab:AddLabel("🔄️ Rebirth:").TextSize = 17
 
 
-
-local isRunning = false
-local startTime = 0
-local totalElapsed = 0
 rebirthTab:AddSwitch("Fast Rebirth", function(state)
-    isRunning = state
-    if state then
-        startTime = tick()
-        if savedPaceHour > 0 then
-            paceLabel.Text = string.format("Pace: %s / Hour | %s / Day | %s / Week",
-                formatNumber(savedPaceHour), formatNumber(savedPaceDay), formatNumber(savedPaceWeek))
-            averagePaceLabel.Text = string.format("Average Pace: %s / Hour | %s / Day | %s / Week",
-                formatNumber(savedAvgHour), formatNumber(savedAvgDay), formatNumber(savedAvgWeek))
-        end
-        task.spawn(function()
-            while isRunning do
-                -- Fire as fast as possible (replace remote path if needed)
-                game:GetService("ReplicatedStorage").Remotes.Rebirth:FireServer()
-                -- Optional: fire multiple times per cycle for even more speed
-                -- game:GetService("ReplicatedStorage").Remotes.Rebirth:FireServer()
-                -- game:GetService("ReplicatedStorage").Remotes.Rebirth:FireServer()
-                task.wait(0) 
-            end
-        end)
-    else
-        totalElapsed = totalElapsed + (tick() - startTime)
-        updateUI(true)
-    end
+    isRunning = state
+   
+    if state then
+        startTime = tick()
+        if savedPaceHour > 0 then
+            paceLabel.Text = string.format("Pace: %s / Hour | %s / Day | %s / Week",
+                formatNumber(savedPaceHour), formatNumber(savedPaceDay), formatNumber(savedPaceWeek))
+            averagePaceLabel.Text = string.format("Average Pace: %s / Hour | %s / Day | %s / Week",
+                formatNumber(savedAvgHour), formatNumber(savedAvgDay), formatNumber(savedAvgWeek))
+        end
+        task.spawn(fastRebirthLoop)
+    else
+        totalElapsed = totalElapsed + (tick() - startTime)
+        updateUI(true)
+    end
 end)
-
 task.spawn(function()
-    while true do
-        updateUI(false)
-        task.wait(0)
-    end
-end) 
-
+    while true do
+        updateUI(false)
+        task.wait(0)
+    end
+end)
 
 
 
