@@ -256,68 +256,43 @@ rebirthTab:AddLabel("🔄️ Rebirth:").TextSize = 17
 
 
 
+
 local isRunning = false
 local startTime = 0
 local totalElapsed = 0
-local rebirthConnection = nil
 
-local function stopRebirth()
-    isRunning = false
-    if rebirthConnection then
-        pcall(function()
-            rebirthConnection:Disconnect()
-        end)
-        rebirthConnection = nil
-    end
-    totalElapsed = totalElapsed + (tick() - startTime)
-    pcall(updateUI, true)
-end
-
-local fastRebirthSwitch = rebirthTab:AddSwitch("Fast Rebirth", function(state)
+rebirthTab:AddSwitch("Fast Rebirth", function(state)
+    isRunning = state
     if state then
-        isRunning = true
         startTime = tick()
-
-        pcall(function()
-            if savedPaceHour and savedPaceHour > 0 then
-                paceLabel.Text = string.format("Pace: %s / Hour | %s / Day | %s / Week",
-                    formatNumber(savedPaceHour), formatNumber(savedPaceDay), formatNumber(savedPaceWeek))
-                averagePaceLabel.Text = string.format("Average Pace: %s / Hour | %s / Day | %s / Week",
-                    formatNumber(savedAvgHour), formatNumber(savedAvgDay), formatNumber(savedAvgWeek))
-            end
-        end)
-
-        local remote = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
-            and game.ReplicatedStorage.Remotes:FindFirstChild("Rebirth")
-
-        if not remote then
-            warn("[Fast Rebirth] Remotes.Rebirth not found!")
-            stopRebirth()
-            if fastRebirthSwitch then
-                fastRebirthSwitch:Set(false)
-            end
-            return
+        if savedPaceHour > 0 then
+            paceLabel.Text = string.format("Pace: %s / Hour | %s / Day | %s / Week",
+                formatNumber(savedPaceHour), formatNumber(savedPaceDay), formatNumber(savedPaceWeek))
+            averagePaceLabel.Text = string.format("Average Pace: %s / Hour | %s / Day | %s / Week",
+                formatNumber(savedAvgHour), formatNumber(savedAvgDay), formatNumber(savedAvgWeek))
         end
-
-        rebirthConnection = game:GetService("RunService").Heartbeat:Connect(function()
-            if not isRunning then return end
-            pcall(function()
-                remote:FireServer()
-            end)
+        task.spawn(function()
+            local remote = game:GetService("ReplicatedStorage").Remotes.Rebirth
+            while isRunning do
+                for _ = 1, 50 do         
+                    remote:FireServer()
+                end
+                task.wait()               
+            end
         end)
     else
-        stopRebirth()
+        totalElapsed = totalElapsed + (tick() - startTime)
+        updateUI(true)
     end
 end)
 
 task.spawn(function()
     while true do
-        if isRunning then
-            pcall(updateUI, false)
-        end
-        task.wait(0.05)
+        updateUI(false)
+        task.wait(0.03)
     end
 end)
+
 
 
 
