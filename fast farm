@@ -273,7 +273,7 @@ end)
 task.spawn(function()
     while true do
         updateUI(false)
-        task.wait(0.1)
+        task.wait(0)
     end
 end)
 
