@@ -261,7 +261,6 @@ rebirthTab:AddLabel("🔄️ Rebirth:").TextSize = 17
 
 
 
--- Fast Rebirth (once every 0.5s)
 local isRunning = false
 local startTime = 0
 local totalElapsed = 0
@@ -279,7 +278,7 @@ rebirthTab:AddSwitch("Fast Rebirth", function(state)
             local remote = game:GetService("ReplicatedStorage").Remotes.Rebirth
             while isRunning do
                 remote:FireServer()
-                task.wait(0.5)
+                task.wait(0)
             end
         end)
     else
@@ -290,7 +289,7 @@ end)
 task.spawn(function()
     while true do
         updateUI(false)
-        task.wait(0.03)
+        task.wait(0.02)
     end
 end)
 
