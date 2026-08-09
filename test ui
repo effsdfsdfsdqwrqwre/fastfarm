@@ -116,7 +116,7 @@ Window.Position = UDim2.new(0, 20, 0, 20)
 Window.Selectable = true
 Window.Size = UDim2.new(0, 200, 0, 200)
 Window.Image = "rbxassetid://130158956302423"
-Window.ImageColor3 = Color3.fromRGB(31, 32, 33)
+Window.ImageColor3 = Color3.new(0.1223529, 0.1262745, 0.1301961)
 Window.ScaleType = Enum.ScaleType.Stretch
 
 Resizer.Name = "Resizer"
@@ -201,7 +201,7 @@ TabSelection.Name = "TabSelection"
 TabSelection.Parent = Window
 TabSelection.BackgroundColor3 = Color3.new(1, 1, 1)
 TabSelection.BackgroundTransparency = 1
-TabSelection.Position = UDim2.new(0, 5, 0, 25)
+TabSelection.Position = UDim2.new(0, 15, 0, 30)
 TabSelection.Size = UDim2.new(1, -30, 0, 25)
 TabSelection.Visible = false
 TabSelection.Image = "rbxassetid://2851929490"
