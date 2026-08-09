@@ -29,6 +29,7 @@ local window = library:AddWindow("INVINCIBLE FAST FARMING", {
 
 
 
+
 player.Idled:Connect(function()
 	virtualUser:CaptureController()
 	virtualUser:ClickButton2(Vector2.new())
@@ -252,30 +253,33 @@ end
 rebirthTab:AddLabel("")
 rebirthTab:AddLabel("🔄️ Rebirth:").TextSize = 17
 
-
 rebirthTab:AddSwitch("Fast Rebirth", function(state)
-    isRunning = state
-   
-    if state then
-        startTime = tick()
-        if savedPaceHour > 0 then
-            paceLabel.Text = string.format("Pace: %s / Hour | %s / Day | %s / Week",
-                formatNumber(savedPaceHour), formatNumber(savedPaceDay), formatNumber(savedPaceWeek))
-            averagePaceLabel.Text = string.format("Average Pace: %s / Hour | %s / Day | %s / Week",
-                formatNumber(savedAvgHour), formatNumber(savedAvgDay), formatNumber(savedAvgWeek))
-        end
-        task.spawn(fastRebirthLoop)
-    else
-        totalElapsed = totalElapsed + (tick() - startTime)
-        updateUI(true)
-    end
+    isRunning = state
+    
+    if state then
+        startTime = tick()
+        if savedPaceHour > 0 then
+            paceLabel.Text = string.format("Pace: %s / Hour | %s / Day | %s / Week",
+                formatNumber(savedPaceHour), formatNumber(savedPaceDay), formatNumber(savedPaceWeek))
+            averagePaceLabel.Text = string.format("Average Pace: %s / Hour | %s / Day | %s / Week",
+                formatNumber(savedAvgHour), formatNumber(savedAvgDay), formatNumber(savedAvgWeek))
+        end
+        task.spawn(fastRebirthLoop)
+    else
+        totalElapsed = totalElapsed + (tick() - startTime)
+        updateUI(true)
+    end
 end)
+
 task.spawn(function()
-    while true do
-        updateUI(false)
-        task.wait(0)
-    end
+    while true do
+        updateUI(false)
+        task.wait(0.03)
+    end
 end)
+
+
+
 
 
 
