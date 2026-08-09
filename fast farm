@@ -251,34 +251,42 @@ end
 
 rebirthTab:AddLabel("")
 rebirthTab:AddLabel("🔄️ Rebirth:").TextSize = 17
+
+
+
+
+
+
+
+
+
+
+-- Fast Rebirth (once every 0.5s)
 local isRunning = false
 local startTime = 0
 local totalElapsed = 0
-
-local remote = game:GetService("ReplicatedStorage").Remotes.Rebirth
-
 rebirthTab:AddSwitch("Fast Rebirth", function(state)
     isRunning = state
-
     if state then
         startTime = tick()
-
+        if savedPaceHour > 0 then
+            paceLabel.Text = string.format("Pace: %s / Hour | %s / Day | %s / Week",
+                formatNumber(savedPaceHour), formatNumber(savedPaceDay), formatNumber(savedPaceWeek))
+            averagePaceLabel.Text = string.format("Average Pace: %s / Hour | %s / Day | %s / Week",
+                formatNumber(savedAvgHour), formatNumber(savedAvgDay), formatNumber(savedAvgWeek))
+        end
         task.spawn(function()
+            local remote = game:GetService("ReplicatedStorage").Remotes.Rebirth
             while isRunning do
-                -- Send a batch every scheduler yield
-                for i = 1, 8 do
-                    remote:FireServer()
-                end
-
-                task.wait()
+                remote:FireServer()
+                task.wait(0.5)
             end
         end)
     else
-        totalElapsed += tick() - startTime
+        totalElapsed = totalElapsed + (tick() - startTime)
         updateUI(true)
     end
 end)
-
 task.spawn(function()
     while true do
         updateUI(false)
