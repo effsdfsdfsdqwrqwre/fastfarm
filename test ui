@@ -9,7 +9,7 @@ do
     if b then
         b:Destroy()
     end
-end
+end 
 local b = Instance.new("ScreenGui")
 local c = Instance.new("Frame")
 local d = Instance.new("TextLabel")
