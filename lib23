@@ -1,5 +1,5 @@
 local a = {
-main_color = Color3.fromRGB(80, 0, 120),
+    main_color = Color3.fromRGB(128, 0, 200),
     min_size = Vector2.new(400, 300),
     toggle_key = Enum.KeyCode.RightShift,
     can_resize = true
@@ -113,13 +113,13 @@ e.Image = "rbxassetid://2851926732"
 e.ImageColor3 = Color3.new(1, 1, 1)
 e.ScaleType = Enum.ScaleType.Slice
 e.SliceCenter = Rect.new(12, 12, 12, 12)
--- Degradado vertical rojo -> rojo oscuro en la ventana
+-- Vertical purple gradient on the window
 local windowGradient = Instance.new("UIGradient")
 windowGradient.Parent = e
 windowGradient.Rotation = 0
 windowGradient.Color = ColorSequence.new({
-ColorSequenceKeypoint.new(0, Color3.fromRGB(170, 0, 255)),
-ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 0, 150))       
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 80, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 0, 150))
 })
 e.ImageTransparency = 0.3
 f.Name = "Resizer"
@@ -132,17 +132,17 @@ f.Position = UDim2.new(1, -20, 1, -20)
 f.Size = UDim2.new(0, 20, 0, 20)
 g.Name = "Bar"
 g.Parent = e
-g.BackgroundColor3 = Color3.fromRGB(80, 0, 150)
+g.BackgroundColor3 = Color3.fromRGB(100, 0, 180)
 g.BorderSizePixel = 0
 g.Position = UDim2.new(0, 0, 0, 5)
 g.Size = UDim2.new(1, 0, 0, 15)
--- Barra superior con degradado rojo -> rojo oscuro
+-- Top bar purple gradient
 local barGradient = Instance.new("UIGradient")
 barGradient.Parent = g
 barGradient.Rotation = 0
 barGradient.Color = ColorSequence.new({
-ColorSequenceKeypoint.new(0, Color3.fromRGB(170, 0, 255)),
-ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 0, 150))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 80, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 0, 150))
 })
 h.Name = "Toggle"
 h.Parent = g
@@ -155,12 +155,12 @@ h.ZIndex = 2
 h.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=94217808434970"
 i.Name = "Base"
 i.Parent = g
-i.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+i.BackgroundColor3 = Color3.fromRGB(140, 0, 200)
 i.BorderSizePixel = 0
 i.Position = UDim2.new(0, 0, 0.800000012, 0)
 i.Size = UDim2.new(1, 0, 0, 10)
 i.Image = "rbxassetid://2851926732"
-i.ImageColor3 = Color3.fromRGB(180, 0, 0)
+i.ImageColor3 = Color3.fromRGB(140, 0, 200)
 i.ScaleType = Enum.ScaleType.Slice
 i.SliceCenter = Rect.new(12, 12, 12, 12)
 j.Name = "Top"
@@ -170,7 +170,7 @@ j.BackgroundTransparency = 1
 j.Position = UDim2.new(0, 0, 0, -5)
 j.Size = UDim2.new(1, 0, 0, 10)
 j.Image = "rbxassetid://2851926732"
-j.ImageColor3 = Color3.fromRGB(255, 0, 0)
+j.ImageColor3 = Color3.fromRGB(180, 50, 255)
 j.ScaleType = Enum.ScaleType.Slice
 j.SliceCenter = Rect.new(12, 12, 12, 12)
 k.Name = "Tabs"
@@ -199,7 +199,7 @@ m.Position = UDim2.new(0, 15, 0, 30)
 m.Size = UDim2.new(1, -30, 0, 25)
 m.Visible = false
 m.Image = "rbxassetid://2851929490"
-m.ImageColor3 = Color3.fromRGB(255, 0, 0)
+m.ImageColor3 = Color3.fromRGB(160, 40, 255)
 m.ScaleType = Enum.ScaleType.Slice
 m.SliceCenter = Rect.new(4, 4, 4, 4)
 n.Name = "TabScrolling"
@@ -221,8 +221,8 @@ p.FillDirection = Enum.FillDirection.Horizontal
 p.SortOrder = Enum.SortOrder.LayoutOrder
 p.Padding = UDim.new(0, 2)
 q.Parent = m
-q.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-q.BorderColor3 = Color3.fromRGB(255, 0, 0)
+q.BackgroundColor3 = Color3.fromRGB(140, 0, 200)
+q.BorderColor3 = Color3.fromRGB(180, 50, 255)
 q.BorderSizePixel = 0
 q.Position = UDim2.new(0, 0, 1, 0)
 q.Size = UDim2.new(1, 0, 0, 2)
@@ -242,7 +242,7 @@ t.BorderSizePixel = 0
 t.Size = UDim2.new(1, 0, 0, 20)
 t.ZIndex = 2
 t.Font = Enum.Font.Garamond
-t.PlaceholderColor3 = Color3.fromRGB(255, 100, 100)
+t.PlaceholderColor3 = Color3.fromRGB(200, 120, 255)
 t.PlaceholderText = "Input Text"
 t.Text = ""
 t.TextColor3 = Color3.new(1, 1, 1)
@@ -283,7 +283,7 @@ x.BackgroundColor3 = Color3.new(1, 1, 1)
 x.BackgroundTransparency = 1
 x.Size = UDim2.new(0, 0, 0, 20)
 x.Image = "rbxassetid://2851929490"
-x.ImageColor3 = Color3.fromRGB(255, 0, 0)
+x.ImageColor3 = Color3.fromRGB(160, 40, 255)
 x.ScaleType = Enum.ScaleType.Slice
 x.SliceCenter = Rect.new(4, 4, 4, 4)
 y.Name = "Value"
@@ -366,7 +366,7 @@ G.Size = UDim2.new(1, 0, 1, 0)
 G.ZIndex = 3
 G.CanvasSize = UDim2.new(0, 0, 0, 0)
 G.ScrollBarThickness = 4
-G.ScrollBarImageColor3 = Color3.fromRGB(255, 0, 0)
+G.ScrollBarImageColor3 = Color3.fromRGB(160, 40, 255)
 H.Parent = G
 H.SortOrder = Enum.SortOrder.LayoutOrder
 I.Name = "TextButton_Roundify_4px"
@@ -380,7 +380,7 @@ I.ScaleType = Enum.ScaleType.Slice
 I.SliceCenter = Rect.new(4, 4, 4, 4)
 J.Name = "TabButton"
 J.Parent = c
-J.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+J.BackgroundColor3 = Color3.fromRGB(140, 0, 200)
 J.BackgroundTransparency = 1
 J.BorderSizePixel = 0
 J.Position = UDim2.new(0.185185179, 0, 0, 0)
@@ -396,7 +396,7 @@ K.BackgroundColor3 = Color3.new(1, 1, 1)
 K.BackgroundTransparency = 1
 K.Size = UDim2.new(1, 0, 1, 0)
 K.Image = "rbxassetid://2851929490"
-K.ImageColor3 = Color3.fromRGB(180, 0, 0)
+K.ImageColor3 = Color3.fromRGB(140, 0, 200)
 K.ScaleType = Enum.ScaleType.Slice
 K.SliceCenter = Rect.new(4, 4, 4, 4)
 L.Name = "Folder"
@@ -411,7 +411,7 @@ L.ScaleType = Enum.ScaleType.Slice
 L.SliceCenter = Rect.new(4, 4, 4, 4)
 M.Name = "Button"
 M.Parent = L
-M.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+M.BackgroundColor3 = Color3.fromRGB(140, 0, 200)
 M.BackgroundTransparency = 1
 M.BorderSizePixel = 0
 M.Size = UDim2.new(1, 0, 0, 20)
@@ -427,7 +427,7 @@ N.BackgroundColor3 = Color3.new(1, 1, 1)
 N.BackgroundTransparency = 1
 N.Size = UDim2.new(1, 0, 1, 0)
 N.Image = "rbxassetid://2851929490"
-N.ImageColor3 = Color3.fromRGB(180, 0, 0)
+N.ImageColor3 = Color3.fromRGB(140, 0, 200)
 N.ScaleType = Enum.ScaleType.Slice
 N.SliceCenter = Rect.new(4, 4, 4, 4)
 O.Name = "Toggle"
@@ -666,7 +666,7 @@ ab.BackgroundColor3 = Color3.new(1, 1, 1)
 ab.BackgroundTransparency = 1
 ab.Size = UDim2.new(1, 0, 1, 0)
 ab.Image = "rbxassetid://2851929490"
-ab.ImageColor3 = Color3.fromRGB(180, 0, 0)
+ab.ImageColor3 = Color3.fromRGB(140, 0, 200)
 ab.ImageTransparency = 0.5
 ab.ScaleType = Enum.ScaleType.Slice
 ab.SliceCenter = Rect.new(4, 4, 4, 4)
@@ -683,7 +683,7 @@ ac.TextSize = 14
 ac.TextXAlignment = Enum.TextXAlignment.Left
 ad.Name = "Button"
 ad.Parent = c
-ad.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+ad.BackgroundColor3 = Color3.fromRGB(140, 0, 200)
 ad.BackgroundTransparency = 1
 ad.BorderSizePixel = 0
 ad.Size = UDim2.new(0, 91, 0, 20)
@@ -698,7 +698,7 @@ ae.BackgroundColor3 = Color3.new(1, 1, 1)
 ae.BackgroundTransparency = 1
 ae.Size = UDim2.new(1, 0, 1, 0)
 ae.Image = "rbxassetid://2851929490"
-ae.ImageColor3 = Color3.fromRGB(180, 0, 0)
+ae.ImageColor3 = Color3.fromRGB(140, 0, 200)
 ae.ScaleType = Enum.ScaleType.Slice
 ae.SliceCenter = Rect.new(4, 4, 4, 4)
 af.Name = "DropdownButton"
@@ -750,7 +750,7 @@ aj.BackgroundColor3 = Color3.new(1, 1, 1)
 aj.BackgroundTransparency = 1
 aj.Size = UDim2.new(1, 0, 1, 0)
 aj.Image = "rbxassetid://2851929490"
-aj.ImageColor3 = Color3.fromRGB(180, 0, 0)
+aj.ImageColor3 = Color3.fromRGB(140, 0, 200)
 aj.ScaleType = Enum.ScaleType.Slice
 aj.SliceCenter = Rect.new(4, 4, 4, 4)
 ak.Name = "Windows"
@@ -930,7 +930,7 @@ function bd:AddWindow(bi, bj)
     bi = tostring(bi or "New Window")
     bj = typeof(bj) == "table" and bj or a
     bj.tween_time = bj.tween_time or 0.1
-    bj.title_bar = bj.title_bar or {Color3.fromRGB(255, 0, 0)}
+    bj.title_bar = bj.title_bar or {Color3.fromRGB(160, 40, 255)}
     if typeof(bj.title_bar) == "Color3" then
         bj.title_bar = {bj.title_bar}
     end
@@ -948,13 +948,13 @@ function bd:AddWindow(bi, bj)
     e:FindFirstChild("Title").Text = bi
     e.Size = UDim2.new(0, bj.min_size.X, 0, bj.min_size.Y)
     e.ZIndex = e.ZIndex + bc * 10
-    -- Añadir degradado vertical rojo -> rojo oscuro a la ventana
+    -- Purple vertical gradient on the window
     local winGradient = Instance.new("UIGradient")
     winGradient.Parent = e
     winGradient.Rotation = 0
     winGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 0, 0))
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 80, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 0, 140))
     })
     e.ImageTransparency = 0.3
     do
@@ -1212,7 +1212,7 @@ function bd:AddWindow(bi, bj)
             c1.ScrollBarThickness = 4
             c1.CanvasSize = UDim2.new(0, 0, 0, 0)
             c1.ZIndex = c0.ZIndex
-            c1.ScrollBarImageColor3 = Color3.fromRGB(255, 0, 0)
+            c1.ScrollBarImageColor3 = Color3.fromRGB(160, 40, 255)
             c1.ScrollBarImageTransparency = 0.4
             local bu = c0:FindFirstChildOfClass("UIListLayout")
             if bu then
@@ -1237,7 +1237,7 @@ function bd:AddWindow(bi, bj)
                             c6.Name = "SimpleParticle"
                             c6.Size = UDim2.new(0, 1.5, 0, 1.5)
                             c6.AnchorPoint = Vector2.new(0.5, 0.5)
-                            c6.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                            c6.BackgroundColor3 = Color3.fromRGB(220, 160, 255)
                             c6.BorderSizePixel = 0
                             c6.ZIndex = b5.ZIndex + 15
                             local bo = Instance.new("UICorner")
@@ -1376,7 +1376,7 @@ function bd:AddWindow(bi, bj)
                     local cp = b5:GetChildren()[1]
                     cp.ZIndex = cp.ZIndex + bc * 10
                     cp.ImageTransparency = bj.title_bar_transparency or 0
-                    aH(cp, {Color3.fromRGB(180, 0, 0)}, 0)
+                    aH(cp, {Color3.fromRGB(140, 0, 200)}, 0)
                     b5.TextColor3 = Color3.new(1, 1, 1)
                     b5.MouseButton1Click:Connect(
                         function()
@@ -1400,7 +1400,7 @@ function bd:AddWindow(bi, bj)
                     local ct = cs:GetChildren()[1]
                     ct.ZIndex = ct.ZIndex + bc * 10
                     ct.ImageTransparency = bj.title_bar_transparency or 0
-                    aH(ct, {Color3.fromRGB(180, 0, 0)}, 0)
+                    aH(ct, {Color3.fromRGB(140, 0, 200)}, 0)
                     local cu = false
                     cs.MouseButton1Click:Connect(
                         function()
@@ -1431,9 +1431,9 @@ function bd:AddWindow(bi, bj)
                     local cz = cy:GetChildren()[1]
                     cz.ZIndex = cz.ZIndex + bc * 10
                     cz.ImageTransparency = bj.title_bar_transparency or 0
-                    aH(cz, {Color3.fromRGB(180, 0, 0)}, 0)
+                    aH(cz, {Color3.fromRGB(140, 0, 200)}, 0)
                     cy.TextColor3 = Color3.new(1, 1, 1)
-                    cy.PlaceholderColor3 = Color3.fromRGB(255, 100, 100)
+                    cy.PlaceholderColor3 = Color3.fromRGB(200, 120, 255)
                     cy.FocusLost:Connect(
                         function(cA)
                             if cA and #cy.Text > 0 then
@@ -1617,7 +1617,7 @@ function bd:AddWindow(bi, bj)
                     local c_ = cX:GetChildren()[3]
                     c_.ZIndex = c_.ZIndex + bc * 10
                     c_.ImageTransparency = bj.title_bar_transparency or 0
-                    aH(c_, {Color3.fromRGB(180, 0, 0)}, 0)
+                    aH(c_, {Color3.fromRGB(140, 0, 200)}, 0)
                     cY.ImageTransparency = bj.background_transparency or 0.1
                     aH(cY, bj.background, 0)
                     local d0 = Instance.new("UICorner")
@@ -1718,7 +1718,7 @@ function bd:AddWindow(bi, bj)
                         aZ.MouseEnter:Connect(
                             function()
                                 aZ.BackgroundTransparency = 0.8
-                                aZ.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+                                aZ.BackgroundColor3 = Color3.fromRGB(160, 40, 255)
                             end
                         )
                         aZ.MouseLeave:Connect(
@@ -1939,7 +1939,7 @@ function bd:AddWindow(bi, bj)
                     dz.Parent = c1 or c0
                     b5.Text = "      " .. dx
                     local cp = b5:GetChildren()[1]
-                    cp.ImageColor3 = Color3.fromRGB(255, 0, 0)
+                    cp.ImageColor3 = Color3.fromRGB(160, 40, 255)
                     local function dB()
                         local d7 = 25
                         for aw, aW in ipairs(cZ:GetChildren()) do
