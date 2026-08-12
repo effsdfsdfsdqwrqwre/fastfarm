@@ -1,3 +1,4 @@
+
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/effsdfsdfsdqwrqwre/fastfarm/refs/heads/main/skullui", true))()
 local window = library:AddWindow("                                     OBLITERATOR KILLING", {
     main_color = Color3.fromRGB(0, 0, 0),
@@ -728,56 +729,64 @@ end)
 
 
 
-local teleportToMe = false
 
-local teleportSwitch = Killer:AddSwitch("Kill Blacklist [ Bring ]", function(state)
-    teleportToMe = state
+
+
+
+local kill = false
+
+Killer:AddSwitch("Kill Blacklist [ Bring ]", function(state)
+    kill = state
 
     task.spawn(function()
-        while teleportToMe do
+        while kill do
             local character = LocalPlayer.Character
-            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-
-            if targetPlayerName and character then
-                local target = Players:FindFirstChild(targetPlayerName)
-
-                if target and target.Character then
-                    local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
-                    local localRoot = character:FindFirstChild("HumanoidRootPart")
-
-                    if targetRoot and localRoot then
-                        targetRoot.CFrame = localRoot.CFrame
-                    end
-                end
+            if not character then
+                task.wait()
+                continue
             end
 
-            if character then
-                local punch = character:FindFirstChild("Punch")
+            -- Equip Punch if it's in the backpack
+            local punch = LocalPlayer.Backpack:FindFirstChild("Punch") or character:FindFirstChild("Punch")
+            if punch and punch.Parent ~= character then
+                punch.Parent = character
+            end
 
-                if not punch then
-                    local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
-                    punch = backpack and backpack:FindFirstChild("Punch")
-
-                    if punch and humanoid then
-                        humanoid:EquipTool(punch)
-                    end
-                end
-
-                if punch and punch:IsA("Tool") and punch.Parent == character then
+            -- Activate Punch
+            if punch and punch.Parent == character then
+                pcall(function()
                     punch:Activate()
+                end)
+            end
+
+            -- Find a valid hand/root part to teleport to
+            local hand = character:FindFirstChild("RightHand")
+                or character:FindFirstChild("Right Arm")
+                or character:FindFirstChild("HumanoidRootPart")
+
+            if hand then
+                for _, name in ipairs(targetPlayerNames) do
+                    local target = Players:FindFirstChild(name)
+                    if target and target ~= LocalPlayer and target.Character then
+                        local root = target.Character:FindFirstChild("HumanoidRootPart")
+                        local humanoid = target.Character:FindFirstChild("Humanoid")
+
+                        if root and humanoid and humanoid.Health > 0 then
+                            pcall(function()
+                                local offset = hand.CFrame.LookVector * 2.2
+                                root.CFrame = CFrame.new(hand.Position + offset) * (hand.CFrame - hand.Position)
+                                root.AssemblyLinearVelocity = Vector3.zero
+                                root.AssemblyAngularVelocity = Vector3.zero
+                            end)
+                        end
+                    end
                 end
             end
 
-            task.wait(0)
+            task.wait()
         end
     end)
 end)
-
-
-
-
-
-
 
 
 
@@ -2288,4 +2297,3 @@ task.spawn(function()
         task.wait(0.1)
     end
 end)
-
