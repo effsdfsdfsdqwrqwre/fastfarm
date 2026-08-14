@@ -114,10 +114,9 @@ window.ClipsDescendants = true
 window.Position = UDim2.new(0, 20, 0, 20)
 window.Selectable = true
 window.Size = UDim2.new(0, 200, 0, 200)
-window.Image = "rbxassetid://2851926732"
+window.Image = "rbxassetid://77855812045780"
 window.ImageColor3 = Color3.new(0.0823529, 0.0862745, 0.0901961)
-window.ScaleType = Enum.ScaleType.Slice
-window.SliceCenter = Rect.new(12, 12, 12, 12)
+window.ScaleType = Enum.ScaleType.Stretch
 
 resizer.Name = "Resizer"
 resizer.Parent = window
@@ -133,7 +132,7 @@ bar.Parent = window
 bar.BackgroundColor3 = Color3.new(0.160784, 0.290196, 0.478431)
 bar.BorderSizePixel = 0
 bar.Position = UDim2.new(0, 0, 0, 5)
-bar.Size = UDim2.new(1, 0, 0, 50)
+bar.Size = UDim2.new(1, 0, 0, 20)
 
 toggle.Name = "Toggle"
 toggle.Parent = bar
