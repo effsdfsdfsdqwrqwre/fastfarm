@@ -11,14 +11,6 @@ local virtualUser = game:GetService("VirtualUser")
 local lighting = game:GetService("Lighting")
 
 
-if getgenv().sbe ~= "sbevalid" then
-	player:Kick("Always use the Loader")
-	getgenv().sbe = ""
-	task.wait(0.5)
-	return
-else
-	getgenv().sbe = ""
-end
 
 
 
