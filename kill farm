@@ -1,7 +1,6 @@
 if getgenv().AutoKillLoaded then return end
 getgenv().AutoKillLoaded = true
 
--- ================== SETTINGS ==================
 local AutoFarmEnabled = true
 local AutoServerHopEnabled = true
 local ServerHopInterval = 60
@@ -10,11 +9,11 @@ local AutoTPKingGymEnabled = true
 local AutoLockPositionEnabled = true
 local AutoSetNightTimeEnabled = true
 local AutoBigHitboxEnabled = true
--- =============================================
+
 
 local gymCFrame = CFrame.new(-7574.69531, 0.61160785, 2999.99536, 0.930037916, 9.8745204e-08, 0.367463559, -9.51245127e-08, 1, -2.79641394e-08, -0.367463559, -8.94708219e-09, 0.930037916)
 
--- Services
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
@@ -25,7 +24,6 @@ local LocalPlayer = Players.LocalPlayer
 
 local LastServerHop = os.clock()
 
--- Position Lock
 local positionLockAlignPos, positionLockAttachment
 
 local function clearPositionLock()
@@ -50,7 +48,6 @@ local function setupPositionLock()
     positionLockAlignPos.Parent = hrp
 end
 
--- Night Time
 local function setNightTime()
     Lighting.ClockTime = 0
     Lighting.Brightness = 0.5
@@ -58,7 +55,7 @@ local function setNightTime()
     Lighting.OutdoorAmbient = Color3.fromRGB(30,30,50)
 end
 
--- Hitbox
+
 local TARGET_HITBOX_SIZE = Vector3.new(25, 25, 25)
 
 local function setBigHitbox()
@@ -73,7 +70,7 @@ local function resetHitbox()
     if hrp then hrp.Size = Vector3.new(2, 2, 1) end
 end
 
--- Stats
+
 local function GetPlayerStatValue(plr, statNames)
     if not plr then return nil end
     if type(statNames) == "string" then statNames = {statNames} end
@@ -107,7 +104,6 @@ local function ShouldKillPlayer(target)
     return math.ceil(theirHP / myDmg) <= 5
 end
 
--- Character
 local Character, Humanoid, Hand, Punch, HRP
 local LastAttack = 0
 
@@ -145,13 +141,13 @@ end)
 
 UpdateAll()
 
--- Anti-AFK
+
 LocalPlayer.Idled:Connect(function()
     VirtualUser:CaptureController()
     VirtualUser:ClickButton2(Vector2.new())
 end)
 
--- Server Hop
+
 local function ServerHop()
     local placeId = game.PlaceId
     local myJobId = game.JobId
@@ -187,7 +183,7 @@ local function ServerHop()
     end
 end
 
--- Main Loop
+
 RunService.Heartbeat:Connect(function()
     if AutoServerHopEnabled and (os.clock() - LastServerHop) >= ServerHopInterval then
         LastServerHop = os.clock()
@@ -312,7 +308,6 @@ playersLabel.Font = Enum.Font.Code
 playersLabel.TextStrokeTransparency = 0.7
 playersLabel.Parent = frame
 
--- Update Kills from leaderstats
 local function updateKills()
     local leaderstats = player:FindFirstChild("leaderstats")
     if leaderstats then
@@ -336,7 +331,7 @@ if player:FindFirstChild("leaderstats") then
     end
 end
 
--- Update Players Count
+
 local function updatePlayers()
     playersLabel.Text = "Players: " .. #game.Players:GetPlayers()
 end
@@ -345,5 +340,4 @@ game.Players.PlayerAdded:Connect(updatePlayers)
 game.Players.PlayerRemoving:Connect(updatePlayers)
 updatePlayers()
 
-print("✅ INVINCIBLE PRIVATE KILLING Counter Loaded!")
-print("Raised higher under top UI")
+
