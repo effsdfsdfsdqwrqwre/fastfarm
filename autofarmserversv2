@@ -1,13 +1,13 @@
 if getgenv().AutoKillLoaded then return end
 getgenv().AutoKillLoaded = true
 
--- ================== SETTINGS ==================
+
 local AutoFarmEnabled = true
 local AutoServerHopEnabled = true
-local ServerHopInterval = 60 -- seconds
-local KillOnlyWeakerEnabled = true -- set to false to kill everyone
-local AutoWhitelistFriendsEnabled = true -- New: Auto whitelist friends
--- =============================================
+local ServerHopInterval = 90
+local KillOnlyWeakerEnabled = true 
+local AutoWhitelistFriendsEnabled = true
+
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -18,11 +18,10 @@ local LocalPlayer = Players.LocalPlayer
 local LastServerHop = os.clock()
 local LastAttack = 0
 
--- Whitelist system
 local playerWhitelist = {}
 local friendWhitelistActive = AutoWhitelistFriendsEnabled
 
--- Initialize friend whitelist
+
 if friendWhitelistActive then
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and LocalPlayer:IsFriendsWith(player.UserId) then
@@ -37,7 +36,7 @@ if friendWhitelistActive then
     end)
 end
 
--- Stats
+
 local function GetPlayerStatValue(plr, statNames)
     if not plr then return nil end
     if type(statNames) == "string" then statNames = {statNames} end
@@ -76,7 +75,7 @@ local function ShouldKillPlayer(target)
     return math.ceil(theirHP / myDmg) <= 5
 end
 
--- Server Hop
+
 local function ServerHop()
     local placeId = game.PlaceId
     local myJobId = game.JobId
@@ -118,9 +117,7 @@ local function ServerHop()
     end
 end
 
--- Main Loop
 RunService.Heartbeat:Connect(function()
-    -- Server Hop
     if AutoServerHopEnabled and (os.clock() - LastServerHop) >= ServerHopInterval then
         LastServerHop = os.clock()
         task.spawn(ServerHop)
@@ -143,12 +140,10 @@ RunService.Heartbeat:Connect(function()
     if (os.clock() - LastAttack) < 0.08 then return end
     LastAttack = os.clock()
    
-    -- Speed up attack
     local attackTime = Punch:FindFirstChild("attackTime")
     if attackTime then attackTime.Value = 0 end
     Punch:Activate()
-   
-    -- Kill loop
+
     for _, other in Players:GetPlayers() do
         if other == LocalPlayer then continue end
         if not ShouldKillPlayer(other) then continue end
@@ -171,5 +166,3 @@ RunService.Heartbeat:Connect(function()
         end
     end
 end)
-
-print("✅ Auto Kill + Server Hop + Friend Whitelist Loaded!")
