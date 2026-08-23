@@ -17,12 +17,10 @@ local window = library:AddWindow("invincible fast farm", {
     can_resize = false
 })
 
-
 player.Idled:Connect(function()
     VirtualUser:CaptureController()
     VirtualUser:ClickButton2(Vector2.new())
 end)
-
 
 local adsConnection
 
@@ -266,6 +264,8 @@ rebirthsStat:GetPropertyChangedSignal("Value"):Connect(function()
 end)
 
 --// Pet management
+local MAX_PETS = 9
+
 local function managePets(petName)
     local petsFolder = player:FindFirstChild("petsFolder")
 
@@ -273,19 +273,19 @@ local function managePets(petName)
         return false
     end
 
-    local equipEvent
-
     local rEvents = ReplicatedStorage:FindFirstChild("rEvents")
 
-    if rEvents then
-        equipEvent = rEvents:FindFirstChild("equipPetEvent")
+    if not rEvents then
+        return false
     end
+
+    local equipEvent = rEvents:FindFirstChild("equipPetEvent")
 
     if not equipEvent then
         return false
     end
 
-    -- Unequip current pets
+    -- Unequip currently equipped pets
     for _, folder in ipairs(petsFolder:GetChildren()) do
         if folder:IsA("Folder") then
             for _, pet in ipairs(folder:GetChildren()) do
@@ -296,14 +296,16 @@ local function managePets(petName)
         end
     end
 
-    task.wait(0.1)
+    task.wait(0.15)
 
-    -- Equip requested pet
     local unique = petsFolder:FindFirstChild("Unique")
 
     if not unique then
         return false
     end
+
+    -- Find and equip up to 9 copies of the selected pet
+    local equipped = 0
 
     for _, pet in ipairs(unique:GetChildren()) do
         if pet.Name == petName then
@@ -311,14 +313,17 @@ local function managePets(petName)
                 equipEvent:FireServer("equipPet", pet)
             end)
 
-            return true
+            equipped += 1
+
+            if equipped >= MAX_PETS then
+                break
+            end
         end
     end
 
-    return false
+    return equipped > 0
 end
 
---// Get rebirth remote
 local function getRebirthRemote()
     local rEvents = ReplicatedStorage:FindFirstChild("rEvents")
 
@@ -329,7 +334,6 @@ local function getRebirthRemote()
     return rEvents:FindFirstChild("rebirthRemote")
 end
 
---// Perform one rebirth
 local function doRebirth(petName)
     if not activeMode then
         return false
@@ -371,14 +375,13 @@ local function doRebirth(petName)
         return false
     end
 
-    -- Change pet before rebirth
+    -- Equip the selected pet set before rebirthing
     managePets(petName)
 
     task.wait(0.25)
 
     local before = rebirthsStat.Value
 
-    -- Rebirth until the stat actually changes
     repeat
         if not activeMode then
             return false
@@ -394,7 +397,6 @@ local function doRebirth(petName)
     return rebirthsStat.Value > before
 end
 
---// Farming configurations
 local MODES = {
     normal = {
         petBefore = "Swift Samurai",
@@ -407,7 +409,6 @@ local MODES = {
     }
 }
 
---// Main farming loop
 local function fastRebirthLoop(modeName)
     local config = MODES[modeName]
 
@@ -416,14 +417,14 @@ local function fastRebirthLoop(modeName)
     end
 
     while activeMode == modeName do
-        -- Equip farming pet
+        -- Equip up to 9 of the first pet
         managePets(config.petBefore)
 
         if activeMode ~= modeName then
             break
         end
 
-        -- Do rebirth
+        -- Rebirth using the second pet
         doRebirth(config.petRebirth)
 
         if activeMode ~= modeName then
@@ -434,9 +435,7 @@ local function fastRebirthLoop(modeName)
     end
 end
 
---// Start mode
 local function startMode(modeName)
-    -- Stop any existing mode first
     if activeMode then
         totalElapsed += tick() - startTime
     end
@@ -451,7 +450,6 @@ local function startMode(modeName)
     end)
 end
 
---// Stop mode
 local function stopMode()
     if activeMode then
         totalElapsed += tick() - startTime
@@ -461,7 +459,6 @@ local function stopMode()
     updateUI()
 end
 
---// UI
 rebirthTab:AddLabel("")
 rebirthTab:AddLabel("🔄️ Rebirth:").TextSize = 17
 
@@ -490,7 +487,6 @@ local newSwitch = rebirthTab:AddSwitch(
     end
 )
 
-
 task.spawn(function()
     while true do
         updateUI()
@@ -498,10 +494,8 @@ task.spawn(function()
     end
 end)
 
---// Initial UI
 updateRebirthsLabel()
 updateUI()
-
 
 
 
@@ -1069,6 +1063,95 @@ packs:AddButton("Titanium Hydra", function()
                 equipEvent:FireServer("equipPet", pet)
                 equipped = equipped + 1
                 task.wait(0.05)
+            end
+        end
+    end
+end)
+
+packs:AddLabel("").TextSize = 1
+packs:AddLabel("Pet Combos").TextSize = 18
+packs:AddLabel("").TextSize = 1
+
+packs:AddButton("Fast Farm Combo", function()
+    local player = game:GetService("Players").LocalPlayer
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local equipEvent = ReplicatedStorage.rEvents.equipPetEvent
+
+    -- Unequip all currently equipped pets
+    if player:FindFirstChild("petsFolder") then
+        for _, folder in pairs(player.petsFolder:GetChildren()) do
+            if folder:IsA("Folder") then
+                for _, pet in pairs(folder:GetChildren()) do
+                    equipEvent:FireServer("unequipPet", pet)
+                end
+            end
+        end
+    end
+
+    task.wait(0.15)
+
+    local equippedOmega = 0
+    local equippedHound = 0
+
+    local unique = player.petsFolder:FindFirstChild("Unique")
+    if unique then
+        for _, pet in pairs(unique:GetChildren()) do
+            if pet.Name == "Omega Overlord" and equippedOmega < 7 then
+                equipEvent:FireServer("equipPet", pet)
+                equippedOmega += 1
+                task.wait(0.05)
+
+            elseif pet.Name == "Powercore Hound" and equippedHound < 2 then
+                equipEvent:FireServer("equipPet", pet)
+                equippedHound += 1
+                task.wait(0.05)
+            end
+
+            if equippedOmega >= 7 and equippedHound >= 2 then
+                break
+            end
+        end
+    end
+end)
+
+
+
+packs:AddButton("Fast Farm Combo V2", function()
+    local player = game:GetService("Players").LocalPlayer
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local equipEvent = ReplicatedStorage.rEvents.equipPetEvent
+
+    if player:FindFirstChild("petsFolder") then
+        for _, folder in pairs(player.petsFolder:GetChildren()) do
+            if folder:IsA("Folder") then
+                for _, pet in pairs(folder:GetChildren()) do
+                    equipEvent:FireServer("unequipPet", pet)
+                end
+            end
+        end
+    end
+
+    task.wait(0.15)
+
+    local equippedOmega = 0
+    local equippedHound = 0
+
+    local unique = player.petsFolder:FindFirstChild("Unique")
+    if unique then
+        for _, pet in pairs(unique:GetChildren()) do
+            if pet.Name == "Omega Overlord" and equippedOmega < 8 then
+                equipEvent:FireServer("equipPet", pet)
+                equippedOmega += 1
+                task.wait(0.05)
+
+            elseif pet.Name == "Powercore Hound" and equippedHound < 1 then
+                equipEvent:FireServer("equipPet", pet)
+                equippedHound += 1
+                task.wait(0.05)
+            end
+
+            if equippedOmega >= 8 and equippedHound >= 1 then
+                break
             end
         end
     end
