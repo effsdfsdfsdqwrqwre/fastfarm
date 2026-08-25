@@ -83,8 +83,7 @@ local inputButton = Instance.new("TextButton")
 local inputRoundify4px = Instance.new("ImageLabel")
 local windowsFrame = Instance.new("Frame")
 local cloneref = cloneref and cloneref or function(...) return ... end
-local CoreGui= cloneref(game:GetService("CoreGui"))
-
+local CoreGui = cloneref(game:GetService("CoreGui"))
 
 imgui.Name = "imgui"
 imgui.Parent = gethui and gethui() or (CoreGui or game.Players.LocalPlayer:WaitForChild("PlayerGui"))
@@ -118,6 +117,10 @@ window.Image = "rbxassetid://75793804195252"
 window.ImageColor3 = Color3.new(0.0823529, 0.0862745, 0.0901961)
 window.ScaleType = Enum.ScaleType.Stretch
 
+local windowCorner = Instance.new("UICorner")
+windowCorner.CornerRadius = UDim.new(0, 8)
+windowCorner.Parent = window
+
 resizer.Name = "Resizer"
 resizer.Parent = window
 resizer.Active = true
@@ -127,12 +130,20 @@ resizer.BorderSizePixel = 0
 resizer.Position = UDim2.new(1, -20, 1, -20)
 resizer.Size = UDim2.new(0, 20, 0, 20)
 
+local resizerCorner = Instance.new("UICorner")
+resizerCorner.CornerRadius = UDim.new(0, 4)
+resizerCorner.Parent = resizer
+
 bar.Name = "Bar"
 bar.Parent = window
 bar.BackgroundColor3 = Color3.new(0.160784, 0.290196, 0.478431)
 bar.BorderSizePixel = 0
 bar.Position = UDim2.new(0, 0, 0, 5)
 bar.Size = UDim2.new(1, 0, 0, 20)
+
+local barCorner = Instance.new("UICorner")
+barCorner.CornerRadius = UDim.new(0, 6)
+barCorner.Parent = bar
 
 toggle.Name = "Toggle"
 toggle.Parent = bar
@@ -155,6 +166,10 @@ base.ImageColor3 = Color3.new(0.160784, 0.290196, 0.478431)
 base.ScaleType = Enum.ScaleType.Slice
 base.SliceCenter = Rect.new(12, 12, 12, 12)
 
+local baseCorner = Instance.new("UICorner")
+baseCorner.CornerRadius = UDim.new(0, 4)
+baseCorner.Parent = base
+
 top.Name = "Top"
 top.Parent = bar
 top.BackgroundColor3 = Color3.new(1, 1, 1)
@@ -165,6 +180,10 @@ top.Image = "rbxassetid://2851926732"
 top.ImageColor3 = Color3.new(0.160784, 0.290196, 0.478431)
 top.ScaleType = Enum.ScaleType.Slice
 top.SliceCenter = Rect.new(12, 12, 12, 12)
+
+local topCorner = Instance.new("UICorner")
+topCorner.CornerRadius = UDim.new(0, 4)
+topCorner.Parent = top
 
 tabs.Name = "Tabs"
 tabs.Parent = window
@@ -197,6 +216,10 @@ tabSelection.ImageColor3 = Color3.new(0.145098, 0.14902, 0.156863)
 tabSelection.ScaleType = Enum.ScaleType.Slice
 tabSelection.SliceCenter = Rect.new(4, 4, 4, 4)
 
+local tabSelectionCorner = Instance.new("UICorner")
+tabSelectionCorner.CornerRadius = UDim.new(0, 6)
+tabSelectionCorner.Parent = tabSelection
+
 tabButtons.Name = "TabButtons"
 tabButtons.Parent = tabSelection
 tabButtons.BackgroundColor3 = Color3.new(1, 1, 1)
@@ -215,6 +238,10 @@ frame.BorderSizePixel = 0
 frame.Position = UDim2.new(0, 0, 1, 0)
 frame.Size = UDim2.new(1, 0, 0, 2)
 
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0, 2)
+frameCorner.Parent = frame
+
 tab.Name = "Tab"
 tab.Parent = prefabs
 tab.BackgroundColor3 = Color3.new(1, 1, 1)
@@ -228,6 +255,10 @@ tab.ScrollingDirection = Enum.ScrollingDirection.Y
 tab.ScrollBarThickness = 6
 tab.ScrollBarImageTransparency = 0.15
 tab.ClipsDescendants = true
+
+local tabCorner = Instance.new("UICorner")
+tabCorner.CornerRadius = UDim.new(0, 6)
+tabCorner.Parent = tab
 
 uiListLayout2.Parent = tab
 uiListLayout2.SortOrder = Enum.SortOrder.LayoutOrder
@@ -256,6 +287,10 @@ textBoxRoundify4px.ImageColor3 = Color3.new(0.203922, 0.207843, 0.219608)
 textBoxRoundify4px.ScaleType = Enum.ScaleType.Slice
 textBoxRoundify4px.SliceCenter = Rect.new(4, 4, 4, 4)
 
+local textBoxCorner = Instance.new("UICorner")
+textBoxCorner.CornerRadius = UDim.new(0, 6)
+textBoxCorner.Parent = textBoxRoundify4px
+
 slider.Name = "Slider"
 slider.Parent = prefabs
 slider.BackgroundColor3 = Color3.new(1, 1, 1)
@@ -266,6 +301,10 @@ slider.Image = "rbxassetid://2851929490"
 slider.ImageColor3 = Color3.new(0.145098, 0.14902, 0.156863)
 slider.ScaleType = Enum.ScaleType.Slice
 slider.SliceCenter = Rect.new(4, 4, 4, 4)
+
+local sliderCorner = Instance.new("UICorner")
+sliderCorner.CornerRadius = UDim.new(0, 6)
+sliderCorner.Parent = slider
 
 sliderTitle.Name = "Title"
 sliderTitle.Parent = slider
@@ -288,6 +327,10 @@ indicator.Image = "rbxassetid://2851929490"
 indicator.ImageColor3 = Color3.new(0.254902, 0.262745, 0.278431)
 indicator.ScaleType = Enum.ScaleType.Slice
 indicator.SliceCenter = Rect.new(4, 4, 4, 4)
+
+local indicatorCorner = Instance.new("UICorner")
+indicatorCorner.CornerRadius = UDim.new(0, 6)
+indicatorCorner.Parent = indicator
 
 sliderValue.Name = "Value"
 sliderValue.Parent = slider
@@ -368,6 +411,10 @@ dropdownBox.ImageColor3 = Color3.new(0.129412, 0.133333, 0.141176)
 dropdownBox.ScaleType = Enum.ScaleType.Slice
 dropdownBox.SliceCenter = Rect.new(4, 4, 4, 4)
 
+local dropdownBoxCorner = Instance.new("UICorner")
+dropdownBoxCorner.CornerRadius = UDim.new(0, 6)
+dropdownBoxCorner.Parent = dropdownBox
+
 dropdownObjects.Name = "Objects"
 dropdownObjects.Parent = dropdownBox
 dropdownObjects.BackgroundColor3 = Color3.new(1, 1, 1)
@@ -390,6 +437,10 @@ textButtonRoundify4px.Image = "rbxassetid://2851929490"
 textButtonRoundify4px.ImageColor3 = Color3.new(0.203922, 0.207843, 0.219608)
 textButtonRoundify4px.ScaleType = Enum.ScaleType.Slice
 textButtonRoundify4px.SliceCenter = Rect.new(4, 4, 4, 4)
+
+local dropdownRoundCorner = Instance.new("UICorner")
+dropdownRoundCorner.CornerRadius = UDim.new(0, 6)
+dropdownRoundCorner.Parent = textButtonRoundify4px
 
 tabButton.Name = "TabButton"
 tabButton.Parent = prefabs
@@ -414,6 +465,10 @@ textButtonRoundify4px_2.ImageColor3 = Color3.new(0.203922, 0.207843, 0.219608)
 textButtonRoundify4px_2.ScaleType = Enum.ScaleType.Slice
 textButtonRoundify4px_2.SliceCenter = Rect.new(4, 4, 4, 4)
 
+local tabButtonCorner = Instance.new("UICorner")
+tabButtonCorner.CornerRadius = UDim.new(0, 6)
+tabButtonCorner.Parent = textButtonRoundify4px_2
+
 folder.Name = "Folder"
 folder.Parent = prefabs
 folder.BackgroundColor3 = Color3.new(1, 1, 1)
@@ -424,6 +479,10 @@ folder.Image = "rbxassetid://2851929490"
 folder.ImageColor3 = Color3.new(0.0823529, 0.0862745, 0.0901961)
 folder.ScaleType = Enum.ScaleType.Slice
 folder.SliceCenter = Rect.new(4, 4, 4, 4)
+
+local folderCorner = Instance.new("UICorner")
+folderCorner.CornerRadius = UDim.new(0, 6)
+folderCorner.Parent = folder
 
 button.Name = "Button"
 button.Parent = folder
@@ -447,6 +506,10 @@ textButtonRoundify4px_3.Image = "rbxassetid://2851929490"
 textButtonRoundify4px_3.ImageColor3 = Color3.new(0.160784, 0.290196, 0.478431)
 textButtonRoundify4px_3.ScaleType = Enum.ScaleType.Slice
 textButtonRoundify4px_3.SliceCenter = Rect.new(4, 4, 4, 4)
+
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(0, 6)
+buttonCorner.Parent = textButtonRoundify4px_3
 
 toggle2.Name = "Toggle"
 toggle2.Parent = button
@@ -488,6 +551,10 @@ console.Image = "rbxassetid://2851928141"
 console.ImageColor3 = Color3.new(0.129412, 0.133333, 0.141176)
 console.ScaleType = Enum.ScaleType.Slice
 console.SliceCenter = Rect.new(8, 8, 8, 8)
+
+local consoleCorner = Instance.new("UICorner")
+consoleCorner.CornerRadius = UDim.new(0, 8)
+consoleCorner.Parent = console
 
 scrollingFrame.Parent = console
 scrollingFrame.BackgroundColor3 = Color3.new(1, 1, 1)
@@ -644,6 +711,10 @@ colorPicker.ImageColor3 = Color3.new(0.203922, 0.207843, 0.219608)
 colorPicker.ScaleType = Enum.ScaleType.Slice
 colorPicker.SliceCenter = Rect.new(4, 4, 4, 4)
 
+local colorPickerCorner = Instance.new("UICorner")
+colorPickerCorner.CornerRadius = UDim.new(0, 8)
+colorPickerCorner.Parent = colorPicker
+
 palette.Name = "Palette"
 palette.Parent = colorPicker
 palette.BackgroundColor3 = Color3.new(1, 1, 1)
@@ -653,6 +724,10 @@ palette.Size = UDim2.new(0, 100, 0, 100)
 palette.Image = "rbxassetid://698052001"
 palette.ScaleType = Enum.ScaleType.Slice
 palette.SliceCenter = Rect.new(4, 4, 4, 4)
+
+local paletteCorner = Instance.new("UICorner")
+paletteCorner.CornerRadius = UDim.new(0, 6)
+paletteCorner.Parent = palette
 
 indicator3.Name = "Indicator"
 indicator3.Parent = palette
@@ -675,12 +750,20 @@ sample.Image = "rbxassetid://2851929490"
 sample.ScaleType = Enum.ScaleType.Slice
 sample.SliceCenter = Rect.new(4, 4, 4, 4)
 
+local sampleCorner = Instance.new("UICorner")
+sampleCorner.CornerRadius = UDim.new(0, 6)
+sampleCorner.Parent = sample
+
 saturation.Name = "Saturation"
 saturation.Parent = colorPicker
 saturation.BackgroundColor3 = Color3.new(1, 1, 1)
 saturation.Position = UDim2.new(0.649999976, 0, 0.0500000007, 0)
 saturation.Size = UDim2.new(0, 15, 0, 100)
 saturation.Image = "rbxassetid://3641079629"
+
+local saturationCorner = Instance.new("UICorner")
+saturationCorner.CornerRadius = UDim.new(0, 4)
+saturationCorner.Parent = saturation
 
 indicator4.Name = "Indicator"
 indicator4.Parent = saturation
@@ -712,6 +795,10 @@ textButtonRoundify4px_4.ImageColor3 = Color3.new(0.160784, 0.290196, 0.478431)
 textButtonRoundify4px_4.ImageTransparency = 0.5
 textButtonRoundify4px_4.ScaleType = Enum.ScaleType.Slice
 textButtonRoundify4px_4.SliceCenter = Rect.new(4, 4, 4, 4)
+
+local switchCorner = Instance.new("UICorner")
+switchCorner.CornerRadius = UDim.new(0, 6)
+switchCorner.Parent = textButtonRoundify4px_4
 
 title3Label.Name = "Title"
 title3Label.Parent = switchButton
@@ -746,6 +833,10 @@ textButtonRoundify4px_5.ImageColor3 = Color3.new(0.160784, 0.290196, 0.478431)
 textButtonRoundify4px_5.ScaleType = Enum.ScaleType.Slice
 textButtonRoundify4px_5.SliceCenter = Rect.new(4, 4, 4, 4)
 
+local button2Corner = Instance.new("UICorner")
+button2Corner.CornerRadius = UDim.new(0, 6)
+button2Corner.Parent = textButtonRoundify4px_5
+
 dropdownButton.Name = "DropdownButton"
 dropdownButton.Parent = prefabs
 dropdownButton.BackgroundColor3 = Color3.new(0.129412, 0.133333, 0.141176)
@@ -758,6 +849,10 @@ dropdownButton.TextColor3 = Color3.new(0.784314, 0.784314, 0.784314)
 dropdownButton.TextSize = 16
 dropdownButton.TextXAlignment = Enum.TextXAlignment.Left
 
+local dropdownButtonCorner = Instance.new("UICorner")
+dropdownButtonCorner.CornerRadius = UDim.new(0, 4)
+dropdownButtonCorner.Parent = dropdownButton
+
 keybind.Name = "Keybind"
 keybind.Parent = prefabs
 keybind.BackgroundColor3 = Color3.new(1, 1, 1)
@@ -767,6 +862,10 @@ keybind.Image = "rbxassetid://2851929490"
 keybind.ImageColor3 = Color3.new(0.203922, 0.207843, 0.219608)
 keybind.ScaleType = Enum.ScaleType.Slice
 keybind.SliceCenter = Rect.new(4, 4, 4, 4)
+
+local keybindCorner = Instance.new("UICorner")
+keybindCorner.CornerRadius = UDim.new(0, 6)
+keybindCorner.Parent = keybind
 
 title4Label.Name = "Title"
 title4Label.Parent = keybind
@@ -802,6 +901,10 @@ inputRoundify4px.Image = "rbxassetid://2851929490"
 inputRoundify4px.ImageColor3 = Color3.new(0.290196, 0.294118, 0.313726)
 inputRoundify4px.ScaleType = Enum.ScaleType.Slice
 inputRoundify4px.SliceCenter = Rect.new(4, 4, 4, 4)
+
+local inputCorner = Instance.new("UICorner")
+inputCorner.CornerRadius = UDim.new(0, 6)
+inputCorner.Parent = inputRoundify4px
 
 windowsFrame.Name = "Windows"
 windowsFrame.Parent = imgui
@@ -1474,7 +1577,7 @@ function library:AddWindow(title, options)
 							local object_data = {}
 							n = tostring(n or "New Object")
 
-local object = prefabs:FindFirstChild("DropdownButton"):Clone()
+							local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 
 							object.Parent = objects
 							object.Text = n
@@ -1833,14 +1936,14 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 								return A
 							end
 
-                            local function highlight_logs(s)
-                                local result = s
-                                for _, name in ipairs({"print","warn","error","console.log"}) do
-                                    local pat = name:gsub("%.", "%%.")
-                                    result = result:gsub(pat .. "%s*%b()", '<font color="rgb(130,255,170)">%0</font>')
-                                end
-                                return result
-                            end
+							local function highlight_logs(s)
+								local result = s
+								for _, name in ipairs({"print","warn","error","console.log"}) do
+									local pat = name:gsub("%.", "%%.")
+									result = result:gsub(pat .. "%s*%b()", '<font color="rgb(130,255,170)">%0</font>')
+								end
+								return result
+							end
 
 							local highlight_lua = function(type)
 								if type == "Text" then
@@ -1870,27 +1973,27 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 								end
 
 								local highlight_logs = function(type)
-                                    if type == "Text" then
-                                        Source.Text = Source.Text:gsub("\13", "")
-                                        Source.Text = Source.Text:gsub("\t", "      ")
-                                        local s = Source.Text
-                                        Source.Keywords.Text     = Highlight(s, lua_keywords)
-                                        Source.Globals.Text      = Highlight(s, global_env)
-                                        Source.RemoteHighlight.Text = Highlight(s, {"FireServer", "fireServer", "InvokeServer", "invokeServer"})
-                                        Source.Tokens.Text       = hTokens(s)
-                                        Source.Numbers.Text      = numbers(s)
-                                        Source.Strings.Text      = strings(s)
-                                        Source.Comments.Text     = comments(s)
-                                        Source.Logs.Text = highlight_logs(s)
-                                        local lin = 1
-                                        s:gsub("\n", function() lin = lin + 1 end)
-                                        Lines.Text = ""
-                                        for i = 1, lin do
-                                            Lines.Text = Lines.Text .. i .. "\n"
-                                        end
+									if type == "Text" then
+										Source.Text = Source.Text:gsub("\13", "")
+										Source.Text = Source.Text:gsub("\t", "      ")
+										local s = Source.Text
+										Source.Keywords.Text     = Highlight(s, lua_keywords)
+										Source.Globals.Text      = Highlight(s, global_env)
+										Source.RemoteHighlight.Text = Highlight(s, {"FireServer", "fireServer", "InvokeServer", "invokeServer"})
+										Source.Tokens.Text       = hTokens(s)
+										Source.Numbers.Text      = numbers(s)
+										Source.Strings.Text      = strings(s)
+										Source.Comments.Text     = comments(s)
+										Source.Logs.Text = highlight_logs(s)
+										local lin = 1
+										s:gsub("\n", function() lin = lin + 1 end)
+										Lines.Text = ""
+										for i = 1, lin do
+											Lines.Text = Lines.Text .. i .. "\n"
+										end
 
-                                        sf.CanvasSize = UDim2.new(0, 0, lin * 0.153846154, 0)
-                                    end
+										sf.CanvasSize = UDim2.new(0, 0, lin * 0.153846154, 0)
+									end
 								end
 								if type == "Text" then
 									Source.Text = Source.Text:gsub("\13", "")
