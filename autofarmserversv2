@@ -1,168 +1,240 @@
-if getgenv().AutoKillLoaded then return end
-getgenv().AutoKillLoaded = true
-
-
-local AutoFarmEnabled = true
-local AutoServerHopEnabled = true
-local ServerHopInterval = 90
-local KillOnlyWeakerEnabled = true 
-local AutoWhitelistFriendsEnabled = true
+--free auto kill src you can skid i dont give a shit--
 
 
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "KillCounterGui"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+
+local frame = Instance.new("Frame")
+frame.Name = "KillCounter"
+frame.Size = UDim2.fromOffset(180, 80)
+frame.Position = UDim2.new(0, 620, 0, 0)
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+frame.BorderSizePixel = 0
+frame.Parent = gui
+
+
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Position = UDim2.fromOffset(0, 8)
+title.BackgroundTransparency = 1
+title.Text = "invincible"
+title.TextColor3 = Color3.fromRGB(255, 275, 275)
+title.TextSize = 18
+title.Font = Enum.Font.GothamBold
+title.Parent = frame
+
+local counter = Instance.new("TextLabel")
+counter.Size = UDim2.new(1, 0, 0, 45)
+counter.Position = UDim2.fromOffset(0, 35)
+counter.BackgroundTransparency = 1
+counter.Text = "0"
+counter.TextColor3 = Color3.fromRGB(255, 280, 280)
+counter.TextSize = 32
+counter.Font = Enum.Font.GothamBlack
+counter.Parent = frame
+
+local leaderstats = player:WaitForChild("leaderstats")
+local kills = leaderstats:WaitForChild("Kills")
+
+local function updateCounter()
+	counter.Text = tostring(kills.Value)
+end
+
+updateCounter()
+
+kills:GetPropertyChangedSignal("Value"):Connect(updateCounter)
+
+
+if getgenv().AutoServerHopLoaded then return end
+getgenv().AutoServerHopLoaded = true
+
+local AutoServerHopEnabled = true
+local ServerHopInterval = 20
+local TargetTimeout = 3
+local AttackInterval = 0.1
+
+local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
+
 local LocalPlayer = Players.LocalPlayer
-
 local LastServerHop = os.clock()
-local LastAttack = 0
 
-local playerWhitelist = {}
-local friendWhitelistActive = AutoWhitelistFriendsEnabled
+local function GetCharacter(player)
+    return player and player.Character
+end
 
+local function GetHumanoid(player)
+    local character = GetCharacter(player)
+    return character and character:FindFirstChildOfClass("Humanoid")
+end
 
-if friendWhitelistActive then
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and LocalPlayer:IsFriendsWith(player.UserId) then
-            playerWhitelist[player.Name] = true
-        end
+local function IsAlive(player)
+    local humanoid = GetHumanoid(player)
+    return humanoid ~= nil and humanoid.Health > 0
+end
+
+local function GetPunch()
+    local character = LocalPlayer.Character
+    if not character then
+        return nil
     end
-    
-    Players.PlayerAdded:Connect(function(player)
-        if friendWhitelistActive and player ~= LocalPlayer and LocalPlayer:IsFriendsWith(player.UserId) then
-            playerWhitelist[player.Name] = true
-        end
+
+    return character:FindFirstChild("Punch")
+        or LocalPlayer.Backpack:FindFirstChild("Punch")
+end
+
+local function Punch()
+    local tool = GetPunch()
+    if not tool then
+        return
+    end
+
+    local character = LocalPlayer.Character
+
+    if tool.Parent ~= character then
+        tool.Parent = character
+    end
+
+    pcall(function()
+        tool:Activate()
     end)
 end
 
+local function AttackPlayer(player)
+    local character = LocalPlayer.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
 
-local function GetPlayerStatValue(plr, statNames)
-    if not plr then return nil end
-    if type(statNames) == "string" then statNames = {statNames} end
-   
-    for _, name in statNames do
-        local val = plr:GetAttribute(name)
-        if val ~= nil then return tonumber(val) end
+    if not root or not IsAlive(player) then
+        return
     end
-   
-    local stats = plr:FindFirstChild("leaderstats")
-    if stats then
-        for _, name in statNames do
-            local v = stats:FindFirstChild(name)
-            if v and v:IsA("ValueBase") then return tonumber(v.Value) end
+
+    local startTime = os.clock()
+
+    while AutoServerHopEnabled
+        and IsAlive(player)
+        and (os.clock() - startTime) < TargetTimeout do
+
+        character = LocalPlayer.Character
+        root = character and character:FindFirstChild("HumanoidRootPart")
+
+        local targetCharacter = GetCharacter(player)
+        local targetRoot = targetCharacter
+            and targetCharacter:FindFirstChild("HumanoidRootPart")
+
+        if not root or not targetRoot then
+            break
+        end
+
+        root.CFrame = targetRoot.CFrame * CFrame.new(0, 1, 1)
+
+
+        Punch()
+
+        task.wait(AttackInterval)
+    end
+end
+
+local function VisitPlayers()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if not AutoServerHopEnabled then
+            break
+        end
+
+        if player ~= LocalPlayer and IsAlive(player) then
+            AttackPlayer(player)
         end
     end
-    return nil
 end
-
-local function GetLocalPlayerDamage()
-    return GetPlayerStatValue(LocalPlayer, {"Damage", "DMG", "Attack", "Strength", "Str"}) or 1
-end
-
-local function GetTargetHealth(target)
-    local hum = target.Character and target.Character:FindFirstChildOfClass("Humanoid")
-    return hum and hum.MaxHealth or 100
-end
-
-local function ShouldKillPlayer(target)
-    if playerWhitelist[target.Name] then
-        return false -- Never kill whitelisted friends
-    end
-    if not KillOnlyWeakerEnabled then return true end
-    local myDmg = GetLocalPlayerDamage()
-    local theirHP = GetTargetHealth(target)
-    return math.ceil(theirHP / myDmg) <= 5
-end
-
 
 local function ServerHop()
     local placeId = game.PlaceId
     local myJobId = game.JobId
-   
+
     for attempt = 1, 6 do
         local success, response = pcall(function()
-            return HttpService:JSONDecode(game:HttpGet(
-                "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Desc&limit=100"
-            ))
+            return HttpService:JSONDecode(
+                game:HttpGet(
+                    "https://games.roblox.com/v1/games/"
+                    .. placeId
+                    .. "/servers/Public?sortOrder=Desc&limit=100"
+                )
+            )
         end)
-       
+
         if not success or not response or not response.data then
             task.wait(2 + attempt)
             continue
         end
-       
+
         local candidates = {}
+
         for _, srv in response.data do
-            if srv.id == myJobId then continue end
-            if srv.playing >= srv.maxPlayers then continue end
-            if srv.playing < 8 then continue end
-           
+            if srv.id == myJobId then
+                continue
+            end
+
+            if srv.playing >= srv.maxPlayers then
+                continue
+            end
+
+            if srv.playing < 8 then
+                continue
+            end
+
             local fill = srv.playing / srv.maxPlayers
+
             if fill > 0.25 and fill < 0.9 then
                 table.insert(candidates, srv)
             end
         end
-       
+
         if #candidates == 0 then
             task.wait(3 + attempt * 1.5)
             continue
         end
-       
+
         local target = candidates[math.random(1, #candidates)]
-        pcall(function()
-            TeleportService:TeleportToPlaceInstance(placeId, target.id, LocalPlayer)
+
+        local successTeleport = pcall(function()
+            TeleportService:TeleportToPlaceInstance(
+                placeId,
+                target.id,
+                LocalPlayer
+            )
         end)
+
+        if successTeleport then
+            return
+        end
+
         task.wait(5 + attempt * 2)
     end
 end
 
-RunService.Heartbeat:Connect(function()
-    if AutoServerHopEnabled and (os.clock() - LastServerHop) >= ServerHopInterval then
-        LastServerHop = os.clock()
-        task.spawn(ServerHop)
-    end
-    if not AutoFarmEnabled then return end
-   
-    local Character = LocalPlayer.Character
-    if not Character then return end
-   
-    local Humanoid = Character:FindFirstChildOfClass("Humanoid")
-    if not Humanoid or Humanoid.Health <= 0 then return end
-   
-    local Punch = Character:FindFirstChild("Punch")
-    if not Punch then
-        local tool = LocalPlayer.Backpack:FindFirstChild("Punch")
-        if tool then Humanoid:EquipTool(tool) end
-        return
-    end
-   
-    if (os.clock() - LastAttack) < 0.08 then return end
-    LastAttack = os.clock()
-   
-    local attackTime = Punch:FindFirstChild("attackTime")
-    if attackTime then attackTime.Value = 0 end
-    Punch:Activate()
+task.spawn(function()
+    task.wait(2)
 
-    for _, other in Players:GetPlayers() do
-        if other == LocalPlayer then continue end
-        if not ShouldKillPlayer(other) then continue end
-       
-        local char = other.Character
-        if not char then continue end
-       
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        local head = char:FindFirstChild("Head")
-        local root = char:FindFirstChild("HumanoidRootPart")
-        local Hand = Character:FindFirstChild("LeftHand") or Character:FindFirstChild("Left Arm")
-       
-        if hum and head and root and hum.Health > 0 and Hand then
-            local wasAnchored = root.Anchored
-            root.Anchored = true
-            firetouchinterest(head, Hand, 0)
-            task.wait()
-            firetouchinterest(head, Hand, 1)
-            root.Anchored = wasAnchored
-        end
+    while AutoServerHopEnabled do
+        VisitPlayers()
+        task.wait(1)
     end
 end)
+
+while AutoServerHopEnabled do
+    if os.clock() - LastServerHop >= ServerHopInterval then
+        LastServerHop = os.clock()
+
+        task.spawn(ServerHop)
+    end
+
+    task.wait(1)
+end
