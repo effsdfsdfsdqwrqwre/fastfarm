@@ -1,205 +1,5 @@
 --free auto kill src you can skid i dont give a shit--
 
-local Lighting = game:GetService("Lighting")
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local StarterGui = game:GetService("StarterGui")
-local LocalPlayer = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
-local Terrain = Workspace.Terrain
-
-pcall(function()
-	settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-	UserSettings().GameSettings.SavedQualityLevel = Enum.SavedQualitySetting.QualityLevel1
-	UserSettings().GameSettings.MasterVolume = 0
-end)
-
-Lighting.GlobalShadows = false
-Lighting.FogEnd = 9e9
-Lighting.FogStart = 0
-Lighting.Brightness = 1
-Lighting.OutdoorAmbient = Color3.fromRGB(120, 120, 120)
-Lighting.Ambient = Color3.fromRGB(80, 80, 80)
-Lighting.ClockTime = 0
-Lighting.GeographicLatitude = 0
-Lighting.TimeOfDay = "00:00:00"
-
-for _, effect in pairs(Lighting:GetChildren()) do
-	if effect:IsA("PostEffect") or effect:IsA("Atmosphere") or effect:IsA("Sky") or effect:IsA("Clouds") then
-		effect.Enabled = false
-		pcall(function() effect:Destroy() end)
-	end
-end
-
-pcall(function()
-	Terrain.WaterWaveSize = 0
-	Terrain.WaterWaveSpeed = 0
-	Terrain.WaterReflectance = 0
-	Terrain.WaterTransparency = 1
-end)
-
-local function makeInvisible(obj)
-	if not obj or not obj.Parent then return end
-
-	if obj:IsA("BasePart") then
-		obj.Transparency = 1
-		obj.CanCollide = true
-		obj.CastShadow = false
-		obj.Material = Enum.Material.SmoothPlastic
-		if obj:IsA("MeshPart") then
-			obj.TextureID = ""
-		end
-	elseif obj:IsA("Decal") or obj:IsA("Texture") then
-		obj.Transparency = 1
-		obj.Color3 = Color3.new(0, 0, 0)
-	elseif obj:IsA("SurfaceGui") or obj:IsA("BillboardGui") or obj:IsA("ScreenGui") then
-		obj.Enabled = false
-	elseif obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-		obj.Visible = false
-		obj.TextTransparency = 1
-		obj.BackgroundTransparency = 1
-	elseif obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
-		obj.Visible = false
-		obj.ImageTransparency = 1
-		obj.BackgroundTransparency = 1
-	elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
-		obj.Enabled = false
-		obj.Rate = 0
-		pcall(function() obj:Destroy() end)
-	elseif obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
-		obj.Enabled = false
-		pcall(function() obj:Destroy() end)
-	elseif obj:IsA("Explosion") then
-		pcall(function() obj:Destroy() end)
-	elseif obj:IsA("Sound") then
-		obj.Volume = 0
-		obj:Stop()
-	elseif obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
-		obj.Enabled = false
-		obj.Brightness = 0
-	elseif obj:IsA("Highlight") then
-		obj.Enabled = false
-		pcall(function() obj:Destroy() end)
-	elseif obj:IsA("SpecialMesh") then
-		obj.TextureId = ""
-	end
-end
-
-local function deepClean(container)
-	for _, v in pairs(container:GetDescendants()) do
-		makeInvisible(v)
-	end
-end
-
-deepClean(Workspace)
-deepClean(ReplicatedStorage)
-
-Workspace.DescendantAdded:Connect(function(obj)
-	task.defer(function()
-		makeInvisible(obj)
-	end)
-end)
-
-ReplicatedStorage.DescendantAdded:Connect(function(obj)
-	task.defer(function()
-		makeInvisible(obj)
-	end)
-end)
-
-RunService.Heartbeat:Connect(function()
-	Lighting.ClockTime = 0
-	Lighting.TimeOfDay = "00:00:00"
-	Lighting.Brightness = 1
-	Lighting.GlobalShadows = false
-end)
-
-local lastFullClean = 0
-RunService.Heartbeat:Connect(function()
-	if tick() - lastFullClean >= 2 then
-		lastFullClean = tick()
-		deepClean(Workspace)
-		
-		for _, player in pairs(Players:GetPlayers()) do
-			if player.Character and player ~= LocalPlayer then
-				deepClean(player.Character)
-			end
-		end
-		
-		collectgarbage("collect")
-	end
-end)
-
-RunService.RenderStepped:Connect(function()
-	if Camera then
-		Camera.FieldOfView = 70
-	end
-end)
-
-local function cleanCharacter(char)
-	if not char then return end
-	task.wait(0.3)
-	for _, v in pairs(char:GetDescendants()) do
-		if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") then
-			v.Enabled = false
-			pcall(function() v:Destroy() end)
-		elseif v:IsA("PointLight") or v:IsA("SpotLight") or v:IsA("SurfaceLight") then
-			v.Enabled = false
-		elseif v:IsA("Decal") or v:IsA("Texture") then
-			v.Transparency = 1
-		end
-	end
-end
-
-if LocalPlayer.Character then
-	cleanCharacter(LocalPlayer.Character)
-end
-
-LocalPlayer.CharacterAdded:Connect(cleanCharacter)
-
-Players.PlayerAdded:Connect(function(player)
-	player.CharacterAdded:Connect(function(char)
-		task.wait(0.5)
-		deepClean(char)
-	end)
-end)
-
-for _, player in pairs(Players:GetPlayers()) do
-	if player.Character and player ~= LocalPlayer then
-		deepClean(player.Character)
-	end
-	player.CharacterAdded:Connect(function(char)
-		task.wait(0.5)
-		deepClean(char)
-	end)
-end
-
-pcall(function()
-	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, false)
-	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.EmotesMenu, false)
-end)
-
-task.spawn(function()
-	while true do
-		task.wait(1)
-		Lighting.ClockTime = 0
-		for _, effect in pairs(Lighting:GetChildren()) do
-			if effect:IsA("PostEffect") then
-				effect.Enabled = false
-			end
-		end
-	end
-end)
-
-task.spawn(function()
-	while true do
-		task.wait(4)
-		deepClean(Workspace)
-		collectgarbage("collect")
-	end
-end)
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
@@ -439,6 +239,7 @@ end
 
 EnablePunchRemoval()
 
+
 local Players = game:GetService("Players")
 
 local player = Players.LocalPlayer
@@ -448,6 +249,7 @@ gui.Name = "KillCounterGui"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
+
 local frame = Instance.new("Frame")
 frame.Name = "KillCounter"
 frame.Size = UDim2.fromOffset(180, 80)
@@ -456,12 +258,14 @@ frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 frame.BorderSizePixel = 0
 frame.Parent = gui
 
+
+
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.Position = UDim2.fromOffset(0, 8)
 title.BackgroundTransparency = 1
 title.Text = "invincible"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextColor3 = Color3.fromRGB(255, 275, 275)
 title.TextSize = 18
 title.Font = Enum.Font.GothamBold
 title.Parent = frame
@@ -471,7 +275,7 @@ counter.Size = UDim2.new(1, 0, 0, 45)
 counter.Position = UDim2.fromOffset(0, 35)
 counter.BackgroundTransparency = 1
 counter.Text = "0"
-counter.TextColor3 = Color3.fromRGB(255, 255, 255)
+counter.TextColor3 = Color3.fromRGB(255, 280, 280)
 counter.TextSize = 32
 counter.Font = Enum.Font.GothamBlack
 counter.Parent = frame
@@ -486,6 +290,7 @@ end
 updateCounter()
 
 kills:GetPropertyChangedSignal("Value"):Connect(updateCounter)
+
 
 if getgenv().AutoServerHopLoaded then return end
 getgenv().AutoServerHopLoaded = true
@@ -569,6 +374,7 @@ local function AttackPlayer(player)
         end
 
         root.CFrame = targetRoot.CFrame * CFrame.new(0, 1, 1)
+
 
         Punch()
 
@@ -670,4 +476,205 @@ while AutoServerHopEnabled do
     end
 
     task.wait(1)
+end 
+
+
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+local Terrain = Workspace.Terrain
+
+pcall(function()
+	settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+	UserSettings().GameSettings.SavedQualityLevel = Enum.SavedQualitySetting.QualityLevel1
+	UserSettings().GameSettings.MasterVolume = 0
+end)
+
+Lighting.GlobalShadows = false
+Lighting.FogEnd = 9e9
+Lighting.FogStart = 0
+Lighting.Brightness = 1
+Lighting.OutdoorAmbient = Color3.fromRGB(120, 120, 120)
+Lighting.Ambient = Color3.fromRGB(80, 80, 80)
+Lighting.ClockTime = 0
+Lighting.GeographicLatitude = 0
+Lighting.TimeOfDay = "00:00:00"
+
+for _, effect in pairs(Lighting:GetChildren()) do
+	if effect:IsA("PostEffect") or effect:IsA("Atmosphere") or effect:IsA("Sky") or effect:IsA("Clouds") then
+		effect.Enabled = false
+		pcall(function() effect:Destroy() end)
+	end
 end
+
+pcall(function()
+	Terrain.WaterWaveSize = 0
+	Terrain.WaterWaveSpeed = 0
+	Terrain.WaterReflectance = 0
+	Terrain.WaterTransparency = 1
+end)
+
+local function makeInvisible(obj)
+	if not obj or not obj.Parent then return end
+
+	if obj:IsA("BasePart") then
+		obj.Transparency = 1
+		obj.CanCollide = true
+		obj.CastShadow = false
+		obj.Material = Enum.Material.SmoothPlastic
+		if obj:IsA("MeshPart") then
+			obj.TextureID = ""
+		end
+	elseif obj:IsA("Decal") or obj:IsA("Texture") then
+		obj.Transparency = 1
+		obj.Color3 = Color3.new(0, 0, 0)
+	elseif obj:IsA("SurfaceGui") or obj:IsA("BillboardGui") or obj:IsA("ScreenGui") then
+		obj.Enabled = false
+	elseif obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+		obj.Visible = false
+		obj.TextTransparency = 1
+		obj.BackgroundTransparency = 1
+	elseif obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+		obj.Visible = false
+		obj.ImageTransparency = 1
+		obj.BackgroundTransparency = 1
+	elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
+		obj.Enabled = false
+		obj.Rate = 0
+		pcall(function() obj:Destroy() end)
+	elseif obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
+		obj.Enabled = false
+		pcall(function() obj:Destroy() end)
+	elseif obj:IsA("Explosion") then
+		pcall(function() obj:Destroy() end)
+	elseif obj:IsA("Sound") then
+		obj.Volume = 0
+		obj:Stop()
+	elseif obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
+		obj.Enabled = false
+		obj.Brightness = 0
+	elseif obj:IsA("Highlight") then
+		obj.Enabled = false
+		pcall(function() obj:Destroy() end)
+	elseif obj:IsA("SpecialMesh") then
+		obj.TextureId = ""
+	end
+end
+
+local function deepClean(container)
+	for _, v in pairs(container:GetDescendants()) do
+		makeInvisible(v)
+	end
+end
+
+deepClean(Workspace)
+deepClean(ReplicatedStorage)
+
+Workspace.DescendantAdded:Connect(function(obj)
+	task.defer(function()
+		makeInvisible(obj)
+	end)
+end)
+
+ReplicatedStorage.DescendantAdded:Connect(function(obj)
+	task.defer(function()
+		makeInvisible(obj)
+	end)
+end)
+
+RunService.Heartbeat:Connect(function()
+	Lighting.ClockTime = 0
+	Lighting.TimeOfDay = "00:00:00"
+	Lighting.Brightness = 1
+	Lighting.GlobalShadows = false
+end)
+
+local lastFullClean = 0
+RunService.Heartbeat:Connect(function()
+	if tick() - lastFullClean >= 2 then
+		lastFullClean = tick()
+		deepClean(Workspace)
+		
+		for _, player in pairs(Players:GetPlayers()) do
+			if player.Character and player ~= LocalPlayer then
+				deepClean(player.Character)
+			end
+		end
+		
+		collectgarbage("collect")
+	end
+end)
+
+RunService.RenderStepped:Connect(function()
+	if Camera then
+		Camera.FieldOfView = 70
+	end
+end)
+
+local function cleanCharacter(char)
+	if not char then return end
+	task.wait(0.3)
+	for _, v in pairs(char:GetDescendants()) do
+		if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") then
+			v.Enabled = false
+			pcall(function() v:Destroy() end)
+		elseif v:IsA("PointLight") or v:IsA("SpotLight") or v:IsA("SurfaceLight") then
+			v.Enabled = false
+		elseif v:IsA("Decal") or v:IsA("Texture") then
+			v.Transparency = 1
+		end
+	end
+end
+
+if LocalPlayer.Character then
+	cleanCharacter(LocalPlayer.Character)
+end
+
+LocalPlayer.CharacterAdded:Connect(cleanCharacter)
+
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function(char)
+		task.wait(0.5)
+		deepClean(char)
+	end)
+end)
+
+for _, player in pairs(Players:GetPlayers()) do
+	if player.Character and player ~= LocalPlayer then
+		deepClean(player.Character)
+	end
+	player.CharacterAdded:Connect(function(char)
+		task.wait(0.5)
+		deepClean(char)
+	end)
+end
+
+pcall(function()
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, false)
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.EmotesMenu, false)
+end)
+
+task.spawn(function()
+	while true do
+		task.wait(1)
+		Lighting.ClockTime = 0
+		for _, effect in pairs(Lighting:GetChildren()) do
+			if effect:IsA("PostEffect") then
+				effect.Enabled = false
+			end
+		end
+	end
+end)
+
+task.spawn(function()
+	while true do
+		task.wait(4)
+		deepClean(Workspace)
+		collectgarbage("collect")
+	end
+end)
