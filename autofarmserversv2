@@ -1,5 +1,90 @@
 --free auto kill src you can skid i dont give a shit--
 
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+pcall(function()
+	settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+	UserSettings().GameSettings.SavedQualityLevel = Enum.SavedQualitySetting.QualityLevel1
+end)
+
+Lighting.GlobalShadows = false
+Lighting.FogEnd = 9e9
+Lighting.Brightness = 1
+Lighting.OutdoorAmbient = Color3.fromRGB(140, 140, 140)
+Lighting.Ambient = Color3.fromRGB(100, 100, 100)
+Lighting.ClockTime = 14
+Lighting.GeographicLatitude = 0
+
+for _, effect in pairs(Lighting:GetChildren()) do
+	if effect:IsA("PostEffect") then
+		effect.Enabled = false
+	end
+end
+
+local function disableEffects(obj)
+	if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
+		obj.Enabled = false
+		obj:Destroy()
+	elseif obj:IsA("Explosion") then
+		obj:Destroy()
+	elseif obj:IsA("Decal") or obj:IsA("Texture") then
+		obj.Transparency = 1
+	end
+end
+
+for _, v in pairs(Workspace:GetDescendants()) do
+	disableEffects(v)
+end
+
+Workspace.DescendantAdded:Connect(disableEffects)
+
+RunService.RenderStepped:Connect(function()
+	for _, v in pairs(Workspace:GetDescendants()) do
+		if v:IsA("BasePart") and not v:IsDescendantOf(LocalPlayer.Character) then
+			if (v.Position - Camera.CFrame.Position).Magnitude > 250 then
+				v.Transparency = 1
+				v.CanCollide = false
+			end
+		end
+	end
+end)
+
+local lastClean = 0
+RunService.Heartbeat:Connect(function()
+	if tick() - lastClean > 5 then
+		lastClean = tick()
+		for _, v in pairs(Workspace:GetChildren()) do
+			if v.Name == "Debris" or v.Name == "Effects" or v:IsA("Model") and v:FindFirstChild("Humanoid") == nil then
+				for _, child in pairs(v:GetDescendants()) do
+					disableEffects(child)
+				end
+			end
+		end
+		collectgarbage("collect")
+	end
+end)
+
+if LocalPlayer.Character then
+	for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+		if v:IsA("ParticleEmitter") or v:IsA("Trail") then
+			v.Enabled = false
+		end
+	end
+end
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+	task.wait(0.5)
+	for _, v in pairs(char:GetDescendants()) do
+		if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") then
+			v.Enabled = false
+		end
+	end
+end)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
