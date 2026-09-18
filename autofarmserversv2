@@ -200,11 +200,6 @@ task.spawn(function()
 	end
 end)
 
-
-
-
-
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
@@ -444,7 +439,6 @@ end
 
 EnablePunchRemoval()
 
-
 local Players = game:GetService("Players")
 
 local player = Players.LocalPlayer
@@ -454,7 +448,6 @@ gui.Name = "KillCounterGui"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
-
 local frame = Instance.new("Frame")
 frame.Name = "KillCounter"
 frame.Size = UDim2.fromOffset(180, 80)
@@ -463,14 +456,12 @@ frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 frame.BorderSizePixel = 0
 frame.Parent = gui
 
-
-
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.Position = UDim2.fromOffset(0, 8)
 title.BackgroundTransparency = 1
 title.Text = "invincible"
-title.TextColor3 = Color3.fromRGB(255, 275, 275)
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextSize = 18
 title.Font = Enum.Font.GothamBold
 title.Parent = frame
@@ -480,7 +471,7 @@ counter.Size = UDim2.new(1, 0, 0, 45)
 counter.Position = UDim2.fromOffset(0, 35)
 counter.BackgroundTransparency = 1
 counter.Text = "0"
-counter.TextColor3 = Color3.fromRGB(255, 280, 280)
+counter.TextColor3 = Color3.fromRGB(255, 255, 255)
 counter.TextSize = 32
 counter.Font = Enum.Font.GothamBlack
 counter.Parent = frame
@@ -495,7 +486,6 @@ end
 updateCounter()
 
 kills:GetPropertyChangedSignal("Value"):Connect(updateCounter)
-
 
 if getgenv().AutoServerHopLoaded then return end
 getgenv().AutoServerHopLoaded = true
@@ -579,7 +569,6 @@ local function AttackPlayer(player)
         end
 
         root.CFrame = targetRoot.CFrame * CFrame.new(0, 1, 1)
-
 
         Punch()
 
