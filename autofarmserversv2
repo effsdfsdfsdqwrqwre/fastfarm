@@ -57,7 +57,7 @@ if getgenv().AutoServerHopLoaded then return end
 getgenv().AutoServerHopLoaded = true
 
 local AutoServerHopEnabled = true
-local ServerHopInterval = 20
+local ServerHopInterval = 75
 local TargetTimeout = 3
 local AttackInterval = 0.1
 
