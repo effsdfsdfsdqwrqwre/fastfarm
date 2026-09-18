@@ -1,6 +1,79 @@
 --free auto kill src you can skid i dont give a shit--
 
 local Players = game:GetService("Players")
+local Lighting = game:GetService("Lighting")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+Lighting.ClockTime = 0
+Lighting.GlobalShadows = false
+Lighting.Brightness = 0
+Lighting.FogEnd = 1000000
+Lighting.EnvironmentDiffuseScale = 0
+Lighting.EnvironmentSpecularScale = 0
+
+local function optimize(obj)
+	if obj:IsA("BasePart") then
+		obj.LocalTransparencyModifier = 1
+		obj.CastShadow = false
+		obj.Material = Enum.Material.SmoothPlastic
+	elseif obj:IsA("Decal") or obj:IsA("Texture") then
+		obj.Transparency = 1
+	elseif obj:IsA("ParticleEmitter")
+		or obj:IsA("Trail")
+		or obj:IsA("Beam")
+		or obj:IsA("Smoke")
+		or obj:IsA("Fire")
+		or obj:IsA("Sparkles") then
+		obj.Enabled = false
+	elseif obj:IsA("SurfaceGui")
+		or obj:IsA("BillboardGui") then
+		obj.Enabled = false
+	elseif obj:IsA("TextLabel")
+		or obj:IsA("TextButton")
+		or obj:IsA("TextBox")
+		or obj:IsA("ImageLabel")
+		or obj:IsA("ImageButton") then
+		obj.Visible = false
+	end
+end
+
+for _, obj in ipairs(Workspace:GetDescendants()) do
+	optimize(obj)
+end
+
+Workspace.DescendantAdded:Connect(optimize)
+
+RunService.RenderStepped:Connect(function()
+	Lighting.ClockTime = 0
+end)
+
+local function setupCharacter(character)
+	for _, obj in ipairs(character:GetDescendants()) do
+		if obj:IsA("BasePart") then
+			obj.LocalTransparencyModifier = 1
+			obj.CastShadow = false
+		elseif obj:IsA("Decal") then
+			obj.Transparency = 1
+		end
+	end
+end
+
+if player.Character then
+	setupCharacter(player.Character)
+end
+
+player.CharacterAdded:Connect(setupCharacter)
+
+for _, obj in ipairs(Workspace:GetDescendants()) do
+	if obj:IsA("BasePart") then
+		obj.CanCollide = true
+	end
+end
+
+
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
@@ -479,74 +552,3 @@ while AutoServerHopEnabled do
 end 
 
 
-local Players = game:GetService("Players")
-local Lighting = game:GetService("Lighting")
-local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
-local player = Players.LocalPlayer
-
-Lighting.ClockTime = 0
-Lighting.GlobalShadows = false
-Lighting.Brightness = 0
-Lighting.FogEnd = 1000000
-Lighting.EnvironmentDiffuseScale = 0
-Lighting.EnvironmentSpecularScale = 0
-
-local function optimize(obj)
-	if obj:IsA("BasePart") then
-		obj.LocalTransparencyModifier = 1
-		obj.CastShadow = false
-		obj.Material = Enum.Material.SmoothPlastic
-	elseif obj:IsA("Decal") or obj:IsA("Texture") then
-		obj.Transparency = 1
-	elseif obj:IsA("ParticleEmitter")
-		or obj:IsA("Trail")
-		or obj:IsA("Beam")
-		or obj:IsA("Smoke")
-		or obj:IsA("Fire")
-		or obj:IsA("Sparkles") then
-		obj.Enabled = false
-	elseif obj:IsA("SurfaceGui")
-		or obj:IsA("BillboardGui") then
-		obj.Enabled = false
-	elseif obj:IsA("TextLabel")
-		or obj:IsA("TextButton")
-		or obj:IsA("TextBox")
-		or obj:IsA("ImageLabel")
-		or obj:IsA("ImageButton") then
-		obj.Visible = false
-	end
-end
-
-for _, obj in ipairs(Workspace:GetDescendants()) do
-	optimize(obj)
-end
-
-Workspace.DescendantAdded:Connect(optimize)
-
-RunService.RenderStepped:Connect(function()
-	Lighting.ClockTime = 0
-end)
-
-local function setupCharacter(character)
-	for _, obj in ipairs(character:GetDescendants()) do
-		if obj:IsA("BasePart") then
-			obj.LocalTransparencyModifier = 1
-			obj.CastShadow = false
-		elseif obj:IsA("Decal") then
-			obj.Transparency = 1
-		end
-	end
-end
-
-if player.Character then
-	setupCharacter(player.Character)
-end
-
-player.CharacterAdded:Connect(setupCharacter)
-
-for _, obj in ipairs(Workspace:GetDescendants()) do
-	if obj:IsA("BasePart") then
-		obj.CanCollide = true
-	end
-end
