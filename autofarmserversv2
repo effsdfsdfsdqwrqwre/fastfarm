@@ -1,5 +1,4 @@
 --free auto kill src you can skid i dont give a shit--
-
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
@@ -17,7 +16,7 @@ Lighting.FogEnd = 9e9
 Lighting.Brightness = 1
 Lighting.OutdoorAmbient = Color3.fromRGB(140, 140, 140)
 Lighting.Ambient = Color3.fromRGB(100, 100, 100)
-Lighting.ClockTime = 14
+Lighting.ClockTime = 0
 Lighting.GeographicLatitude = 0
 
 for _, effect in pairs(Lighting:GetChildren()) do
