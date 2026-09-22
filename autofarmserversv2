@@ -382,7 +382,7 @@ kills:GetPropertyChangedSignal("Value"):Connect(updateCounter)
 
 local RETELEPORT_TIME = 0
 local TARGET_TIMEOUT = 8
-local TELEPORT_OFFSET = Vector3.new(0, 1, 0)
+local TELEPORT_OFFSET = Vector3.new(0, -1, 0.3)
 local SAFE_ZONE_POS = Vector3.new(-3.24319363, 32.9251213, -1270.24817)
 local SAFE_ZONE_RADIUS = 300
 
