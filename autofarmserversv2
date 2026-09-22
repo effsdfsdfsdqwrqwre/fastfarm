@@ -497,7 +497,7 @@ end
 
 task.spawn(function()
 	while true do
-		task.wait(30)
+		task.wait(70)
 		task.spawn(ServerHop)
 	end
 end)
