@@ -3,6 +3,8 @@ local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 local LocalPlayer = Players.LocalPlayer
 
@@ -73,18 +75,20 @@ end
 _G.autoPunchActive = true
 
 local function applyPunchEgg()
+	if _G.punchEggSaving then return false end
+
 	local character = LocalPlayer.Character
 	local backpack = LocalPlayer.Backpack
 	if not (character and backpack) then return false end
 
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if not humanoid then return false end
+	if not humanoid or humanoid.Health <= 0 then return false end
 
 	local punch = backpack:FindFirstChild("Punch") or character:FindFirstChild("Punch")
 	local egg = backpack:FindFirstChild("Protein Egg") or character:FindFirstChild("Protein Egg")
 
 	if punch and punch:IsA("Tool") then
-		humanoid:EquipTool(punch)
+		punch.Parent = character
 		local attackTime = punch:FindFirstChild("attackTime")
 		if attackTime and attackTime:IsA("NumberValue") then
 			attackTime.Value = 0
@@ -107,10 +111,13 @@ end)
 
 task.spawn(function()
 	while _G.autoPunchActive do
-		local character = LocalPlayer.Character
-		local punch = character and character:FindFirstChild("Punch")
-		if punch and punch:IsA("Tool") then
-			punch:Activate()
+		if not _G.punchEggSaving then
+			local character = LocalPlayer.Character
+			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+			local punch = character and character:FindFirstChild("Punch")
+			if humanoid and humanoid.Health > 0 and punch and punch:IsA("Tool") then
+				punch:Activate()
+			end
 		end
 		task.wait()
 	end
@@ -118,23 +125,47 @@ end)
 
 if _G.punchEggCharConn then
 	_G.punchEggCharConn:Disconnect()
+	_G.punchEggCharConn = nil
 end
+if _G.punchEggRemovingConn then
+	_G.punchEggRemovingConn:Disconnect()
+	_G.punchEggRemovingConn = nil
+end
+
+_G.punchEggRemovingConn = LocalPlayer.CharacterRemoving:Connect(function(char)
+	if not _G.autoPunchActive then return end
+
+	_G.punchEggSaving = true
+
+	local backpack = LocalPlayer.Backpack
+	if backpack then
+		local punch = char:FindFirstChild("Punch")
+		local egg = char:FindFirstChild("Protein Egg")
+
+		if punch then punch.Parent = backpack end
+		if egg then egg.Parent = backpack end
+	end
+end)
 
 _G.punchEggCharConn = LocalPlayer.CharacterAdded:Connect(function(char)
 	if not _G.autoPunchActive then return end
+
+	_G.punchEggSaving = false
+
 	task.spawn(function()
 		local start = tick()
-		while _G.autoPunchActive and tick() - start < 5 do
+		while _G.autoPunchActive and tick() - start < 12 do
 			local backpack = LocalPlayer.Backpack
 			if backpack and backpack:FindFirstChild("Punch") and backpack:FindFirstChild("Protein Egg") then
 				applyPunchEgg()
 				break
 			end
-			task.wait(0.1)
+			task.wait(0.15)
 		end
 	end)
 end)
 
+_G.punchEggSaving = false
 if LocalPlayer.Character then
 	applyPunchEgg()
 end
@@ -348,7 +379,7 @@ kills:GetPropertyChangedSignal("Value"):Connect(updateCounter)
 
 local RETELEPORT_TIME = 0
 local TARGET_TIMEOUT = 8
-local TELEPORT_OFFSET = Vector3.new(0, -2, 0.8)
+local TELEPORT_OFFSET = Vector3.new(0, -4, 0.5)
 local SAFE_ZONE_POS = Vector3.new(-3.24319363, 32.9251213, -1270.24817)
 local SAFE_ZONE_RADIUS = 300
 
@@ -417,5 +448,56 @@ task.spawn(function()
 			end
 		end
 		task.wait()
+	end
+end)
+
+
+local function ServerHop()
+	local placeId = game.PlaceId
+	local myJobId = game.JobId
+
+	for attempt = 1, 8 do
+		local success, response = pcall(function()
+			return HttpService:JSONDecode(
+				game:HttpGet(
+					"https://games.roblox.com/v1/games/"
+					.. placeId
+					.. "/servers/Public?sortOrder=Desc&limit=100"
+				)
+			)
+		end)
+
+		if not success or not response or not response.data then
+			task.wait(1 + attempt)
+			continue
+		end
+
+		local candidates = {}
+		for _, srv in ipairs(response.data) do
+			if srv.id ~= myJobId
+				and srv.playing < srv.maxPlayers
+				and srv.playing >= 5 then
+				table.insert(candidates, srv)
+			end
+		end
+
+		if #candidates > 0 then
+			local target = candidates[math.random(1, #candidates)]
+			local ok = pcall(function()
+				TeleportService:TeleportToPlaceInstance(placeId, target.id, LocalPlayer)
+			end)
+			if ok then
+				return
+			end
+		end
+
+		task.wait(2 + attempt)
+	end
+end
+
+task.spawn(function()
+	while true do
+		task.wait(30)
+		task.spawn(ServerHop)
 	end
 end)
