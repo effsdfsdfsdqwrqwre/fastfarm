@@ -1,34 +1,9 @@
 local Players = game:GetService("Players")
-local Lighting = game:GetService("Lighting")
-local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local player = LocalPlayer
-
-
-local function setupCharacter(character)
-	for _, obj in ipairs(character:GetDescendants()) do
-		if obj:IsA("BasePart") then
-			obj.LocalTransparencyModifier = 1
-			obj.CastShadow = false
-		elseif obj:IsA("Decal") then
-			obj.Transparency = 1
-		end
-	end
-end
-
-if player.Character then
-	setupCharacter(player.Character)
-end
-player.CharacterAdded:Connect(setupCharacter)
-
-for _, obj in ipairs(Workspace:GetDescendants()) do
-	if obj:IsA("BasePart") then
-		obj.CanCollide = true
-	end
-end
 
 _G.autoPunchActive = true
 getgenv().TeleportEnabled = true
@@ -40,7 +15,6 @@ local SAFE_ZONE_POS = Vector3.new(-3.24319363, 32.9251213, -1270.24817)
 local SAFE_ZONE_RADIUS = 300
 getgenv().Whitelist = getgenv().Whitelist or {}
 
-local originalProps = {}
 local currentHandWelds = {}
 
 local function clearHandWelds()
@@ -76,76 +50,6 @@ local function attachHandsToTarget(myChar, targetRoot)
 		table.insert(currentHandWelds, weld)
 		rightHand.CFrame = targetRoot.CFrame
 	end
-end
-
-local function saveOriginals(char)
-	if originalProps[char] then return end
-	originalProps[char] = { parts = {}, humanoid = {} }
-	local humanoid = char:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		originalProps[char].humanoid = {
-			HipHeight = humanoid.HipHeight,
-			WalkSpeed = humanoid.WalkSpeed,
-			JumpPower = humanoid.JumpPower,
-		}
-	end
-	for _, part in ipairs(char:GetDescendants()) do
-		if part:IsA("BasePart") then
-			originalProps[char].parts[part] = {
-				Size = part.Size,
-				Transparency = part.Transparency,
-				CanCollide = part.CanCollide,
-				Massless = part.Massless,
-			}
-		end
-	end
-end
-
-local function makeTiny(char)
-	if not char then return end
-	saveOriginals(char)
-	local humanoid = char:FindFirstChildOfClass("Humanoid")
-	local root = char:FindFirstChild("HumanoidRootPart")
-	if not humanoid or not root then return end
-	local partsToCollapse = {
-		"Head",
-		"Left Arm", "Right Arm",
-		"Left Leg", "Right Leg",
-		"LeftUpperArm", "LeftLowerArm", "LeftHand",
-		"RightUpperArm", "RightLowerArm", "RightHand",
-		"LeftUpperLeg", "LeftLowerLeg", "LeftFoot",
-		"RightUpperLeg", "RightLowerLeg", "RightFoot",
-		"UpperTorso", "LowerTorso"
-	}
-	for _, name in ipairs(partsToCollapse) do
-		local part = char:FindFirstChild(name)
-		if part and part:IsA("BasePart") then
-			part.Size = Vector3.new(0.05, 0.05, 0.05)
-			part.Transparency = 1
-			part.CanCollide = false
-			part.Massless = true
-			part.CFrame = root.CFrame
-		end
-	end
-	for _, acc in ipairs(char:GetChildren()) do
-		if acc:IsA("Accessory") then
-			local handle = acc:FindFirstChild("Handle")
-			if handle then
-				handle.Transparency = 1
-				handle.CanCollide = false
-				handle.Size = Vector3.new(0.05, 0.05, 0.05)
-				handle.Massless = true
-			end
-		end
-	end
-	root.Size = Vector3.new(0.3, 0.3, 0.3)
-	root.Transparency = 0
-	root.CanCollide = true
-	root.Massless = false
-	humanoid.HipHeight = 0.1
-	humanoid.WalkSpeed = 25
-	humanoid.JumpPower = 40
-	workspace.CurrentCamera.CameraSubject = humanoid
 end
 
 local function isWhitelisted(plr)
@@ -243,21 +147,9 @@ _G.punchEggCharConn = LocalPlayer.CharacterAdded:Connect(function(char)
 			task.wait(0.15)
 		end
 	end)
-	task.wait(0.3)
-	makeTiny(char)
 end)
 
 _G.punchEggSaving = false
-
-task.spawn(function()
-	while true do
-		local char = LocalPlayer.Character
-		if char and char:FindFirstChild("HumanoidRootPart") then
-			makeTiny(char)
-		end
-		task.wait(0.25)
-	end
-end)
 
 task.spawn(function()
 	while getgenv().TeleportEnabled do
