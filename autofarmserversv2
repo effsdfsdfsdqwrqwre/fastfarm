@@ -275,6 +275,39 @@ RunService.Heartbeat:Connect(function()
 	end
 end)
 
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
+
+local nightSwitch = tab:AddSwitch("Night Time", function(state)
+	if state then
+		Lighting.ClockTime = 0
+		Lighting.GlobalShadows = false
+		Lighting.Brightness = 0
+		Lighting.FogEnd = 1000000
+		Lighting.EnvironmentDiffuseScale = 0
+		Lighting.EnvironmentSpecularScale = 0
+		if _G.nightConn then
+			_G.nightConn:Disconnect()
+			_G.nightConn = nil
+		end
+		_G.nightConn = RunService.RenderStepped:Connect(function()
+			Lighting.ClockTime = 0
+		end)
+	else
+		if _G.nightConn then
+			_G.nightConn:Disconnect()
+			_G.nightConn = nil
+		end
+		Lighting.ClockTime = 14
+		Lighting.GlobalShadows = true
+		Lighting.Brightness = 2
+		Lighting.FogEnd = 100000
+		Lighting.EnvironmentDiffuseScale = 1
+		Lighting.EnvironmentSpecularScale = 1
+	end
+end)
+nightSwitch:Set(true)
+
 local gui = Instance.new("ScreenGui")
 gui.Name = "KillCounterGui"
 gui.ResetOnSpawn = false
