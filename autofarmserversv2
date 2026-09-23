@@ -164,34 +164,6 @@ local function makeTiny(char)
 	workspace.CurrentCamera.CameraSubject = humanoid
 end
 
-local function restoreNormal(char)
-	if not char or not originalProps[char] then return end
-
-	local data = originalProps[char]
-
-	local humanoid = char:FindFirstChildOfClass("Humanoid")
-	if humanoid and data.humanoid then
-		humanoid.HipHeight = data.humanoid.HipHeight
-		humanoid.WalkSpeed = data.humanoid.WalkSpeed
-		humanoid.JumpPower = data.humanoid.JumpPower
-	end
-
-	for part, props in pairs(data.parts) do
-		if part and part.Parent then
-			part.Size = props.Size
-			part.Transparency = props.Transparency
-			part.CanCollide = props.CanCollide
-			part.Massless = props.Massless
-		end
-	end
-
-	originalProps[char] = nil
-
-	if humanoid then
-		workspace.CurrentCamera.CameraSubject = humanoid
-	end
-end
-
 local function isWhitelisted(plr)
 	return table.find(getgenv().Whitelist, plr.Name) ~= nil
 end
@@ -292,15 +264,21 @@ _G.punchEggCharConn = LocalPlayer.CharacterAdded:Connect(function(char)
 		end
 	end)
 
-	task.wait(0.5)
+	task.wait(0.3)
 	makeTiny(char)
 end)
 
 _G.punchEggSaving = false
-if LocalPlayer.Character then
-	applyPunchEgg()
-	makeTiny(LocalPlayer.Character)
-end
+
+task.spawn(function()
+	while true do
+		local char = LocalPlayer.Character
+		if char and char:FindFirstChild("HumanoidRootPart") then
+			makeTiny(char)
+		end
+		task.wait(0.25)
+	end
+end)
 
 task.spawn(function()
 	while getgenv().TeleportEnabled do
