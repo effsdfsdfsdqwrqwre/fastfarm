@@ -1,3 +1,14 @@
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/memejames/elerium-v2-ui-library//main/Library", true))()
+
+local window = library:AddWindow("invincible kill farm", {
+	main_color = Color3.fromRGB(1, 4, 2),
+	min_size = Vector2.new(300, 380),
+	can_resize = false,
+})
+
+local tab = window:AddTab("Main")
+tab:Show()
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TeleportService = game:GetService("TeleportService")
@@ -5,8 +16,9 @@ local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local player = LocalPlayer
 
-_G.autoPunchActive = true
-getgenv().TeleportEnabled = true
+_G.autoPunchActive = false
+getgenv().TeleportEnabled = false
+getgenv().ServerHopEnabled = false
 
 local TELEPORT_OFFSET = Vector3.new(0, 0, 1.2)
 local RETELEPORT_TIME = 0
@@ -52,127 +64,206 @@ local function applyPunchEgg()
 	return punch ~= nil
 end
 
-task.spawn(function()
-	while _G.autoPunchActive do
-		applyPunchEgg()
-		task.wait()
-	end
-end)
-
-task.spawn(function()
-	while _G.autoPunchActive do
-		if not _G.punchEggSaving then
-			local character = LocalPlayer.Character
-			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-			local punch = character and character:FindFirstChild("Punch")
-			if humanoid and humanoid.Health > 0 and punch and punch:IsA("Tool") then
-				punch:Activate()
-			end
-		end
-		task.wait()
-	end
-end)
-
-if _G.punchEggCharConn then
-	_G.punchEggCharConn:Disconnect()
-	_G.punchEggCharConn = nil
-end
-if _G.punchEggRemovingConn then
-	_G.punchEggRemovingConn:Disconnect()
-	_G.punchEggRemovingConn = nil
-end
-
-_G.punchEggRemovingConn = LocalPlayer.CharacterRemoving:Connect(function(char)
-	if not _G.autoPunchActive then return end
-	_G.punchEggSaving = true
-	local backpack = LocalPlayer.Backpack
-	if backpack then
-		local punch = char:FindFirstChild("Punch")
-		local egg = char:FindFirstChild("Protein Egg")
-		if punch then punch.Parent = backpack end
-		if egg then egg.Parent = backpack end
-	end
-end)
-
-_G.punchEggCharConn = LocalPlayer.CharacterAdded:Connect(function(char)
-	if not _G.autoPunchActive then return end
-	_G.punchEggSaving = false
-	task.spawn(function()
-		local start = tick()
-		while _G.autoPunchActive and tick() - start < 12 do
-			local backpack = LocalPlayer.Backpack
-			if backpack and backpack:FindFirstChild("Punch") and backpack:FindFirstChild("Protein Egg") then
+local punchSwitch = tab:AddSwitch("Punch + Egg", function(state)
+	_G.autoPunchActive = state
+	if state then
+		task.spawn(function()
+			while _G.autoPunchActive do
 				applyPunchEgg()
-				break
+				task.wait()
 			end
-			task.wait(0.15)
-		end
-	end)
-end)
-
-_G.punchEggSaving = false
-
-task.spawn(function()
-	while getgenv().TeleportEnabled do
-		for _, plr in ipairs(Players:GetPlayers()) do
-			if plr == LocalPlayer then continue end
-			if isWhitelisted(plr) then continue end
-			if not getgenv().TeleportEnabled then break end
-			local start = tick()
-			while getgenv().TeleportEnabled
-				and plr.Parent
-				and tick() - start < TARGET_TIMEOUT do
-				local targetChar = plr.Character
-				local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
-				local targetHead = targetChar and targetChar:FindFirstChild("Head")
-				local targetHumanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
-				local myChar = LocalPlayer.Character
-				local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-				local myHumanoid = myChar and myChar:FindFirstChildOfClass("Humanoid")
-				if not targetHumanoid or targetHumanoid.Health <= 0 then
-					break
-				end
-				if isInSafeZone(targetRoot) then
-					break
-				end
-				if targetRoot and myRoot and myChar then
-					myRoot.CFrame = targetRoot.CFrame * CFrame.new(TELEPORT_OFFSET)
-					myRoot.AssemblyLinearVelocity = Vector3.zero
-					myRoot.AssemblyAngularVelocity = Vector3.zero
-
-					local leftHand = myChar:FindFirstChild("LeftHand") or myChar:FindFirstChild("Left Arm")
-					local rightHand = myChar:FindFirstChild("RightHand") or myChar:FindFirstChild("Right Arm")
-
-					if targetHead then
-						if leftHand and leftHand:IsA("BasePart") then
-							leftHand.CFrame = targetHead.CFrame
-							leftHand.AssemblyLinearVelocity = Vector3.zero
-							leftHand.AssemblyAngularVelocity = Vector3.zero
-						end
-						if rightHand and rightHand:IsA("BasePart") then
-							rightHand.CFrame = targetHead.CFrame
-							rightHand.AssemblyLinearVelocity = Vector3.zero
-							rightHand.AssemblyAngularVelocity = Vector3.zero
-						end
+		end)
+		task.spawn(function()
+			while _G.autoPunchActive do
+				if not _G.punchEggSaving then
+					local character = LocalPlayer.Character
+					local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+					local punch = character and character:FindFirstChild("Punch")
+					if humanoid and humanoid.Health > 0 and punch and punch:IsA("Tool") then
+						punch:Activate()
 					end
 				end
-				local punch = getPunchTool()
-				if punch and myHumanoid then
-					if punch.Parent ~= myChar then
-						myHumanoid:EquipTool(punch)
-					end
-					punch:Activate()
-				end
-				if RETELEPORT_TIME > 0 then
-					task.wait(RETELEPORT_TIME)
-				else
-					task.wait()
-				end
+				task.wait()
 			end
+		end)
+		if _G.punchEggCharConn then
+			_G.punchEggCharConn:Disconnect()
+			_G.punchEggCharConn = nil
 		end
-		task.wait()
+		if _G.punchEggRemovingConn then
+			_G.punchEggRemovingConn:Disconnect()
+			_G.punchEggRemovingConn = nil
+		end
+		_G.punchEggRemovingConn = LocalPlayer.CharacterRemoving:Connect(function(char)
+			if not _G.autoPunchActive then return end
+			_G.punchEggSaving = true
+			local backpack = LocalPlayer.Backpack
+			if backpack then
+				local punch = char:FindFirstChild("Punch")
+				local egg = char:FindFirstChild("Protein Egg")
+				if punch then punch.Parent = backpack end
+				if egg then egg.Parent = backpack end
+			end
+		end)
+		_G.punchEggCharConn = LocalPlayer.CharacterAdded:Connect(function(char)
+			if not _G.autoPunchActive then return end
+			_G.punchEggSaving = false
+			task.spawn(function()
+				local start = tick()
+				while _G.autoPunchActive and tick() - start < 12 do
+					local backpack = LocalPlayer.Backpack
+					if backpack and backpack:FindFirstChild("Punch") and backpack:FindFirstChild("Protein Egg") then
+						applyPunchEgg()
+						break
+					end
+					task.wait(0.15)
+				end
+			end)
+		end)
+		_G.punchEggSaving = false
+		if LocalPlayer.Character then
+			applyPunchEgg()
+		end
+	else
+		_G.punchEggSaving = false
+		local character = LocalPlayer.Character
+		local backpack = LocalPlayer.Backpack
+		if character and backpack then
+			local punch = character:FindFirstChild("Punch")
+			local egg = character:FindFirstChild("Protein Egg")
+			if punch then punch.Parent = backpack end
+			if egg then egg.Parent = backpack end
+		end
+		if _G.punchEggCharConn then
+			_G.punchEggCharConn:Disconnect()
+			_G.punchEggCharConn = nil
+		end
+		if _G.punchEggRemovingConn then
+			_G.punchEggRemovingConn:Disconnect()
+			_G.punchEggRemovingConn = nil
+		end
 	end
 end)
+punchSwitch:Set(true)
+
+local tpSwitch = tab:AddSwitch("Auto Kill", function(state)
+	getgenv().TeleportEnabled = state
+	if state then
+		task.spawn(function()
+			while getgenv().TeleportEnabled do
+				for _, plr in ipairs(Players:GetPlayers()) do
+					if plr == LocalPlayer then continue end
+					if isWhitelisted(plr) then continue end
+					if not getgenv().TeleportEnabled then break end
+					local start = tick()
+					while getgenv().TeleportEnabled
+						and plr.Parent
+						and tick() - start < TARGET_TIMEOUT do
+						local targetChar = plr.Character
+						local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+						local targetHead = targetChar and targetChar:FindFirstChild("Head")
+						local targetHumanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
+						local myChar = LocalPlayer.Character
+						local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+						local myHumanoid = myChar and myChar:FindFirstChildOfClass("Humanoid")
+						if not targetHumanoid or targetHumanoid.Health <= 0 then
+							break
+						end
+						if isInSafeZone(targetRoot) then
+							break
+						end
+						if targetRoot and myRoot and myChar then
+							myRoot.CFrame = targetRoot.CFrame * CFrame.new(TELEPORT_OFFSET)
+							myRoot.AssemblyLinearVelocity = Vector3.zero
+							myRoot.AssemblyAngularVelocity = Vector3.zero
+							local leftHand = myChar:FindFirstChild("LeftHand") or myChar:FindFirstChild("Left Arm")
+							local rightHand = myChar:FindFirstChild("RightHand") or myChar:FindFirstChild("Right Arm")
+							if targetHead then
+								if leftHand and leftHand:IsA("BasePart") then
+									leftHand.CFrame = targetHead.CFrame
+									leftHand.AssemblyLinearVelocity = Vector3.zero
+									leftHand.AssemblyAngularVelocity = Vector3.zero
+								end
+								if rightHand and rightHand:IsA("BasePart") then
+									rightHand.CFrame = targetHead.CFrame
+									rightHand.AssemblyLinearVelocity = Vector3.zero
+									rightHand.AssemblyAngularVelocity = Vector3.zero
+								end
+							end
+						end
+						local punch = getPunchTool()
+						if punch and myHumanoid then
+							if punch.Parent ~= myChar then
+								myHumanoid:EquipTool(punch)
+							end
+							punch:Activate()
+						end
+						if RETELEPORT_TIME > 0 then
+							task.wait(RETELEPORT_TIME)
+						else
+							task.wait()
+						end
+					end
+				end
+				task.wait()
+			end
+		end)
+	end
+end)
+tpSwitch:Set(true)
+
+local function ServerHop()
+	local placeId = game.PlaceId
+	local myJobId = game.JobId
+	for attempt = 1, 8 do
+		local success, response = pcall(function()
+			return HttpService:JSONDecode(
+				game:HttpGet(
+					"https://games.roblox.com/v1/games/"
+					.. placeId
+					.. "/servers/Public?sortOrder=Desc&limit=100"
+				)
+			)
+		end)
+		if not success or not response or not response.data then
+			task.wait(1 + attempt)
+			continue
+		end
+		local candidates = {}
+		for _, srv in ipairs(response.data) do
+			if srv.id ~= myJobId
+				and srv.playing < srv.maxPlayers
+				and srv.playing >= 5 then
+				table.insert(candidates, srv)
+			end
+		end
+		if #candidates > 0 then
+			local target = candidates[math.random(1, #candidates)]
+			local ok = pcall(function()
+				TeleportService:TeleportToPlaceInstance(placeId, target.id, LocalPlayer)
+			end)
+			if ok then
+				return
+			end
+		end
+		task.wait(2 + attempt)
+	end
+end
+
+local hopSwitch = tab:AddSwitch("Server Hop", function(state)
+	getgenv().ServerHopEnabled = state
+	if state then
+		task.spawn(function()
+			while getgenv().ServerHopEnabled do
+				task.wait(70)
+				if getgenv().ServerHopEnabled then
+					task.spawn(ServerHop)
+				end
+			end
+		end)
+	end
+end)
+hopSwitch:Set(true)
 
 RunService.Heartbeat:Connect(function()
 	local char = LocalPlayer.Character
@@ -225,48 +316,3 @@ local function updateCounter()
 end
 updateCounter()
 kills:GetPropertyChangedSignal("Value"):Connect(updateCounter)
-
-local function ServerHop()
-	local placeId = game.PlaceId
-	local myJobId = game.JobId
-	for attempt = 1, 8 do
-		local success, response = pcall(function()
-			return HttpService:JSONDecode(
-				game:HttpGet(
-					"https://games.roblox.com/v1/games/"
-					.. placeId
-					.. "/servers/Public?sortOrder=Desc&limit=100"
-				)
-			)
-		end)
-		if not success or not response or not response.data then
-			task.wait(1 + attempt)
-			continue
-		end
-		local candidates = {}
-		for _, srv in ipairs(response.data) do
-			if srv.id ~= myJobId
-				and srv.playing < srv.maxPlayers
-				and srv.playing >= 5 then
-				table.insert(candidates, srv)
-			end
-		end
-		if #candidates > 0 then
-			local target = candidates[math.random(1, #candidates)]
-			local ok = pcall(function()
-				TeleportService:TeleportToPlaceInstance(placeId, target.id, LocalPlayer)
-			end)
-			if ok then
-				return
-			end
-		end
-		task.wait(2 + attempt)
-	end
-end
-
-task.spawn(function()
-	while true do
-		task.wait(70)
-		task.spawn(ServerHop)
-	end
-end)
