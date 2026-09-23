@@ -15,43 +15,6 @@ local SAFE_ZONE_POS = Vector3.new(-3.24319363, 32.9251213, -1270.24817)
 local SAFE_ZONE_RADIUS = 300
 getgenv().Whitelist = getgenv().Whitelist or {}
 
-local currentHandWelds = {}
-
-local function clearHandWelds()
-	for _, weld in ipairs(currentHandWelds) do
-		if weld and weld.Parent then
-			weld:Destroy()
-		end
-	end
-	table.clear(currentHandWelds)
-end
-
-local function attachHandsToTarget(myChar, targetRoot)
-	clearHandWelds()
-	if not myChar or not targetRoot then return end
-
-	local leftHand = myChar:FindFirstChild("LeftHand") or myChar:FindFirstChild("Left Arm")
-	local rightHand = myChar:FindFirstChild("RightHand") or myChar:FindFirstChild("Right Arm")
-
-	if leftHand and leftHand:IsA("BasePart") then
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = leftHand
-		weld.Part1 = targetRoot
-		weld.Parent = leftHand
-		table.insert(currentHandWelds, weld)
-		leftHand.CFrame = targetRoot.CFrame
-	end
-
-	if rightHand and rightHand:IsA("BasePart") then
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = rightHand
-		weld.Part1 = targetRoot
-		weld.Parent = rightHand
-		table.insert(currentHandWelds, weld)
-		rightHand.CFrame = targetRoot.CFrame
-	end
-end
-
 local function isWhitelisted(plr)
 	return table.find(getgenv().Whitelist, plr.Name) ~= nil
 end
@@ -122,7 +85,6 @@ end
 _G.punchEggRemovingConn = LocalPlayer.CharacterRemoving:Connect(function(char)
 	if not _G.autoPunchActive then return end
 	_G.punchEggSaving = true
-	clearHandWelds()
 	local backpack = LocalPlayer.Backpack
 	if backpack then
 		local punch = char:FindFirstChild("Punch")
@@ -135,7 +97,6 @@ end)
 _G.punchEggCharConn = LocalPlayer.CharacterAdded:Connect(function(char)
 	if not _G.autoPunchActive then return end
 	_G.punchEggSaving = false
-	clearHandWelds()
 	task.spawn(function()
 		local start = tick()
 		while _G.autoPunchActive and tick() - start < 12 do
@@ -163,23 +124,37 @@ task.spawn(function()
 				and tick() - start < TARGET_TIMEOUT do
 				local targetChar = plr.Character
 				local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+				local targetHead = targetChar and targetChar:FindFirstChild("Head")
 				local targetHumanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
 				local myChar = LocalPlayer.Character
 				local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
 				local myHumanoid = myChar and myChar:FindFirstChildOfClass("Humanoid")
 				if not targetHumanoid or targetHumanoid.Health <= 0 then
-					clearHandWelds()
 					break
 				end
 				if isInSafeZone(targetRoot) then
-					clearHandWelds()
 					break
 				end
-				if targetRoot and myRoot then
+				if targetRoot and myRoot and myChar then
 					myRoot.CFrame = targetRoot.CFrame * CFrame.new(TELEPORT_OFFSET)
 					myRoot.AssemblyLinearVelocity = Vector3.zero
 					myRoot.AssemblyAngularVelocity = Vector3.zero
-					attachHandsToTarget(myChar, targetRoot)
+
+					local leftHand = myChar:FindFirstChild("LeftHand") or myChar:FindFirstChild("Left Arm")
+					local rightHand = myChar:FindFirstChild("RightHand") or myChar:FindFirstChild("Right Arm")
+
+					if targetHead then
+						if leftHand and leftHand:IsA("BasePart") then
+							leftHand.CFrame = targetHead.CFrame
+							leftHand.AssemblyLinearVelocity = Vector3.zero
+							leftHand.AssemblyAngularVelocity = Vector3.zero
+						end
+						if rightHand and rightHand:IsA("BasePart") then
+							rightHand.CFrame = targetHead.CFrame
+							rightHand.AssemblyLinearVelocity = Vector3.zero
+							rightHand.AssemblyAngularVelocity = Vector3.zero
+						end
+					end
 				end
 				local punch = getPunchTool()
 				if punch and myHumanoid then
