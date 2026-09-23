@@ -1,13 +1,10 @@
---free auto kill src you can skid i dont give a shit--
-
-
-
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
+
 local player = Players.LocalPlayer
 local LocalPlayer = Players.LocalPlayer
 
@@ -76,10 +73,142 @@ for _, obj in ipairs(Workspace:GetDescendants()) do
 end
 
 _G.autoPunchActive = true
+getgenv().TeleportEnabled = true
+
+local TELEPORT_OFFSET = Vector3.new(0, 0, 1.2)
+local RETELEPORT_TIME = 0
+local TARGET_TIMEOUT = 8
+local SAFE_ZONE_POS = Vector3.new(-3.24319363, 32.9251213, -1270.24817)
+local SAFE_ZONE_RADIUS = 300
+
+getgenv().Whitelist = getgenv().Whitelist or {}
+
+local originalProps = {}
+
+local function saveOriginals(char)
+	if originalProps[char] then return end
+	originalProps[char] = { parts = {}, humanoid = {} }
+
+	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		originalProps[char].humanoid = {
+			HipHeight = humanoid.HipHeight,
+			WalkSpeed = humanoid.WalkSpeed,
+			JumpPower = humanoid.JumpPower,
+		}
+	end
+
+	for _, part in ipairs(char:GetDescendants()) do
+		if part:IsA("BasePart") then
+			originalProps[char].parts[part] = {
+				Size = part.Size,
+				Transparency = part.Transparency,
+				CanCollide = part.CanCollide,
+				Massless = part.Massless,
+			}
+		end
+	end
+end
+
+local function makeTiny(char)
+	if not char then return end
+	saveOriginals(char)
+
+	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not humanoid or not root then return end
+
+	local partsToCollapse = {
+		"Head",
+		"Left Arm", "Right Arm",
+		"Left Leg", "Right Leg",
+		"LeftUpperArm", "LeftLowerArm", "LeftHand",
+		"RightUpperArm", "RightLowerArm", "RightHand",
+		"LeftUpperLeg", "LeftLowerLeg", "LeftFoot",
+		"RightUpperLeg", "RightLowerLeg", "RightFoot",
+		"UpperTorso", "LowerTorso"
+	}
+
+	for _, name in ipairs(partsToCollapse) do
+		local part = char:FindFirstChild(name)
+		if part and part:IsA("BasePart") then
+			part.Size = Vector3.new(0.05, 0.05, 0.05)
+			part.Transparency = 1
+			part.CanCollide = false
+			part.Massless = true
+			part.CFrame = root.CFrame
+		end
+	end
+
+	for _, acc in ipairs(char:GetChildren()) do
+		if acc:IsA("Accessory") then
+			local handle = acc:FindFirstChild("Handle")
+			if handle then
+				handle.Transparency = 1
+				handle.CanCollide = false
+				handle.Size = Vector3.new(0.05, 0.05, 0.05)
+				handle.Massless = true
+			end
+		end
+	end
+
+	root.Size = Vector3.new(0.3, 0.3, 0.3)
+	root.Transparency = 0
+	root.CanCollide = true
+	root.Massless = false
+
+	humanoid.HipHeight = 0.1
+	humanoid.WalkSpeed = 25
+	humanoid.JumpPower = 40
+
+	workspace.CurrentCamera.CameraSubject = humanoid
+end
+
+local function restoreNormal(char)
+	if not char or not originalProps[char] then return end
+
+	local data = originalProps[char]
+
+	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	if humanoid and data.humanoid then
+		humanoid.HipHeight = data.humanoid.HipHeight
+		humanoid.WalkSpeed = data.humanoid.WalkSpeed
+		humanoid.JumpPower = data.humanoid.JumpPower
+	end
+
+	for part, props in pairs(data.parts) do
+		if part and part.Parent then
+			part.Size = props.Size
+			part.Transparency = props.Transparency
+			part.CanCollide = props.CanCollide
+			part.Massless = props.Massless
+		end
+	end
+
+	originalProps[char] = nil
+
+	if humanoid then
+		workspace.CurrentCamera.CameraSubject = humanoid
+	end
+end
+
+local function isWhitelisted(plr)
+	return table.find(getgenv().Whitelist, plr.Name) ~= nil
+end
+
+local function isInSafeZone(rootPart)
+	if not rootPart then return false end
+	return (rootPart.Position - SAFE_ZONE_POS).Magnitude <= SAFE_ZONE_RADIUS
+end
+
+local function getPunchTool()
+	local char = LocalPlayer.Character
+	local backpack = LocalPlayer.Backpack
+	return (char and char:FindFirstChild("Punch")) or (backpack and backpack:FindFirstChild("Punch"))
+end
 
 local function applyPunchEgg()
 	if _G.punchEggSaving then return false end
-
 	local character = LocalPlayer.Character
 	local backpack = LocalPlayer.Backpack
 	if not (character and backpack) then return false end
@@ -137,14 +266,11 @@ end
 
 _G.punchEggRemovingConn = LocalPlayer.CharacterRemoving:Connect(function(char)
 	if not _G.autoPunchActive then return end
-
 	_G.punchEggSaving = true
-
 	local backpack = LocalPlayer.Backpack
 	if backpack then
 		local punch = char:FindFirstChild("Punch")
 		local egg = char:FindFirstChild("Protein Egg")
-
 		if punch then punch.Parent = backpack end
 		if egg then egg.Parent = backpack end
 	end
@@ -152,7 +278,6 @@ end)
 
 _G.punchEggCharConn = LocalPlayer.CharacterAdded:Connect(function(char)
 	if not _G.autoPunchActive then return end
-
 	_G.punchEggSaving = false
 
 	task.spawn(function()
@@ -166,177 +291,78 @@ _G.punchEggCharConn = LocalPlayer.CharacterAdded:Connect(function(char)
 			task.wait(0.15)
 		end
 	end)
+
+	task.wait(0.5)
+	makeTiny(char)
 end)
 
 _G.punchEggSaving = false
 if LocalPlayer.Character then
 	applyPunchEgg()
+	makeTiny(LocalPlayer.Character)
 end
 
-local function RecoveryPunch()
-	if _G.AnimBlockConnection then
-		_G.AnimBlockConnection:Disconnect()
-		_G.AnimBlockConnection = nil
-	end
-	if _G.AnimMonitorConnection then
-		_G.AnimMonitorConnection:Disconnect()
-		_G.AnimMonitorConnection = nil
-	end
-	if _G.ToolConnections then
-		for _, conn in pairs(_G.ToolConnections) do
-			if conn then
-				conn:Disconnect()
-			end
-		end
-		_G.ToolConnections = nil
-	end
-	if _G.BackpackAddedConnection then
-		_G.BackpackAddedConnection:Disconnect()
-		_G.BackpackAddedConnection = nil
-	end
-	if _G.CharacterToolAddedConnection then
-		_G.CharacterToolAddedConnection:Disconnect()
-		_G.CharacterToolAddedConnection = nil
-	end
-	if _G.CharacterAddedConnection then
-		_G.CharacterAddedConnection:Disconnect()
-		_G.CharacterAddedConnection = nil
-	end
-end
+task.spawn(function()
+	while getgenv().TeleportEnabled do
+		for _, plr in ipairs(Players:GetPlayers()) do
+			if plr == LocalPlayer then continue end
+			if isWhitelisted(plr) then continue end
+			if not getgenv().TeleportEnabled then break end
 
-local function EnablePunchRemoval()
-	local blockedAnimations = {
-		["rbxassetid://3638729053"] = true,
-		["rbxassetid://3638767427"] = true
-	}
+			local start = tick()
+			while getgenv().TeleportEnabled
+				and plr.Parent
+				and tick() - start < TARGET_TIMEOUT do
 
-	local function setupAnimationBlocking()
-		local char = LocalPlayer.Character
-		if not char or not char:FindFirstChild("Humanoid") then return end
-		local humanoid = char.Humanoid
+				local targetChar = plr.Character
+				local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+				local targetHumanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
+				local myChar = LocalPlayer.Character
+				local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+				local myHumanoid = myChar and myChar:FindFirstChildOfClass("Humanoid")
 
-		for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
-			if track.Animation then
-				local animId = track.Animation.AnimationId
-				local animName = track.Name:lower()
-				if blockedAnimations[animId] or animName:match("punch") or animName:match("attack") or animName:match("right") then
-					track:Stop()
+				if not targetHumanoid or targetHumanoid.Health <= 0 then
+					break
 				end
-			end
-		end
 
-		if not _G.AnimBlockConnection then
-			_G.AnimBlockConnection = humanoid.AnimationPlayed:Connect(function(track)
-				if track.Animation then
-					local animId = track.Animation.AnimationId
-					local animName = track.Name:lower()
-					if blockedAnimations[animId] or animName:match("punch") or animName:match("attack") or animName:match("right") then
-						track:Stop()
+				if isInSafeZone(targetRoot) then
+					break
+				end
+
+				if targetRoot and myRoot then
+					myRoot.CFrame = targetRoot.CFrame * CFrame.new(TELEPORT_OFFSET)
+					myRoot.AssemblyLinearVelocity = Vector3.zero
+					myRoot.AssemblyAngularVelocity = Vector3.zero
+				end
+
+				local punch = getPunchTool()
+				if punch and myHumanoid then
+					if punch.Parent ~= myChar then
+						myHumanoid:EquipTool(punch)
 					end
+					punch:Activate()
 				end
-			end)
-		end
-	end
 
-	local function processTool(tool)
-		if not tool or not tool:IsA("Tool") then return end
-		if not ((tool.Name == "Punch") or tool.Name:match("Attack") or tool.Name:match("Right")) then return end
-		if _G.ToolConnections and _G.ToolConnections[tool] then return end
-
-		local connection = tool.Activated:Connect(function()
-			task.wait(0.05)
-			local char = LocalPlayer.Character
-			if char and char:FindFirstChild("Humanoid") then
-				for _, track in pairs(char.Humanoid:GetPlayingAnimationTracks()) do
-					if track.Animation then
-						local animId = track.Animation.AnimationId
-						local animName = track.Name:lower()
-						if blockedAnimations[animId] or animName:match("punch") or animName:match("attack") or animName:match("right") then
-							track:Stop()
-						end
-					end
+				if RETELEPORT_TIME > 0 then
+					task.wait(RETELEPORT_TIME)
+				else
+					task.wait()
 				end
 			end
-		end)
-
-		if not _G.ToolConnections then
-			_G.ToolConnections = {}
 		end
-		_G.ToolConnections[tool] = connection
+		task.wait()
 	end
+end)
 
-	local function overrideToolActivation()
-		for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
-			processTool(tool)
-		end
-
-		local char = LocalPlayer.Character
-		if char then
-			for _, tool in pairs(char:GetChildren()) do
-				processTool(tool)
-			end
-		end
-
-		if not _G.BackpackAddedConnection then
-			_G.BackpackAddedConnection = LocalPlayer.Backpack.ChildAdded:Connect(function(child)
-				if child:IsA("Tool") then
-					task.wait(0.1)
-					processTool(child)
-				end
-			end)
-		end
-
-		if not _G.CharacterToolAddedConnection and char then
-			_G.CharacterToolAddedConnection = char.ChildAdded:Connect(function(child)
-				if child:IsA("Tool") then
-					task.wait(0.1)
-					processTool(child)
-				end
-			end)
-		end
+RunService.Heartbeat:Connect(function()
+	local char = LocalPlayer.Character
+	if not char then return end
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if root then
+		root.AssemblyLinearVelocity = Vector3.zero
+		root.AssemblyAngularVelocity = Vector3.zero
 	end
-
-	setupAnimationBlocking()
-	overrideToolActivation()
-
-	if not _G.AnimMonitorConnection then
-		_G.AnimMonitorConnection = RunService.Heartbeat:Connect(function()
-			if (tick() % 0.5) < 0.016 then
-				local char = LocalPlayer.Character
-				if char and char:FindFirstChild("Humanoid") then
-					for _, track in pairs(char.Humanoid:GetPlayingAnimationTracks()) do
-						if track.Animation then
-							local animId = track.Animation.AnimationId
-							local animName = track.Name:lower()
-							if blockedAnimations[animId] or animName:match("punch") or animName:match("attack") or animName:match("right") then
-								track:Stop()
-							end
-						end
-					end
-				end
-			end
-		end)
-	end
-
-	if not _G.CharacterAddedConnection then
-		_G.CharacterAddedConnection = LocalPlayer.CharacterAdded:Connect(function(newChar)
-			task.wait(1)
-			setupAnimationBlocking()
-			overrideToolActivation()
-			if _G.CharacterToolAddedConnection then
-				_G.CharacterToolAddedConnection:Disconnect()
-			end
-			_G.CharacterToolAddedConnection = newChar.ChildAdded:Connect(function(child)
-				if child:IsA("Tool") then
-					task.wait(0.1)
-					processTool(child)
-				end
-			end)
-		end)
-	end
-end
-
-EnablePunchRemoval()
+end)
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "KillCounterGui"
@@ -380,85 +406,9 @@ end
 updateCounter()
 kills:GetPropertyChangedSignal("Value"):Connect(updateCounter)
 
-local RETELEPORT_TIME = 0
-local TARGET_TIMEOUT = 8
-local TELEPORT_OFFSET = Vector3.new(0, -1, 0.3)
-local SAFE_ZONE_POS = Vector3.new(-3.24319363, 32.9251213, -1270.24817)
-local SAFE_ZONE_RADIUS = 300
-
-getgenv().Whitelist = getgenv().Whitelist or {}
-getgenv().TeleportEnabled = true
-
-local function isWhitelisted(plr)
-	return table.find(getgenv().Whitelist, plr.Name) ~= nil
-end
-
-local function isInSafeZone(rootPart)
-	if not rootPart then return false end
-	return (rootPart.Position - SAFE_ZONE_POS).Magnitude <= SAFE_ZONE_RADIUS
-end
-
-local function getPunchTool()
-	local char = LocalPlayer.Character
-	local backpack = LocalPlayer.Backpack
-	return (char and char:FindFirstChild("Punch")) or (backpack and backpack:FindFirstChild("Punch"))
-end
-
-task.spawn(function()
-	while getgenv().TeleportEnabled do
-		for _, plr in ipairs(Players:GetPlayers()) do
-			if plr == LocalPlayer then continue end
-			if isWhitelisted(plr) then continue end
-			if not getgenv().TeleportEnabled then break end
-
-			local start = tick()
-			while getgenv().TeleportEnabled
-				and plr.Parent
-				and tick() - start < TARGET_TIMEOUT do
-
-				local targetChar = plr.Character
-				local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
-				local targetHumanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
-				local myChar = LocalPlayer.Character
-				local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-				local myHumanoid = myChar and myChar:FindFirstChildOfClass("Humanoid")
-
-				if not targetHumanoid or targetHumanoid.Health <= 0 then
-					break
-				end
-
-				if isInSafeZone(targetRoot) then
-					break
-				end
-
-				if targetRoot and myRoot then
-					myRoot.CFrame = targetRoot.CFrame * CFrame.new(TELEPORT_OFFSET)
-				end
-
-				local punch = getPunchTool()
-				if punch and myHumanoid then
-					if punch.Parent ~= myChar then
-						myHumanoid:EquipTool(punch)
-					end
-					punch:Activate()
-				end
-
-				if RETELEPORT_TIME > 0 then
-					task.wait(RETELEPORT_TIME)
-				else
-					task.wait()
-				end
-			end
-		end
-		task.wait()
-	end
-end)
-
-
 local function ServerHop()
 	local placeId = game.PlaceId
 	local myJobId = game.JobId
-
 	for attempt = 1, 8 do
 		local success, response = pcall(function()
 			return HttpService:JSONDecode(
@@ -469,12 +419,10 @@ local function ServerHop()
 				)
 			)
 		end)
-
 		if not success or not response or not response.data then
 			task.wait(1 + attempt)
 			continue
 		end
-
 		local candidates = {}
 		for _, srv in ipairs(response.data) do
 			if srv.id ~= myJobId
@@ -483,7 +431,6 @@ local function ServerHop()
 				table.insert(candidates, srv)
 			end
 		end
-
 		if #candidates > 0 then
 			local target = candidates[math.random(1, #candidates)]
 			local ok = pcall(function()
@@ -493,7 +440,6 @@ local function ServerHop()
 				return
 			end
 		end
-
 		task.wait(2 + attempt)
 	end
 end
