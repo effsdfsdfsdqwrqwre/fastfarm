@@ -327,6 +327,49 @@ local nightSwitch = tab:AddSwitch("Night Time", function(state)
 end)
 nightSwitch:Set(true)
 
+local hideSwitch = tab:AddSwitch("Hide Character", function(bool)
+    local character = game.Players.LocalPlayer.Character
+    if not character then return end
+
+    for _, v in pairs(character:GetDescendants()) do
+        if v:IsA("BasePart") or v:IsA("Decal") or v:IsA("Texture") then
+            if bool then
+                if not v:GetAttribute("OriginalTransparency") then
+                    v:SetAttribute("OriginalTransparency", v.Transparency)
+                end
+                v.Transparency = 1
+            else
+                local original = v:GetAttribute("OriginalTransparency")
+                v.Transparency = original or 0
+            end
+        end
+    end
+end)
+hideSwitch:Set(true)
+
+local antiDeathConnection
+local antiDeathSwitch = tab:AddSwitch("Anti Death", function(bool)
+    local character = game.Players.LocalPlayer.Character
+    if not character then return end
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    if antiDeathConnection then
+        antiDeathConnection:Disconnect()
+        antiDeathConnection = nil
+    end
+
+    if bool then
+        antiDeathConnection = humanoid.HealthChanged:Connect(function()
+            if humanoid.Health < humanoid.MaxHealth then
+                humanoid.Health = humanoid.MaxHealth
+            end
+        end)
+        humanoid.Health = humanoid.MaxHealth
+    end
+end)
+antiDeathSwitch:Set(true)
+
 local gui = Instance.new("ScreenGui")
 gui.Name = "KillCounterGui"
 gui.ResetOnSpawn = false
