@@ -370,6 +370,26 @@ local antiDeathSwitch = tab:AddSwitch("Anti Death", function(bool)
 end)
 antiDeathSwitch:Set(true)
 
+local sizeLoop
+local sizeSwitch = tab:AddSwitch("Size 100", function(bool)
+    if sizeLoop then
+        task.cancel(sizeLoop)
+        sizeLoop = nil
+    end
+
+    if bool then
+        sizeLoop = task.spawn(function()
+            while true do
+                pcall(function()
+                    game:GetService("ReplicatedStorage").rEvents.changeSpeedSizeRemote:InvokeServer("changeSize", 100)
+                end)
+                task.wait(0.5)
+            end
+        end)
+    end
+end)
+sizeSwitch:Set(true)
+
 local gui = Instance.new("ScreenGui")
 gui.Name = "KillCounterGui"
 gui.ResetOnSpawn = false
