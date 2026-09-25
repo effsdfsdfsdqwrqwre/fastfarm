@@ -42,7 +42,7 @@ local function godmode(char)
 	local voidConn
 	voidConn = RunService.Heartbeat:Connect(function()
 		if root and root.Parent and root.Position.Y < VOID_Y then
-			root.CFrame = CFrame.new(root.Position.X, 50, root.Position.Z) 
+			root.CFrame = CFrame.new(root.Position.X, 70, root.Position.Z) 
 			root.AssemblyLinearVelocity = Vector3.zero 
 		end
 	end)
