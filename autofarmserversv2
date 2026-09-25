@@ -15,28 +15,49 @@ local function deleteAds()
 	end)
 end
 deleteAds()
+
+
+
+
+
+
+
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
+local VOID_Y = -200 
+
 local function godmode(char)
 	local hum = char:WaitForChild("Humanoid")
+	local root = char:WaitForChild("HumanoidRootPart")
+
 	hum.MaxHealth = math.huge
 	hum.Health = math.huge
 	hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
 	hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
 	hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
 
-	local conn
-	conn = hum:GetPropertyChangedSignal("Health"):Connect(function()
+	local healthConn
+	healthConn = hum:GetPropertyChangedSignal("Health"):Connect(function()
 		if hum.Health < hum.MaxHealth then
 			hum.Health = hum.MaxHealth
 		end
 	end)
 
+	local voidConn
+	voidConn = RunService.Heartbeat:Connect(function()
+		if root and root.Parent and root.Position.Y < VOID_Y then
+			root.CFrame = CFrame.new(root.Position.X, 50, root.Position.Z) 
+			root.AssemblyLinearVelocity = Vector3.zero 
+		end
+	end)
+
 	char.AncestryChanged:Connect(function()
 		if not char.Parent then
-			conn:Disconnect()
+			healthConn:Disconnect()
+			voidConn:Disconnect()
 		end
 	end)
 end
@@ -45,8 +66,6 @@ if player.Character then
 	godmode(player.Character)
 end
 player.CharacterAdded:Connect(godmode)
-
-
 
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/memejames/elerium-v2-ui-library//main/Library", true))()
 local window = library:AddWindow("invincible kill farm", {
